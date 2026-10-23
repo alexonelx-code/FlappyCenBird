@@ -1,4 +1,4 @@
-# Flappy Cen Pro — Amigos al vuelo
+# Cen Crew — La pandilla vuela
 
 Un juego arcade de navegador hecho para retar a la pandilla. Funciona en teléfonos y computadoras, se puede instalar como aplicación web y guarda el récord, el nombre y el silencio en cada dispositivo.
 
