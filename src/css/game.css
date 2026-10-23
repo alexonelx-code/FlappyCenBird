@@ -1,8 +1,9 @@
 :root {
   color-scheme: dark;
-  font-family: "Trebuchet MS", system-ui, sans-serif;
-  background: #0b141c;
-  color: #fff;
+  font-family: "Trebuchet MS", "Arial Rounded MT Bold", system-ui, sans-serif;
+  background: #091820;
+  color: #fff0d1;
+  font-synthesis: none;
 }
 
 * { box-sizing: border-box; }
@@ -22,19 +23,21 @@ body {
   place-items: center;
   overflow: hidden;
   padding: max(8px, env(safe-area-inset-top)) max(8px, env(safe-area-inset-right)) max(8px, env(safe-area-inset-bottom)) max(8px, env(safe-area-inset-left));
-  background: radial-gradient(circle at 50% 15%, #1e3d4e 0%, #0b141c 65%, #070d12 100%);
+  background-color: #091820;
+  background-image: radial-gradient(ellipse at 50% 10%, #183642 0%, #0d2028 48%, #071219 100%);
   -webkit-tap-highlight-color: transparent;
 }
 
 .game-shell {
   position: relative;
-  width: min(94vw, 52.9vh, 430px);
-  width: min(94vw, 52.9dvh, 430px);
+  width: min(92vw, 52.9vh, 430px);
+  width: min(92vw, 52.9dvh, 430px);
   aspect-ratio: 9 / 16;
   overflow: hidden;
   isolation: isolate;
-  border-radius: clamp(12px, 3.5vw, 18px);
-  box-shadow: 0 30px 70px rgba(0, 0, 0, .65), 0 0 0 1px rgba(255, 255, 255, .08);
+  border: 1px solid rgba(237, 189, 120, .38);
+  border-radius: clamp(16px, 4vw, 24px);
+  box-shadow: 0 24px 64px rgba(0, 0, 0, .56), 0 0 0 5px rgba(19, 46, 55, .46);
   animation: appear .45s ease-out both;
 }
 
@@ -69,8 +72,8 @@ body {
 .overlay-button,
 .action-button,
 .dialog-actions button {
-  border: 1px solid rgba(255, 255, 255, .34);
-  color: #fff;
+  border: 1px solid rgba(244, 210, 166, .34);
+  color: #fff0d1;
   font: 700 14px/1 system-ui, sans-serif;
   cursor: pointer;
   -webkit-appearance: none;
@@ -85,14 +88,14 @@ body {
   justify-content: center;
   gap: 7px;
   padding: 0 13px;
-  border-radius: 24px;
-  background: rgba(9, 25, 30, .68);
-  box-shadow: 0 3px 12px rgba(0, 0, 0, .2);
-  backdrop-filter: blur(8px);
+  border-radius: 16px;
+  background: rgba(15, 39, 47, .92);
+  box-shadow: 0 3px 10px rgba(6, 19, 23, .28);
+  backdrop-filter: blur(5px);
   pointer-events: auto;
 }
 
-.overlay-button:hover { background: rgba(9, 25, 30, .86); }
+.overlay-button:hover { background: #21434a; }
 .overlay-button:active,
 .action-button:active,
 .dialog-actions button:active { transform: scale(.97); }
@@ -100,11 +103,25 @@ body {
 .player-button { max-width: 72%; }
 .player-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
+.avatar-mark {
+  width: 23px;
+  height: 23px;
+  display: inline-grid;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 7px;
+  background: #edbd78;
+  color: #17343c;
+  font-size: 13px;
+  font-weight: 900;
+}
+
 .mute-button {
   width: 44px;
   padding: 0;
-  font-size: 18px;
 }
+
+.sound-icon { width: 21px; height: 21px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
 
 .game-actions {
   position: absolute;
@@ -115,30 +132,32 @@ body {
 
 .action-button {
   position: absolute;
-  left: 30%;
-  width: 40%;
+  left: 23.3%;
+  width: 53.4%;
   min-height: 44px;
-  height: 5.95%;
+  height: 6.875%;
   padding: 0 8px;
-  border-radius: 22px;
-  background: linear-gradient(180deg, #fff 0%, #e9f7f1 100%);
-  color: #24573f;
-  box-shadow: 0 3px 9px rgba(39, 78, 43, .22);
+  border-radius: 12px;
+  background: #23434a;
+  color: #fff0d1;
+  box-shadow: 0 3px 9px rgba(10, 27, 32, .34);
+  font-size: 13px;
+  letter-spacing: .035em;
   pointer-events: auto;
 }
 
 .retry-button {
-  top: 56.875%;
-  border-color: rgba(255, 255, 255, .55);
-  background: linear-gradient(180deg, #ffb64d 0%, #eb9025 100%);
-  color: #fff;
-  box-shadow: 0 3px 10px rgba(119, 70, 15, .28);
+  top: 56.25%;
+  border-color: rgba(255, 240, 209, .6);
+  background: #f2b86f;
+  color: #243d43;
+  box-shadow: 0 3px 10px rgba(58, 35, 33, .3);
 }
-.share-button { top: 64.0625%; }
+.share-button { top: 64.6875%; }
 
 button:focus-visible,
 input:focus-visible {
-  outline: 3px solid #ffd76b;
+  outline: 3px solid #f2b86f;
   outline-offset: 3px;
 }
 
@@ -149,35 +168,35 @@ input:focus-visible {
   max-height: calc(100dvh - 16px);
   overflow: auto;
   padding: 0;
-  border: 1px solid rgba(255, 255, 255, .2);
-  border-radius: 20px;
-  background: #12232c;
-  color: #f7fbfa;
-  box-shadow: 0 24px 80px rgba(0, 0, 0, .6);
+  border: 1px solid rgba(237, 189, 120, .52);
+  border-radius: 18px;
+  background: #132e37;
+  color: #fff0d1;
+  box-shadow: 0 24px 72px rgba(0, 0, 0, .58);
 }
 
-.player-dialog::backdrop { background: rgba(2, 9, 13, .72); backdrop-filter: blur(4px); }
+.player-dialog::backdrop { background: rgba(2, 9, 13, .78); backdrop-filter: blur(4px); }
 .player-dialog form { padding: 24px; }
 .player-dialog h1 { margin: 0 0 18px; font-size: 23px; }
-.player-dialog label { display: block; margin-bottom: 8px; color: #d4e4de; font-size: 14px; }
+.player-dialog label { display: block; margin-bottom: 8px; color: #e0c9a5; font-size: 14px; }
 .player-dialog label:not(:first-of-type) { margin-top: 14px; }
 .player-dialog input,
 .player-dialog select {
   width: 100%;
   min-height: 48px;
   padding: 0 13px;
-  border: 1px solid #49615e;
-  border-radius: 11px;
-  background: #09151b;
+  border: 1px solid #56736d;
+  border-radius: 10px;
+  background: #0a1b21;
   color: #fff;
   font: 16px system-ui, sans-serif;
 }
 .player-dialog select { margin-top: 0; }
-.player-dialog p { margin: 10px 0 20px; color: #b9c9c4; font-size: 13px; line-height: 1.45; }
+.player-dialog p { margin: 10px 0 20px; color: #c1d0c8; font-size: 13px; line-height: 1.5; }
 .dialog-actions { display: flex; justify-content: flex-end; gap: 10px; }
 .dialog-actions button { min-height: 44px; padding: 0 15px; border-radius: 12px; }
-.dialog-secondary { background: #263a40; }
-.dialog-primary { border-color: #ffc164 !important; background: #e9942d; }
+.dialog-secondary { background: #29464a; }
+.dialog-primary { border-color: #f6c988 !important; background: #e4775f; color: #fff8e9 !important; }
 
 .sr-only {
   position: absolute;
@@ -206,7 +225,7 @@ input:focus-visible {
     height: 48px;
   }
   .retry-button { top: calc(50% + 8px); }
-  .share-button { top: calc(50% + 64px); }
+  .share-button { top: calc(50% + 66px); }
 }
 
 @media (prefers-reduced-motion: reduce) {

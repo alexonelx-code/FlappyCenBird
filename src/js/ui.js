@@ -17,7 +17,8 @@
   const characterInput = document.getElementById('characterInput');
   const cancelPlayerButton = document.getElementById('cancelPlayerButton');
   const muteButton = document.getElementById('muteButton');
-  const muteIcon = document.getElementById('muteIcon');
+  const muteWaves = document.getElementById('muteWaves');
+  const muteSlash = document.getElementById('muteSlash');
   const retryButton = document.getElementById('retryButton');
   const shareButton = document.getElementById('shareButton');
   const gameStatus = document.getElementById('gameStatus');
@@ -95,7 +96,8 @@
   });
 
   function syncMuteButton(muted) {
-    muteIcon.textContent = muted ? '🔇' : '🔊';
+    muteWaves.hidden = muted;
+    muteSlash.hidden = !muted;
     muteButton.setAttribute('aria-pressed', String(!muted));
     muteButton.setAttribute('aria-label', muted ? 'Sonido silenciado' : 'Sonido activado');
   }
@@ -153,9 +155,9 @@
     const score = Number(shareButton.dataset.score) || 0;
     const best = Number(shareButton.dataset.best) || score;
     const characterLabel = CHARACTER_LABELS[character] || 'su personaje';
-    const message = `${playerName} hizo ${score} puntos en Flappy Cen Pro con ${characterLabel}. Su récord personal es ${best}. ¿Puedes superarlo?`;
+    const message = `${playerName} hizo ${score} puntos en Cen Crew con ${characterLabel}. Su récord personal es ${best}. ¿Puedes superarlo?`;
     const payload = {
-      title: 'Flappy Cen Pro — Amigos al vuelo',
+      title: 'Cen Crew — La pandilla vuela',
       text: message,
       url: window.location.href
     };

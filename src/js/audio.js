@@ -48,10 +48,23 @@
   }
 
   const effects = {
-    flap()  { tone(560, 0.09, 'sine', 0.07, 780); tone(300, 0.05, 'triangle', 0.025); },
-    score() { tone(880, 0.08, 'square', 0.035); tone(1320, 0.12, 'square', 0.028, null, 0.07); },
-    hit()   { tone(170, 0.16, 'sawtooth', 0.08, 60); },
-    die()   { tone(420, 0.5, 'triangle', 0.06, 80); }
+    flap()  {
+      tone(310, 0.11, 'triangle', 0.035, 470);
+      tone(620, 0.075, 'sine', 0.018, 800, 0.008);
+    },
+    score() {
+      tone(660, 0.12, 'sine', 0.035, 880);
+      tone(990, 0.16, 'sine', 0.025, 1180, 0.055);
+      tone(1480, 0.19, 'triangle', 0.015, 1660, 0.105);
+    },
+    hit()   {
+      tone(140, 0.13, 'triangle', 0.055, 70);
+      tone(94, 0.09, 'sine', 0.02, 48, 0.015);
+    },
+    die()   {
+      tone(360, 0.38, 'sine', 0.04, 120);
+      tone(230, 0.42, 'triangle', 0.025, 78, 0.055);
+    }
   };
 
   function toggleMute() {

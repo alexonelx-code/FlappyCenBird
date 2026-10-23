@@ -3,37 +3,41 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#0b141c">
-  <meta name="description" content="El Flappy de la pandilla. Elige tu nombre, vuela y reta a tus amigos.">
+  <meta name="theme-color" content="#0b1b22">
+  <meta name="description" content="Cen Crew: el vuelo de la pandilla. Elige personaje, vuela y reta a tus amigos.">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="Flappy Cen">
+  <meta name="apple-mobile-web-app-title" content="Cen Crew">
   <meta property="og:type" content="website">
-  <meta property="og:title" content="Flappy Cen Pro — Amigos al vuelo">
-  <meta property="og:description" content="¿Quién de la pandilla consigue más puntos? Juega desde tu teléfono.">
+  <meta property="og:title" content="Cen Crew — La pandilla vuela">
+  <meta property="og:description" content="¿Quién de la pandilla aguanta más en el aire? Juega desde tu teléfono.">
   <link rel="icon" href="assets/icons/flappy-cen.svg" type="image/svg+xml">
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="stylesheet" href="src/css/game.css">
-  <title>Flappy Cen Pro — Amigos al vuelo</title>
+  <title>Cen Crew — La pandilla vuela</title>
 </head>
 <body>
   <main class="game-shell" id="gameShell">
-    <canvas id="game" tabindex="0" role="img" aria-label="Flappy Cen Pro. Toca el juego para volar; también puedes usar Espacio, flecha arriba o W.">
+    <canvas id="game" tabindex="0" role="img" aria-label="Cen Crew. Toca el juego para volar; también puedes usar Espacio, flecha arriba o W.">
       Este navegador no soporta Canvas. Prueba con una versión reciente de Chrome, Safari, Edge o Firefox.
     </canvas>
 
     <nav class="top-controls" aria-label="Opciones del juego">
       <button class="overlay-button player-button" id="playerButton" type="button" aria-haspopup="dialog" aria-controls="playerDialog">
-        <span aria-hidden="true">👤</span>
+        <span class="avatar-mark" aria-hidden="true">C</span>
         <span class="player-name" id="playerNameLabel">Jugador</span>
       </button>
       <button class="overlay-button mute-button" id="muteButton" type="button" aria-label="Silenciar sonido" aria-pressed="false">
-        <span id="muteIcon" aria-hidden="true">🔊</span>
+        <svg class="sound-icon" id="muteIcon" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M4 10v4h4l5 4V6l-5 4H4Z" />
+          <path id="muteWaves" d="M16 9a5 5 0 0 1 0 6m2-9a9 9 0 0 1 0 12" />
+          <path id="muteSlash" d="m16 9 5 6m0-6-5 6" hidden />
+        </svg>
       </button>
     </nav>
 
     <div class="game-actions" aria-label="Acciones de la partida">
-      <button class="action-button retry-button" id="retryButton" type="button" hidden>Otra partida</button>
+      <button class="action-button retry-button" id="retryButton" type="button" hidden>Revancha</button>
       <button class="action-button share-button" id="shareButton" type="button" hidden>Compartir reto</button>
     </div>
 
@@ -42,7 +46,7 @@
 
   <dialog class="player-dialog" id="playerDialog" aria-labelledby="playerDialogTitle">
     <form id="playerForm">
-      <h1 id="playerDialogTitle">¿Quién va a volar?</h1>
+      <h1 id="playerDialogTitle">Arma tu personaje</h1>
       <label for="playerNameInput">Tu nombre o apodo</label>
       <input id="playerNameInput" name="nickname" type="text" maxlength="18" autocomplete="nickname" autocapitalize="words" placeholder="Por ejemplo, Alex" required>
       <label for="characterInput">Elige tu personaje</label>
@@ -52,7 +56,7 @@
         <option value="laguna">Laguna</option>
         <option value="mango">Mango</option>
       </select>
-      <p>Se guarda solo en este teléfono y aparecerá al compartir tu puntuación.</p>
+      <p>Tu apodo y personaje se guardan en este teléfono. Elige a quién le toca volar.</p>
       <div class="dialog-actions">
         <button class="dialog-secondary" id="cancelPlayerButton" type="button">Cancelar</button>
         <button class="dialog-primary" type="submit">Guardar</button>
