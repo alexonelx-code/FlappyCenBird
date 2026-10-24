@@ -1,5 +1,5 @@
 :root {
-  /* Pide al navegador respetar los colores de la página; ambos temas son propios. */
+  /* Fallback claro hasta que el script aplique el tema propio de CenGames. */
   color-scheme: only light;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   background: #091820;

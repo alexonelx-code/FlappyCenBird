@@ -27,6 +27,7 @@
     }
 
     root.dataset.theme = theme;
+    root.style.colorScheme = theme === 'light' ? 'only light' : 'dark';
     const color = theme === 'light' ? '#f3f7f5' : '#0b1b22';
     document.querySelector('meta[name="theme-color"]')?.setAttribute('content', color);
   }
