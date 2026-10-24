@@ -1,10 +1,10 @@
-const CACHE_NAME = 'minijuegos-cen-v35';
+const CACHE_NAME = 'minijuegos-cen-v36';
 const APP_FILES = [
   './',
   './index.html',
   './manifest.webmanifest',
   './src/css/game.css?v=34',
-  './src/js/audio.js?v=34',
+  './src/js/audio.js?v=35',
   './src/js/economy.js?v=30',
   './src/js/store-ui.js?v=28',
   './src/js/theme.js?v=23',

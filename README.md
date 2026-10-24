@@ -71,22 +71,10 @@ Incluye también los módulos nuevos del motor de peleas:
 for file in src/js/fighter/*.js; do node --check "$file"; done
 ```
 
-Valida la política reproducible de CPU con Node.js:
+Valida el motor, los efectos de audio de pelea, la política reproducible de CPU, el roster y el renderer con Node.js:
 
 ```bash
-node --test tests/fighter-learning.test.cjs
-```
-
-Comprueba roster, atributos y contrato de sprites:
-
-```bash
-node --test tests/fighter-roster.test.cjs
-```
-
-Comprueba el renderer y los efectos Canvas:
-
-```bash
-node --test tests/fighter-renderer.test.cjs
+node --test tests/*.test.cjs
 ```
 
 Valida la curva de velocidad sin instalar dependencias:
