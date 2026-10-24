@@ -5,12 +5,7 @@
   const CHARACTER_KEY = 'flappy_character_v1';
   const CHARACTER_SELECTED_KEY = 'flappy_character_selected_v1';
   const LEADERBOARD_KEY = 'flappy_leaderboard_v1';
-  const CHARACTER_LABELS = {
-    friend: 'el personaje de la casa',
-    classic: 'el Canario',
-    laguna: 'Laguna',
-    mango: 'Mango'
-  };
+  const PROFILE_STATS_KEY = 'cengames_profile_stats_v1';
 
   const screens = {
     welcome: document.getElementById('welcomeScreen'),
@@ -32,6 +27,13 @@
   const characterOptions = [...document.querySelectorAll('[data-character]')];
   const characterConfirmButton = document.getElementById('characterConfirmButton');
   const lobbyName = document.getElementById('lobbyName');
+  const profileButton = document.getElementById('profileButton');
+  const profileDialog = document.getElementById('profileDialog');
+  const profileName = document.getElementById('profileName');
+  const profileFlappyPlays = document.getElementById('profileFlappyPlays');
+  const profileFlappyBest = document.getElementById('profileFlappyBest');
+  const profileFlappyPoints = document.getElementById('profileFlappyPoints');
+  const logoutButton = document.getElementById('logoutButton');
   const editNameButton = document.getElementById('editNameButton');
   const exitGamesButton = document.getElementById('exitGamesButton');
   const flappyCard = document.getElementById('flappyCard');
@@ -47,7 +49,6 @@
   const muteWaves = document.getElementById('muteWaves');
   const muteSlash = document.getElementById('muteSlash');
   const retryButton = document.getElementById('retryButton');
-  const shareButton = document.getElementById('shareButton');
   const gameStatus = document.getElementById('gameStatus');
 
   function readPlayerName() {
@@ -91,6 +92,7 @@
   function updatePlayerName(name) {
     playerName = name.replace(/\s+/g, ' ').trim().slice(0, 18);
     lobbyName.textContent = playerName || 'Jugador';
+    profileName.textContent = playerName || 'Jugador';
     try {
       if (playerName) localStorage.setItem(PLAYER_KEY, playerName);
       else localStorage.removeItem(PLAYER_KEY);
@@ -119,16 +121,16 @@
 
   function openRegistration(returnTo, editing = false) {
     registrationReturnScreen = returnTo;
-    registrationTitle.textContent = editing ? 'Cambia tu nombre' : 'Tu nombre';
+    registrationTitle.textContent = editing ? 'Cambiar jugador' : 'Tu nombre';
     registrationDescription.textContent = editing
-      ? 'Actualiza tu nombre.'
+      ? 'Escribe un nombre o apodo para cambiar de perfil.'
       : 'Después eliges un juego.';
     registrationSubmit.innerHTML = editing
-      ? 'Guardar <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h13m-5-5 5 5-5 5" /></svg>'
+      ? 'Cambiar jugador <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h13m-5-5 5 5-5 5" /></svg>'
       : 'Elegir juego <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h13m-5-5 5 5-5 5" /></svg>';
     registrationBackButton.textContent = '';
     registrationBackButton.insertAdjacentHTML('beforeend', '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H6m5 5-5-5 5-5" /></svg> Volver');
-    nicknameInput.value = playerName;
+    nicknameInput.value = editing ? '' : playerName;
     setScreen('registration');
     window.setTimeout(() => nicknameInput.focus(), 0);
   }
@@ -177,7 +179,7 @@
     event.stopPropagation();
   }
 
-  [leaderboardButton, muteButton, gameMenuButton, retryButton, shareButton].forEach((button) => {
+  [leaderboardButton, muteButton, gameMenuButton, retryButton].forEach((button) => {
     button.addEventListener('pointerdown', stopGamePointer);
   });
 
@@ -200,6 +202,17 @@
     if (!name) {
       nicknameInput.focus();
       return;
+    }
+    if (playerName && normalizedPlayerName(name) !== normalizedPlayerName(playerName)) {
+      character = 'friend';
+      hasChosenCharacter = false;
+      pendingCharacter = '';
+      try {
+        localStorage.removeItem(CHARACTER_KEY);
+        localStorage.removeItem(CHARACTER_SELECTED_KEY);
+      } catch (error) {
+        // La selección nueva queda limpia durante esta sesión.
+      }
     }
     updatePlayerName(name);
     setScreen('games');
@@ -250,6 +263,69 @@
   function normalizedPlayerName(name) {
     return name.normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().toLocaleLowerCase();
   }
+
+  function profileStatsStorageKey(name = playerName) {
+    return `${PROFILE_STATS_KEY}:${encodeURIComponent(normalizedPlayerName(name) || 'jugador')}`;
+  }
+
+  function readProfileStats(name = playerName) {
+    try {
+      const stored = JSON.parse(localStorage.getItem(profileStatsStorageKey(name)) || '{}');
+      const flappy = stored.flappy && typeof stored.flappy === 'object' ? stored.flappy : {};
+      return {
+        plays: Math.max(0, Number(flappy.plays) || 0),
+        points: Math.max(0, Number(flappy.points) || 0),
+        best: Math.max(0, Number(flappy.best) || 0)
+      };
+    } catch (error) {
+      return { plays: 0, points: 0, best: 0 };
+    }
+  }
+
+  function recordFlappyResult(score, best) {
+    if (!playerName) return;
+    const stats = readProfileStats();
+    stats.plays += 1;
+    stats.points += Math.max(0, Number(score) || 0);
+    stats.best = Math.max(stats.best, Math.max(0, Number(best) || 0));
+    try {
+      localStorage.setItem(profileStatsStorageKey(), JSON.stringify({ flappy: stats }));
+    } catch (error) {
+      // Las estadísticas viven en esta sesión aunque el almacenamiento no esté disponible.
+    }
+  }
+
+  function renderProfile() {
+    const stats = readProfileStats();
+    const liveBest = window.FlappyGame && typeof window.FlappyGame.getBestScore === 'function'
+      ? window.FlappyGame.getBestScore()
+      : 0;
+    profileName.textContent = playerName || 'Jugador';
+    profileFlappyPlays.textContent = String(stats.plays);
+    profileFlappyBest.textContent = String(Math.max(stats.best, liveBest));
+    profileFlappyPoints.textContent = String(stats.points);
+  }
+
+  profileButton.addEventListener('click', () => {
+    renderProfile();
+    if (typeof profileDialog.showModal === 'function') profileDialog.showModal();
+    else profileDialog.setAttribute('open', '');
+  });
+
+  logoutButton.addEventListener('click', () => {
+    closeDialog(profileDialog);
+    updatePlayerName('');
+    character = 'friend';
+    hasChosenCharacter = false;
+    pendingCharacter = '';
+    try {
+      localStorage.removeItem(CHARACTER_KEY);
+      localStorage.removeItem(CHARACTER_SELECTED_KEY);
+    } catch (error) {
+      // El cierre de perfil sigue activo durante esta sesión.
+    }
+    setScreen('welcome');
+  });
 
   function readLeaderboard() {
     try {
@@ -336,9 +412,6 @@
   window.addEventListener('flappy:state', (event) => {
     const { state, score, best } = event.detail;
     retryButton.hidden = state !== 'gameover';
-    shareButton.hidden = state !== 'gameover';
-    shareButton.dataset.score = String(score);
-    shareButton.dataset.best = String(best);
 
     if (state === 'ready') {
       announce(`Récord personal: ${best}. Toca el juego para volar.`);
@@ -346,60 +419,14 @@
       announce('Partida en curso. Toca para aletear.');
     } else if (state === 'gameover') {
       saveLeaderboardScore(playerName, score);
+      recordFlappyResult(score, best);
       if (leaderboardDialog.open) renderLeaderboard();
-      announce(`Fin de la partida. ${playerName} hizo ${score} puntos. Récord personal: ${best}.`);
+      announce(`Fin de la partida. ${playerName} hizo ${score} puntos. Récord personal: ${best}. Medallas a los 5, 10, 20 y 40 puntos.`);
     }
   });
 
   window.addEventListener('flappy:score', (event) => {
     announce(`¡Punto! Puntuación: ${event.detail.score}.`);
-  });
-
-  async function copyText(text) {
-    if (navigator.clipboard && window.isSecureContext) {
-      await navigator.clipboard.writeText(text);
-      return;
-    }
-
-    const field = document.createElement('textarea');
-    field.value = text;
-    field.setAttribute('readonly', '');
-    field.style.position = 'fixed';
-    field.style.opacity = '0';
-    document.body.appendChild(field);
-    field.select();
-    const copied = document.execCommand('copy');
-    field.remove();
-    if (!copied) window.prompt('Copia tu reto para compartirlo:', text);
-  }
-
-  shareButton.addEventListener('click', async () => {
-    const score = Number(shareButton.dataset.score) || 0;
-    const best = Number(shareButton.dataset.best) || score;
-    const characterLabel = CHARACTER_LABELS[character] || 'su personaje';
-    const message = `${playerName} hizo ${score} puntos en Flappy BirdCen con ${characterLabel}. Su récord personal es ${best}. ¿Puedes superarlo?`;
-    const payload = {
-      title: 'Flappy BirdCen',
-      text: message,
-      url: window.location.href
-    };
-
-    if (navigator.share) {
-      try {
-        await navigator.share(payload);
-        announce('Reto compartido. ¡A ver quién lo supera!');
-        return;
-      } catch (error) {
-        if (error && error.name === 'AbortError') return;
-      }
-    }
-
-    try {
-      await copyText(`${message}\n${window.location.href}`);
-      announce('Reto y enlace copiados. Ya puedes pegarlos en el chat.');
-    } catch (error) {
-      window.prompt('Copia tu reto para compartirlo:', `${message}\n${window.location.href}`);
-    }
   });
 
   window.FlappyUI = Object.freeze({

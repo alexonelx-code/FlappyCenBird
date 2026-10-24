@@ -11,7 +11,7 @@
   "theme_color": "#0b1b22",
   "icons": [
     {
-      "src": "assets/icons/flappy-cen.svg",
+      "src": "assets/icons/cengames-mark.svg",
       "sizes": "any",
       "type": "image/svg+xml",
       "purpose": "any maskable"

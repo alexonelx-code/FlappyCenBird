@@ -903,7 +903,11 @@
       ctx.lineWidth = 2;
       ctx.stroke();
       ctx.setLineDash([]);
-      text('?', cx, cy + 1, 26, 'rgba(140, 115, 70, .55)');
+      starPath(cx, cy - 5, 5, r * 0.43, r * 0.19);
+      ctx.strokeStyle = 'rgba(230, 196, 137, .72)';
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+      text('5', cx, cy + 20, 10, 'rgba(255, 225, 176, .84)');
       return;
     }
 
@@ -948,7 +952,7 @@
   }
 
   function drawGameOver() {
-    const px = 34, py = 171, pw = 292, ph = 326;
+    const px = 34, py = 171, pw = 292, ph = 272;
 
     ctx.save();
     ctx.shadowColor = 'rgba(8, 23, 30, .36)';
@@ -993,8 +997,7 @@
     drawMedal(267, 303, 31, score);
 
     const buttons = window.matchMedia('(orientation: landscape) and (max-height: 520px)').matches ? [] : [
-      { y: 360, fill: '#f2b86f', label: 'REVANCHA', color: '#243d43' },
-      { y: 428, fill: '#23434a', label: 'COMPARTIR RETO', color: '#fff0d1' }
+      { y: 368, fill: '#f2b86f', label: 'REVANCHA', color: '#243d43' }
     ];
     for (const button of buttons) {
       const bx = W / 2 - 120, bw = 240, bh = 56;
@@ -1009,7 +1012,10 @@
     }
   }
 
-  window.FlappyGame = Object.freeze({ reset: resetGame });
+  window.FlappyGame = Object.freeze({
+    reset: resetGame,
+    getBestScore() { return loadPlayerBest(); }
+  });
 
   /* ---------------------------------------------------------------
      Render

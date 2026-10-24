@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 220" role="img" aria-labelledby="title">
+  <title id="title">Flappy BirdCen</title>
+  <defs>
+    <linearGradient id="badge" x1="32" y1="24" x2="176" y2="196" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#315c66"/>
+      <stop offset="1" stop-color="#173842"/>
+    </linearGradient>
+    <linearGradient id="bird" x1="48" y1="56" x2="160" y2="166" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#ffd17c"/>
+      <stop offset="1" stop-color="#e9925c"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="248" y1="156" x2="564" y2="156" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#f6c783"/>
+      <stop offset="1" stop-color="#e88267"/>
+    </linearGradient>
+  </defs>
+  <rect x="7" y="7" width="626" height="206" rx="42" fill="#0b2028" stroke="#f2b86f" stroke-opacity=".58" stroke-width="3"/>
+  <rect x="20" y="20" width="180" height="180" rx="34" fill="url(#badge)" stroke="#a4c5b8" stroke-opacity=".24" stroke-width="2"/>
+  <circle cx="158" cy="53" r="12" fill="#f2b86f"/>
+  <g stroke-linejoin="round" stroke-width="6">
+    <path d="m60 115-26-18 8 31 27-4Z" fill="#e9a95f" stroke="#503747"/>
+    <ellipse cx="102" cy="112" rx="47" ry="36" fill="url(#bird)" stroke="#503747"/>
+    <path d="M78 128c12-18 32-20 45-3-8 16-30 22-45 3Z" fill="#fff0d1" stroke="#9e5c4d" stroke-width="4"/>
+    <circle cx="125" cy="95" r="13" fill="#fff0d1" stroke="#503747" stroke-width="4"/>
+    <circle cx="129" cy="96" r="5" fill="#20353c" stroke="none"/>
+    <path d="m140 110 28 4c-4 14-19 19-34 10Z" fill="#e4775f" stroke="#793f4a" stroke-width="4"/>
+    <path d="M84 76c-1-14 4-22 13-22 8 0 11 7 10 17 9-11 17-14 23-9 5 5 2 13-7 22" fill="#efb765" stroke="#503747"/>
+  </g>
+  <path d="M238 83h5m18 0h5" stroke="#8bb9ad" stroke-linecap="round" stroke-width="4"/>
+  <text x="238" y="124" fill="#fff0d1" font-family="Trebuchet MS,Arial,sans-serif" font-size="57" font-weight="800" letter-spacing="-2">Flappy</text>
+  <text x="238" y="177" fill="url(#accent)" font-family="Trebuchet MS,Arial,sans-serif" font-size="45" font-weight="800" letter-spacing="1">BirdCen</text>
+  <path d="m570 50 5.4 12.6L588 68l-12.6 5.4L570 86l-5.4-12.6L552 68l12.6-5.4L570 50Z" fill="#f2b86f"/>
+  <circle cx="586" cy="148" r="4" fill="#7db9a8"/>
+  <circle cx="570" cy="160" r="3" fill="#e4775f"/>
+</svg>

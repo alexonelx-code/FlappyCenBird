@@ -1,4 +1,4 @@
-const CACHE_NAME = 'minijuegos-cen-v9';
+const CACHE_NAME = 'minijuegos-cen-v11';
 const APP_FILES = [
   './',
   './index.html',
@@ -8,6 +8,8 @@ const APP_FILES = [
   './src/js/ui.js',
   './src/js/game.js',
   './assets/icons/flappy-cen.svg',
+  './assets/icons/cengames-mark.svg',
+  './assets/icons/flappy-birdcen-logo.svg',
   './assets/images/personaje/cuerpo.png',
   './assets/images/personaje/brazo_i.png',
   './assets/images/personaje/brazo_d.png'

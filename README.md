@@ -9,8 +9,9 @@ Portal de minijuegos de navegador. Al entrar, cada jugador registra un nombre y 
 3. Elige **Flappy BirdCen** en el selector.
 4. La primera vez que abras Flappy BirdCen, elige personaje.
 5. Abre **Tabla** para ver los récords guardados, o usa **Menú** para volver a los minijuegos o cambiar de personaje.
+6. En el selector, toca tu nombre para consultar estadísticas por juego; usa el icono de cambio para entrar con otro nombre o sal del perfil desde esa ficha.
 
-El nombre, los récords personales y la tabla se guardan en el almacenamiento local del navegador. Por ahora no hay cuentas ni sincronización entre dispositivos. Una tabla realmente compartida requiere añadir una API y almacenamiento central.
+El nombre, los récords, las partidas jugadas y los puntos acumulados se guardan por jugador en el almacenamiento local del navegador. Por ahora no hay cuentas ni sincronización entre dispositivos. La tabla general refleja las mejores marcas de los perfiles guardados en ese dispositivo.
 
 ## Ejecutar localmente
 
