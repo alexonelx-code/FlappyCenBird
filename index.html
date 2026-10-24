@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
   <meta charset="utf-8">
-  <meta name="color-scheme" content="light dark">
+  <meta name="color-scheme" content="light">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#0b1b22">
   <meta name="description" content="CenGames: entra, elige un minijuego y juega.">
@@ -15,7 +15,7 @@
   <link rel="icon" href="assets/icons/cengames-mark.svg" type="image/svg+xml">
   <link rel="manifest" href="manifest.webmanifest">
   <script src="src/js/theme.js?v=23"></script>
-  <link rel="stylesheet" href="src/css/game.css?v=23">
+  <link rel="stylesheet" href="src/css/game.css?v=24">
   <title>CenGames</title>
 </head>
 <body>
@@ -74,7 +74,7 @@
           <label for="nicknameInput">Nombre o apodo</label>
           <input id="nicknameInput" name="nickname" type="text" maxlength="18" autocomplete="nickname" autocapitalize="words" placeholder="Ej. Alex" required>
           <button class="primary-button" id="registrationSubmit" type="submit">
-            Elegir juego
+            <span id="registrationSubmitLabel">Elegir juego</span>
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h13m-5-5 5 5-5 5" /></svg>
           </button>
         </form>
@@ -175,7 +175,7 @@
     </section>
 
     <section class="game-screen" id="gameScreen" aria-label="Flappy BirdCen" hidden>
-      <main class="game-shell" id="gameShell">
+      <div class="game-shell" id="gameShell">
         <canvas id="game" tabindex="0" role="img" aria-label="Flappy BirdCen. Toca para jugar; también puedes usar Espacio, flecha arriba o W.">
           Este navegador no soporta Canvas. Prueba con una versión reciente de Chrome, Safari, Edge o Firefox.
         </canvas>
@@ -194,7 +194,7 @@
         </div>
 
         <p class="sr-only" id="gameStatus" role="status" aria-live="polite" aria-atomic="true">Toca para jugar. También puedes usar Espacio, flecha arriba o W.</p>
-      </main>
+      </div>
     </section>
   </main>
 
@@ -289,8 +289,14 @@
   </dialog>
 
   <script src="src/js/audio.js" defer></script>
-  <script src="src/js/economy.js" defer></script>
-  <script src="src/js/ui.js?v=24" defer></script>
-  <script src="src/js/game.js?v=23" defer></script>
+  <script src="src/js/economy.js?v=28" defer></script>
+  <script src="src/js/store-ui.js?v=28" defer></script>
+  <script src="src/js/ui.js?v=28" defer></script>
+  <script src="src/js/game-config.js?v=29" defer></script>
+  <script src="src/js/game-pace.js?v=29" defer></script>
+  <script src="src/js/game-scene.js?v=29" defer></script>
+  <script src="src/js/game-character.js?v=28" defer></script>
+  <script src="src/js/game-overlay.js?v=28" defer></script>
+  <script src="src/js/game.js?v=29" defer></script>
 </body>
 </html>

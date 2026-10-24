@@ -3,6 +3,7 @@
 
   const PLAYER_IDS_KEY = 'cengames_player_ids_v2';
   const PROFILE_PREFIX = 'cengames_economy_v2:';
+  const MAX_RUN_SCORE = 10_000;
   const FREE_AVATARS = ['sol', 'luna', 'pixel', 'rayo', 'ola'];
   const BACKGROUNDS = [
     { id: 'costa', name: 'Costa dorada', price: 0, free: true, scene: 'coast', sky: ['#1b394b', '#4f7880', '#efa47e'], hills: ['#426a68', '#244b50'], floor: ['#3e5751', '#213a3a'], groundEdge: '#e27b5e', stripes: 'rgba(237, 190, 132, .10)', pipes: ['#8f454c', '#f28c68', '#d9655c', '#b44f52', '#783b49'], pipeEdge: '#523641', pipeHighlight: 'rgba(255, 216, 164, .72)' },
@@ -163,7 +164,7 @@
 
     if (apiBase) {
       try {
-        const payload = await remote('/profile', 'POST', { name: safeName, legacyBest: Math.min(500, Number(legacyBest) || 0) });
+        const payload = await remote('/profile', 'POST', { name: safeName, legacyBest: Math.min(MAX_RUN_SCORE, Number(legacyBest) || 0) });
         saveRemoteProfile(payload);
       } catch (error) {
         if (error.remoteResponse) console.warn('CenGames API:', error.message);
@@ -194,7 +195,7 @@
 
   async function completeRun(score, best, runId = uuid()) {
     if (!profile || !active) return null;
-    const points = Math.max(0, Math.min(500, Math.floor(Number(score) || 0)));
+    const points = Math.max(0, Math.min(MAX_RUN_SCORE, Math.floor(Number(score) || 0)));
     const runKey = runId;
     return actionOrLocal('/runs', { name: active.name, gameId: 'flappy', runId: runKey, score: points }, (next) => {
       const runs = Array.isArray(next.processedRuns) ? next.processedRuns : [];
