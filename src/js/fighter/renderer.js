@@ -8,10 +8,50 @@
     ['#91d487', '#386b54', '#f7d69e'], ['#f28f9e', '#843f58', '#ffdaa9'],
     ['#8fdae5', '#356377', '#f4c89f'], ['#efa95d', '#8c4d32', '#ffe0aa']
   ];
+  const spriteImages = new Map();
 
   function paletteFor(fighter) {
+    if (fighter.palette) return [fighter.palette.accent, fighter.palette.shadow, fighter.palette.skin];
     const match = /-(\d+)$/.exec(fighter.characterId || fighter.id || '');
     return PALETTES[(Math.max(1, Number(match && match[1]) || 1) - 1) % PALETTES.length];
+  }
+
+  function spriteImage(src) {
+    if (typeof Image === 'undefined') return null;
+    if (!spriteImages.has(src)) {
+      const image = new Image();
+      image.src = src;
+      spriteImages.set(src, image);
+    }
+    const image = spriteImages.get(src);
+    return image.complete && image.naturalWidth ? image : null;
+  }
+
+  function drawSprite(ctx, fighter, frame, bodyHeight) {
+    const sprite = fighter.sprite;
+    const contract = globalThis.CenFighterArtContract;
+    if (!sprite || !contract) return false;
+    const image = spriteImage(sprite.src);
+    if (!image) return false;
+    const clip = sprite.animations[contract.animationFor(fighter)];
+    const columns = Math.floor(image.naturalWidth / sprite.frameWidth);
+    const rows = Math.floor(image.naturalHeight / sprite.frameHeight);
+    if (!columns || !rows || clip.frames.some((index) => index >= columns * rows)) return false;
+    const step = Math.floor(frame * clip.fps / 60);
+    const clipStep = clip.loop ? step % clip.frames.length : Math.min(step, clip.frames.length - 1);
+    const index = clip.frames[clipStep];
+    const scale = bodyHeight / sprite.anchor.y;
+    const width = sprite.frameWidth * scale;
+    ctx.save();
+    ctx.globalAlpha = fighter.knockedOut ? 0.58 : 1;
+    pixel(ctx, fighter.x - width * 0.34, fighter.y + 5, width * 0.68, 6, 'rgba(5, 12, 23, .38)');
+    ctx.translate(fighter.x, fighter.y);
+    ctx.scale(fighter.facing * scale, scale);
+    ctx.imageSmoothingEnabled = false;
+    ctx.drawImage(image, (index % columns) * sprite.frameWidth, Math.floor(index / columns) * sprite.frameHeight,
+      sprite.frameWidth, sprite.frameHeight, -sprite.anchor.x, -sprite.anchor.y, sprite.frameWidth, sprite.frameHeight);
+    ctx.restore();
+    return true;
   }
 
   function pixel(ctx, x, y, width, height, color) {
@@ -40,6 +80,10 @@
       color);
 
     ctx.save();
+    if (drawSprite(ctx, fighter, frame, bodyHeight)) {
+      ctx.restore();
+      return;
+    }
     ctx.globalAlpha = fighter.knockedOut ? 0.48 : 1;
     pixel(ctx, x - width * 0.62, fighter.y + 5, width * 1.24, 6, 'rgba(5, 12, 23, .38)');
     rect(0, 16, 42, 34, outline);
@@ -74,9 +118,11 @@
     }
     if (attacking) {
       const move = fighter.attackId;
-      const moveWidth = move === 'heavy' ? 66 : 47;
-      const active = fighter.attackFrame >= (move === 'heavy' ? 11 : 5)
-        && fighter.attackFrame < (move === 'heavy' ? 15 : 8);
+      const moveData = fighter.moves && fighter.moves[move];
+      const moveWidth = Math.max(36, Math.min(88, moveData ? moveData.reach * 0.68 : move === 'heavy' ? 66 : 47));
+      const startup = moveData ? moveData.startupFrames : move === 'heavy' ? 11 : 5;
+      const active = fighter.attackFrame >= startup
+        && fighter.attackFrame < startup + (moveData ? moveData.activeFrames : move === 'heavy' ? 4 : 3);
       if (active) {
         ctx.globalAlpha = 0.82;
         ctx.fillStyle = move === 'heavy' ? '#ffd58a' : '#93e9db';

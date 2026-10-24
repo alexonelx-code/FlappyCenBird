@@ -5,6 +5,8 @@ require('../src/js/fighter/config.js');
 require('../src/js/fighter/engine.js');
 require('../src/js/fighter/random.js');
 require('../src/js/fighter/cpu.js');
+require('../src/js/fighter/sprite-contract.js');
+require('../src/js/fighter/roster.js');
 const teams = require('../src/js/fighter/team-match.js');
 const learning = require('../src/js/fighter/learning.js');
 const engine = globalThis.CenFighterEngine;

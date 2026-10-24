@@ -15,8 +15,8 @@ El documento maestro de diseño está en [`output/pdf/plan-maestro-juego-de-pele
 | 3. CPU base y dificultad | Controlador de acciones legales con Muy fácil, Normal y Difícil. | Los niveles se distinguen por reacción y decisión; ninguno modifica vida, daño ni información disponible. | Controlador heurístico implementado; el aprendizaje queda para la fase 4. |
 | 4. Aprendizaje local | Política Q-learning compacta, entrenada primero mediante simulaciones y ajustada por perfil tras partidas completas. | La CPU adapta preferencias dentro de límites de dificultad, conserva una política base, se puede reiniciar y funciona sin red. | Implementada |
 | 5. Integración del portal y economía | Lobby, pantalla de pelea, pausa, teclado/touch, perfil, estadísticas y pago único por matchId. | La partida se puede iniciar, pausar, abandonar y completar desde el portal; Cent y estadísticas no se duplican al reintentar un guardado. | Implementada |
-| 6. Pareja de arte | Contrato de atlas, anclas, clips e hitboxes; adaptar una pareja de sprites como piloto. | Las animaciones conservan el ancla de pies y los hitboxes se pueden inspeccionar sin depender del dibujo. | Pendiente de los sprites del usuario |
-| 7. Roster completo | Adaptar los diez peleadores, definir arquetipos y balancear enfrentamientos. | Todos comparten el contrato de datos y cada matchup se puede probar con la misma semilla. | Pendiente de nombres y sprites finales |
+| 6. Pareja de arte | Contrato de atlas, anclas, clips e hitboxes; renderer listo para reemplazar los placeholders al recibir el arte. | Las animaciones conservan el ancla de pies y los hitboxes se pueden inspeccionar sin depender del dibujo. | Contrato y renderer implementados; falta recibir los sprites |
+| 7. Roster completo | Definir diez peleadores, arquetipos, estadísticas y loadouts que el motor pueda validar. | Todos comparten el contrato de datos y cada matchup se puede probar con la misma semilla. | Diez loadouts provisionales implementados; faltan sprites y pruebas de balance con el roster final |
 | 8. Pulido y publicación | Audio, efectos, cache offline, accesibilidad, rendimiento, README y QA desktop/móvil. | El juego abre sin API, funciona tras cargar la cache y limpia teclado/touch, pausa y ciclo de animación al salir. |
 
 ## Reglas base ya decididas
@@ -46,10 +46,18 @@ Al iniciar una partida, la pantalla crea el controlador con `seed: match.cpuSeed
 - Una partida terminada entrega 5 Cent; la victoria añade 2. El empate paga 5. Abandonar o recargar antes del resultado no registra ni paga una partida. La pantalla manda un ID único y la economía limita repeticiones a 2,000 recibos retenidos por perfil.
 - El perfil publicado y el aprendizaje viven en `localStorage`; la API opcional solo en localhost añade resultados en SQLite y migra las bases ya existentes. No hay sincronización entre dispositivos ni ML remoto.
 
+## Fases 6 y 7 implementadas
+
+- `sprite-contract.js` valida atlases locales, tamaño de frame, ancla de pies, clips (quieto, caminar, salto, agacharse, bloquear, ligero, fuerte, recibir daño, KO y entrada) y cajas de cuerpo/ataque. Los índices recorren el atlas por filas; el ancla se mide desde la esquina superior izquierda del frame. Las cajas se miden desde el ancla, con `y` negativo hacia arriba; son datos de inspección del arte y el motor conserva sus propios hitboxes de combate.
+- `renderer.js` puede dibujar esos clips usando el ancla y la orientación del peleador, con fallback automático a figuras temporales cuando aún no existe un sprite cargado. El catálogo deja `sprite` vacío hasta recibir las hojas de sprites.
+- `roster.js` incluye diez nombres provisionales y paletas. Cada peleador tiene un arquetipo y ajustes individuales de vida, velocidad, salto, defensa y movimientos; espejo entre equipos sigue permitido.
+- `engine.js`, `team-match.js`, la CPU y el aprendizaje consumen los atributos y movimientos individuales sin alterar las reglas de reloj, reservas o recompensa.
+- Las cifras sirven como primer pase de balance, no como valores finales. Cuando llegue el arte real, reemplazaremos los nombres provisionales y afinaremos el roster mirando hurtboxes y matchups reproducibles.
+
 ## Riesgos y decisiones que quedan para fases posteriores
 
 - El aprendizaje es una política tabular local y pequeña, no entrenamiento en la nube. Puede aprender preferencias útiles, pero todavía necesita probarse contra humanos y balancearse; la dificultad seguirá limitando reflejos y exploración.
 - La economía local es para el proyecto de ocio. Como los datos se guardan en el navegador, un jugador puede modificarlos; no se usa para dinero real, premios ni cuentas entre dispositivos.
 - El Canvas actual es una maqueta de combate. En fase 6 se debe sustituir mediante un contrato de sprites con ancla de pies, clips, caja de cuerpo y hitboxes independientes de la ilustración.
-- Fase 7 debe reemplazar los diez nombres provisionales por el roster real, definir arquetipos/movimientos con estadísticas compatibles con el motor y revisar todos los enfrentamientos bajo semillas repetibles.
+- Al recibir los sprites, fase 6 debe llenar el atlas de cada peleador y comparar visualmente el cuerpo con las hurtboxes; fase 7 debe reemplazar los nombres provisionales si así lo indica el diseño final y probar matchups y valores bajo semillas repetibles.
 - La fase 8 debe validar audio, navegación por teclado, preferencias de movimiento reducido, escalado móvil, suspensión de pestaña y uso sin conexión con el service worker. La pantalla de pelea se crea a partir de Canvas nativo para evitar dependencias y seguir funcionando desde el sitio estático.

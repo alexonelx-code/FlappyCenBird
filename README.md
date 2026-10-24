@@ -17,7 +17,7 @@ Cada punto de Flappy suma 1 Cent al terminar. Cen Fighters otorga 5 Cent por com
 
 ## Prototipo del juego de peleas
 
-El motor vive en `src/js/fighter/`, separado de la simulación de Flappy. Ya incluye la pantalla de selección y combate, equipos de tres con reservas y sustituciones, tres dificultades de CPU, una política Q-learning local y recompensas idempotentes. El renderer usa figuras y colores temporales: el contrato y los sprites definitivos del roster se incorporarán después. La ruta de desarrollo y las reglas están en [`docs/fighter-game-roadmap.md`](docs/fighter-game-roadmap.md); el juego seguirá siendo local y contra la computadora.
+El motor vive en `src/js/fighter/`, separado de la simulación de Flappy. Ya incluye la pantalla de selección y combate, equipos de tres con reservas y sustituciones, tres dificultades de CPU, una política Q-learning local y recompensas idempotentes. Tiene diez personajes provisionales con arquetipos, colores y atributos propios. El contrato de atlas y el renderer aceptan sprites futuros; mientras no estén esos archivos se dibujan figuras temporales. Los nombres, sprites y el balance final se pueden cambiar cuando llegue el arte. La ruta de desarrollo y las reglas están en [`docs/fighter-game-roadmap.md`](docs/fighter-game-roadmap.md); el juego seguirá siendo local y contra la computadora.
 
 ## Guardado y límites
 
@@ -75,6 +75,12 @@ Valida la política reproducible de CPU con Node.js:
 node --test tests/fighter-learning.test.cjs
 ```
 
+Comprueba roster, atributos y contrato de sprites:
+
+```bash
+node --test tests/fighter-roster.test.cjs
+```
+
 Valida la curva de velocidad sin instalar dependencias:
 
 ```bash
@@ -103,6 +109,8 @@ src/js/fighter/random.js    Semillas y números pseudoaleatorios reproducibles
 src/js/fighter/team-match.js Equipos 3 contra 3, reservas, transiciones y resultado
 src/js/fighter/cpu.js       Controlador heurístico base para tres dificultades
 src/js/fighter/learning.js  Q-learning por perfil y simulaciones deterministas de entrenamiento
+src/js/fighter/roster.js    Diez personajes provisionales y sus arquetipos/atributos
+src/js/fighter/sprite-contract.js Esquema validado de atlas, clips, anclas y hitboxes
 src/js/fighter/renderer.js  Arena Canvas con figuras provisionales sustituibles por sprites
 src/js/fighter/game.js      Selección, controles, HUD, pausas y flujo del combate
 docs/fighter-game-roadmap.md Fases y decisiones del juego de peleas

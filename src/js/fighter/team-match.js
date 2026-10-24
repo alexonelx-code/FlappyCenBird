@@ -7,16 +7,24 @@
   const random = root.CenFighterRandom || (typeof module === 'object' && module.exports
     ? require('./random.js')
     : null);
-  const api = factory(engine, random);
+  const rosterCatalog = root.CenFighterRoster || null;
+  const artContract = root.CenFighterArtContract || null;
+  const api = factory(engine, random, rosterCatalog, artContract);
 
   root.CenFighterTeams = api;
   if (typeof module === 'object' && module.exports) module.exports = api;
-})(globalThis, (engine, random) => {
+})(globalThis, (engine, random, rosterCatalog, artContract) => {
   'use strict';
 
   const TEAM_SIZE = 3;
   const ROSTER_SIZE = 10;
-  const DEFAULT_ROSTER = Object.freeze(Array.from({ length: 10 }, (_, index) => Object.freeze({
+  function freezeDeep(value) {
+    if (!value || typeof value !== 'object' || Object.isFrozen(value)) return value;
+    Object.values(value).forEach(freezeDeep);
+    return Object.freeze(value);
+  }
+
+  const DEFAULT_ROSTER = rosterCatalog && rosterCatalog.entries || Object.freeze(Array.from({ length: 10 }, (_, index) => Object.freeze({
     id: `fighter-${String(index + 1).padStart(2, '0')}`,
     name: `Peleador ${String(index + 1).padStart(2, '0')}`
   })));
@@ -30,31 +38,27 @@
       if (!source || typeof source !== 'object' || !source.id) {
         throw new TypeError('Cada peleador del catálogo necesita un ID.');
       }
+      const definition = engine.validateFighterDefinition(source, config);
+      if (source.palette !== undefined && (!source.palette || typeof source.palette !== 'object'
+          || ['accent', 'shadow', 'skin'].some((key) => typeof source.palette[key] !== 'string'
+            || !/^#[0-9a-f]{6}$/i.test(source.palette[key])))) {
+        throw new RangeError(`La paleta de ${source.id} debe usar tres colores hexadecimales.`);
+      }
       const normalized = {
         id: String(source.id).trim(),
         name: String(source.name || source.id),
-        width: source.width,
-        height: source.height,
-        crouchHeight: source.crouchHeight,
-        maxHealth: source.maxHealth
+        archetype: String(source.archetype || 'Peleador'),
+        stats: definition.stats,
+        moves: definition.moves,
+        width: definition.stats.width,
+        height: definition.stats.height,
+        crouchHeight: definition.stats.crouchHeight,
+        maxHealth: definition.stats.health,
+        palette: source.palette ? { ...source.palette } : null,
+        sprite: source.sprite ? JSON.parse(JSON.stringify(source.sprite)) : null
       };
+      if (normalized.sprite && artContract) artContract.validate(normalized.sprite);
       if (!normalized.id) throw new TypeError('Cada peleador del catálogo necesita un ID.');
-      if (normalized.width !== undefined && (!Number.isFinite(normalized.width) || normalized.width <= 0
-          || normalized.width > config.arena.width - config.arena.wallPadding * 2)) {
-        throw new RangeError(`El ancho de ${normalized.id} no cabe en la arena.`);
-      }
-      if (normalized.height !== undefined && (!Number.isFinite(normalized.height) || normalized.height <= 0)) {
-        throw new RangeError(`La altura de ${normalized.id} no es válida.`);
-      }
-      const fullHeight = normalized.height === undefined ? config.fighter.height : normalized.height;
-      const crouchHeight = normalized.crouchHeight === undefined ? config.fighter.crouchHeight : normalized.crouchHeight;
-      if (normalized.crouchHeight !== undefined && (!Number.isFinite(normalized.crouchHeight) || normalized.crouchHeight <= 0
-          || crouchHeight > fullHeight)) {
-        throw new RangeError(`La altura agachada de ${normalized.id} no es válida.`);
-      }
-      if (normalized.maxHealth !== undefined && (!Number.isInteger(normalized.maxHealth) || normalized.maxHealth <= 0)) {
-        throw new RangeError(`La vida máxima de ${normalized.id} no es válida.`);
-      }
       return normalized;
     });
     if (new Set(entries.map((entry) => entry.id)).size !== entries.length) {
@@ -95,6 +99,11 @@
       id: `${side}:${definition.id}`,
       characterId: definition.id,
       name: definition.name,
+      archetype: definition.archetype,
+      palette: definition.palette ? freezeDeep({ ...definition.palette }) : null,
+      sprite: definition.sprite ? freezeDeep(JSON.parse(JSON.stringify(definition.sprite))) : null,
+      stats: freezeDeep({ ...definition.stats }),
+      moves: freezeDeep(Object.fromEntries(Object.entries(definition.moves).map(([id, move]) => [id, { ...move }]))),
       width: definition.width || fighter.width,
       height: definition.height || fighter.height,
       crouchHeight: definition.crouchHeight || fighter.crouchHeight,
@@ -116,10 +125,17 @@
   function duelFighter(combatant) {
     return {
       id: combatant.id,
+      characterId: combatant.characterId,
+      name: combatant.name,
+      archetype: combatant.archetype,
+      palette: combatant.palette,
+      sprite: combatant.sprite,
       x: undefined,
       width: combatant.width,
       height: combatant.height,
       crouchHeight: combatant.crouchHeight,
+      stats: combatant.stats,
+      moves: combatant.moves,
       maxHealth: combatant.maxHealth,
       health: combatant.health
     };

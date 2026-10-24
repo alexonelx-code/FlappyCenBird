@@ -1,0 +1,71 @@
+(() => {
+  'use strict';
+
+  const ANIMATIONS = Object.freeze(['idle', 'walk', 'jump', 'crouch', 'block', 'light', 'heavy', 'hurt', 'ko', 'enter']);
+
+  function clone(value) {
+    return JSON.parse(JSON.stringify(value));
+  }
+
+  function freezeDeep(value) {
+    Object.values(value).forEach((item) => {
+      if (item && typeof item === 'object') freezeDeep(item);
+    });
+    return Object.freeze(value);
+  }
+
+  function assertRect(rect, label) {
+    if (!rect || !['x', 'y', 'width', 'height'].every((key) => Number.isFinite(rect[key]))
+        || rect.width <= 0 || rect.height <= 0) {
+      throw new RangeError(`${label} debe ser un rectángulo válido.`);
+    }
+  }
+
+  function validate(definition) {
+    if (!definition || typeof definition !== 'object' || Array.isArray(definition)) {
+      throw new TypeError('La definición del atlas debe ser un objeto.');
+    }
+    const { src, frameWidth, frameHeight, anchor, animations, hitboxes } = definition;
+    if (typeof src !== 'string' || !src.trim() || /^(?:https?:)?\/\//i.test(src)) {
+      throw new TypeError('El atlas debe usar una ruta local del proyecto.');
+    }
+    if (!Number.isInteger(frameWidth) || frameWidth <= 0 || !Number.isInteger(frameHeight) || frameHeight <= 0) {
+      throw new RangeError('Cada frame del atlas necesita ancho y alto en píxeles enteros.');
+    }
+    if (!anchor || !Number.isFinite(anchor.x) || !Number.isFinite(anchor.y)
+        || anchor.x < 0 || anchor.x > frameWidth || anchor.y <= 0 || anchor.y > frameHeight) {
+      throw new RangeError('El ancla de pies debe estar dentro del frame.');
+    }
+    if (!animations || typeof animations !== 'object') throw new TypeError('El atlas necesita clips de animación.');
+    ANIMATIONS.forEach((name) => {
+      const clip = animations[name];
+      if (!clip || !Array.isArray(clip.frames) || !clip.frames.length
+          || clip.frames.some((frame) => !Number.isInteger(frame) || frame < 0)
+          || !Number.isFinite(clip.fps) || clip.fps <= 0 || typeof clip.loop !== 'boolean') {
+        throw new RangeError(`El clip ${name} no tiene frames, velocidad y ciclo válidos.`);
+      }
+    });
+    if (!hitboxes || typeof hitboxes !== 'object') throw new TypeError('El atlas necesita hitboxes separados del dibujo.');
+    assertRect(hitboxes.body, 'La caja corporal');
+    ['light', 'heavy'].forEach((name) => assertRect(hitboxes[name], `La caja de ${name}`));
+    return true;
+  }
+
+  function create(definition) {
+    validate(definition);
+    return freezeDeep(clone(definition));
+  }
+
+  function animationFor(fighter) {
+    if (fighter.knockedOut) return 'ko';
+    if (fighter.hitstunFrames > 0) return 'hurt';
+    if (fighter.attackId) return fighter.attackId;
+    if (!fighter.grounded) return 'jump';
+    if (fighter.guarding) return 'block';
+    if (fighter.crouching) return 'crouch';
+    if (Math.abs(fighter.vx) > 12) return 'walk';
+    return 'idle';
+  }
+
+  globalThis.CenFighterArtContract = Object.freeze({ ANIMATIONS, validate, create, animationFor });
+})();

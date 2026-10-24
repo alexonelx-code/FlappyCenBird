@@ -65,7 +65,7 @@
   }
 
   function isIncomingAttack(actor, opponent, rules, reactionFrames) {
-    const move = opponent.attackId && rules.moves[opponent.attackId];
+    const move = opponent.attackId && (opponent.moves?.[opponent.attackId] || rules.moves[opponent.attackId]);
     if (!move || opponent.knockedOut || (actor.x - opponent.x) * opponent.facing <= 0) return false;
     const distance = edgeDistance(actor, opponent);
     const inRange = distance <= move.reach;
@@ -75,8 +75,8 @@
     return inRange && attackStillThreatening;
   }
 
-  function selectAttack(opponent, distance, rules, difficulty, controller) {
-    const available = Object.entries(rules.moves)
+  function selectAttack(opponent, distance, moves, difficulty, controller) {
+    const available = Object.entries(moves)
       .filter(([, move]) => move.reach >= distance)
       .sort((a, b) => a[1].startupFrames - b[1].startupFrames);
     if (!available.length) return null;
@@ -98,7 +98,7 @@
     const difficulty = controller.difficulty;
     const profile = DIFFICULTIES[difficulty];
     const distance = edgeDistance(actor, opponent);
-    const moves = duel.rules.moves;
+    const moves = actor.moves || duel.rules.moves;
     const moveIds = Object.keys(moves);
     const light = moves.light || moves[moveIds[0]];
     const heavy = moves.heavy || moves[moveIds[moveIds.length - 1]];
@@ -114,7 +114,7 @@
       };
     }
 
-    const attackId = selectAttack(opponent, distance, duel.rules, difficulty, controller);
+    const attackId = selectAttack(opponent, distance, actor.moves || duel.rules.moves, difficulty, controller);
     if (attackId && distance <= moves[attackId].reach && !actor.knockedOut) {
       return {
         intent: { moveX: 0, crouch: false, block: false },
