@@ -18,6 +18,11 @@ AVATAR_PRICES = {
     "orbita": 70,
     "flora": 85,
     "neon": 100,
+    "avatar-11": 110,
+    "avatar-12": 120,
+    "avatar-13": 130,
+    "avatar-14": 140,
+    "avatar-15": 150,
 }
 FREE_BIRDS = ("friend", "classic", "laguna", "mango", "nube")
 FREE_BACKGROUNDS = ("costa", "aurora")

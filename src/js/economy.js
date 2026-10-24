@@ -13,16 +13,21 @@
   ];
   const FREE_BACKGROUNDS = ['costa', 'aurora'];
   const AVATARS = [
-    { id: 'sol', name: 'Sol', price: 0, image: 'assets/avatars/sol.svg', mood: 'gold' },
-    { id: 'luna', name: 'Luna', price: 0, image: 'assets/avatars/luna.svg', mood: 'lavender' },
-    { id: 'pixel', name: 'Pixel', price: 0, image: 'assets/avatars/pixel.svg', mood: 'mint' },
-    { id: 'rayo', name: 'Rayo', price: 0, image: 'assets/avatars/rayo.svg', mood: 'coral' },
-    { id: 'ola', name: 'Ola', price: 0, image: 'assets/avatars/ola.svg', mood: 'blue' },
-    { id: 'cometa', name: 'Cometa', price: 40, image: 'assets/avatars/cometa.svg', mood: 'mint' },
-    { id: 'prisma', name: 'Prisma', price: 55, image: 'assets/avatars/prisma.svg', mood: 'lavender' },
-    { id: 'orbita', name: 'Órbita', price: 70, image: 'assets/avatars/orbita.svg', mood: 'coral' },
-    { id: 'flora', name: 'Flora', price: 85, image: 'assets/avatars/flora.svg', mood: 'gold' },
-    { id: 'neon', name: 'Neón', price: 100, image: 'assets/avatars/neon.svg', mood: 'lavender' }
+    { id: 'sol', name: 'Avatar 01', price: 0, image: 'assets/avatars/community/avatar-01.webp', mood: 'gold' },
+    { id: 'luna', name: 'Avatar 02', price: 0, image: 'assets/avatars/community/avatar-02.webp', mood: 'lavender' },
+    { id: 'pixel', name: 'Avatar 03', price: 0, image: 'assets/avatars/community/avatar-03.webp', mood: 'mint' },
+    { id: 'rayo', name: 'Avatar 04', price: 0, image: 'assets/avatars/community/avatar-04.webp', mood: 'coral' },
+    { id: 'ola', name: 'Avatar 05', price: 0, image: 'assets/avatars/community/avatar-05.webp', mood: 'blue' },
+    { id: 'cometa', name: 'Avatar 06', price: 40, image: 'assets/avatars/community/avatar-06.webp', mood: 'mint' },
+    { id: 'prisma', name: 'Avatar 07', price: 55, image: 'assets/avatars/community/avatar-07.webp', mood: 'lavender' },
+    { id: 'orbita', name: 'Avatar 08', price: 70, image: 'assets/avatars/community/avatar-08.webp', mood: 'coral' },
+    { id: 'flora', name: 'Avatar 09', price: 85, image: 'assets/avatars/community/avatar-09.webp', mood: 'gold' },
+    { id: 'neon', name: 'Avatar 10', price: 100, image: 'assets/avatars/community/avatar-10.webp', mood: 'lavender' },
+    { id: 'avatar-11', name: 'Avatar 11', price: 110, image: 'assets/avatars/community/avatar-11.webp', mood: 'gold' },
+    { id: 'avatar-12', name: 'Avatar 12', price: 120, image: 'assets/avatars/community/avatar-12.webp', mood: 'lavender' },
+    { id: 'avatar-13', name: 'Avatar 13', price: 130, image: 'assets/avatars/community/avatar-13.webp', mood: 'mint' },
+    { id: 'avatar-14', name: 'Avatar 14', price: 140, image: 'assets/avatars/community/avatar-14.webp', mood: 'coral' },
+    { id: 'avatar-15', name: 'Avatar 15', price: 150, image: 'assets/avatars/community/avatar-15.webp', mood: 'blue' }
   ];
   const FREE_BIRDS = [
     { id: 'friend', name: 'Cen', icon: 'assets/images/personaje/cuerpo.png' },
