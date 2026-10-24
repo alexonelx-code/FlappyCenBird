@@ -16,7 +16,7 @@ Cada punto de una partida suma 1 Cent al terminar. La API local limita una parti
 
 ## Prototipo del juego de peleas
 
-El motor puro inicial vive en `src/js/fighter/` y todavía no se carga en el portal. Por ahora resuelve un duelo aislado con movimiento, salto, agacharse, defensa, ataques configurables, colisiones, daño y reloj fijo; no incluye selector, equipos, CPU, sprites ni recompensas. La ruta de desarrollo por fases está en [`docs/fighter-game-roadmap.md`](docs/fighter-game-roadmap.md). El juego completo seguirá siendo local y contra la computadora.
+El motor vive en `src/js/fighter/`, separado del portal y de Flappy. Ya simula duelos y administra equipos de tres con reservas, sustituciones y vida persistente. Todavía no hay pantalla de selección o combate, CPU, sprites ni recompensas. La ruta de desarrollo está en [`docs/fighter-game-roadmap.md`](docs/fighter-game-roadmap.md); el juego completo seguirá siendo local y contra la computadora.
 
 ## Guardado y límites
 
@@ -92,6 +92,8 @@ src/js/game-character.js    Dibujo y animación de personajes
 src/js/game-overlay.js      Marcador, instrucciones y resultado de partida
 src/js/fighter/config.js    Parámetros provisionales del combate
 src/js/fighter/engine.js    Simulación pura de un duelo, independiente de la interfaz
+src/js/fighter/random.js    Semillas y números pseudoaleatorios reproducibles
+src/js/fighter/team-match.js Equipos 3 contra 3, reservas, transiciones y resultado
 docs/fighter-game-roadmap.md Fases y decisiones del juego de peleas
 api/economy.py              Reglas de economía y persistencia SQLite
 api/http_api.py             Rutas locales de perfil, partidas, tabla y tienda
