@@ -1,9 +1,9 @@
-const CACHE_NAME = 'minijuegos-cen-v49';
+const CACHE_NAME = 'minijuegos-cen-v62';
 const APP_FILES = [
   './',
   './index.html',
   './manifest.webmanifest',
-  './src/css/game.css?v=42',
+  './src/css/game.css?v=53',
   './src/js/audio.js?v=35',
   './src/js/economy.js?v=30',
   './src/js/store-ui.js?v=28',
@@ -23,8 +23,8 @@ const APP_FILES = [
   './src/js/fighter/team-match.js',
   './src/js/fighter/cpu.js',
   './src/js/fighter/learning.js',
-  './src/js/fighter/renderer.js?v=42',
-  './src/js/fighter/game.js?v=42',
+  './src/js/fighter/renderer.js?v=43',
+  './src/js/fighter/game.js?v=46',
   './assets/fighters/stages/01-biblioteca.png',
   './assets/fighters/stages/02-campus-nocturno.png',
   './assets/fighters/stages/03-jardin.png',

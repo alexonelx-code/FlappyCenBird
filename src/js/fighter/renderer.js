@@ -13,13 +13,13 @@
   const motionQuery = typeof window !== 'undefined' && typeof window.matchMedia === 'function'
     ? window.matchMedia('(prefers-reduced-motion: reduce)')
     : null;
-  const STAGE_ASSETS = [
-    '01-biblioteca.png',
-    '02-campus-nocturno.png',
-    '03-jardin.png',
-    '04-fachada.png',
-    '05-monumento.png'
-  ];
+  const STAGES = Object.freeze([
+    Object.freeze({ id: 'biblioteca', name: 'Biblioteca', description: 'Duelo bajo la luz del campus.', file: '01-biblioteca.png' }),
+    Object.freeze({ id: 'campus-nocturno', name: 'Campus de noche', description: 'Combate nocturno frente a la universidad.', file: '02-campus-nocturno.png' }),
+    Object.freeze({ id: 'jardin', name: 'Jardín universitario', description: 'Un claro verde rodeado de jardines.', file: '03-jardin.png' }),
+    Object.freeze({ id: 'fachada', name: 'Fachada UNICARIBE', description: 'La entrada principal como arena de combate.', file: '04-fachada.png' }),
+    Object.freeze({ id: 'monumento', name: 'Monumento del Caribe', description: 'Pelea junto al monumento de la ciudad.', file: '05-monumento.png' })
+  ]);
   let backgroundCanvas = null;
 
   function paletteFor(fighter) {
@@ -39,9 +39,10 @@
     return image.complete && image.naturalWidth ? image : null;
   }
 
-  function pixelStage(boutNumber) {
-    const index = ((Math.max(1, Number(boutNumber) || 1) - 1) % STAGE_ASSETS.length);
-    return spriteImage(`assets/fighters/stages/${STAGE_ASSETS[index]}`);
+  function pixelStage(boutNumber, stageId) {
+    const index = ((Math.max(1, Number(boutNumber) || 1) - 1) % STAGES.length);
+    const stage = STAGES.find((item) => item.id === stageId) || STAGES[index];
+    return spriteImage(`assets/fighters/stages/${stage.file}`);
   }
 
   function drawRosterSprite(ctx, fighter, frame, reducedMotion, portrait) {
@@ -54,10 +55,11 @@
     const sourceX = (index % 5) * cellWidth;
     const sourceY = Math.floor(index / 5) * cellHeight;
     const bodyHeight = fighter.crouching && fighter.grounded ? fighter.crouchHeight : fighter.height;
+    const spriteAspect = cellWidth / cellHeight;
     const artHeight = portrait
       ? Math.min(bodyHeight * (fighter.crouching && fighter.grounded ? 0.78 : 1.15), 140)
       : bodyHeight * (fighter.crouching && fighter.grounded ? 0.98 : 1.38);
-    const artWidth = artHeight * (portrait ? 1.35 : 1);
+    const artWidth = artHeight * spriteAspect * (portrait ? 1.35 : 1);
     const moving = Math.abs(fighter.vx) > 30 && fighter.grounded;
     const attack = fighter.attackId && fighter.moves && fighter.moves[fighter.attackId];
     const strikeStart = attack ? attack.startupFrames : 0;
@@ -378,7 +380,7 @@
     return backgroundCanvas;
   }
 
-  function drawBackground(ctx, frame, reducedMotion, boutNumber) {
+  function drawBackground(ctx, frame, reducedMotion, boutNumber, stageId) {
     [
       [-540, 105, '#171b39'], [-435, 100, '#202344'], [-335, 91, '#302947'],
       [-244, 85, '#4c3450'], [-159, 80, '#70415b']
@@ -394,7 +396,7 @@
       pixel(ctx, x + 14, y - 7, 33, 7, index % 2 ? '#72718d' : '#85819a');
       pixel(ctx, x + 8, y + 8, 29, 5, '#4c496c');
     });
-    const stage = pixelStage(boutNumber);
+    const stage = pixelStage(boutNumber, stageId);
     if (stage) {
       const smoothing = ctx.imageSmoothingEnabled;
       ctx.imageSmoothingEnabled = false;
@@ -443,11 +445,11 @@
     if (!context || !match || !match.duel) return;
     const reducedMotion = Boolean(motionQuery && motionQuery.matches);
     context.imageSmoothingEnabled = false;
-    drawBackground(context, frame, reducedMotion, match.boutNumber);
+    drawBackground(context, frame, reducedMotion, match.boutNumber, options.stageId);
     drawFighter(context, match.duel.left, 'left', frame, reducedMotion, Boolean(options.portrait));
     drawFighter(context, match.duel.right, 'right', frame, reducedMotion, Boolean(options.portrait));
     effects.forEach((effect) => drawImpact(context, effect, frame, reducedMotion));
   }
 
-  globalThis.CenFighterRenderer = Object.freeze({ draw });
+  globalThis.CenFighterRenderer = Object.freeze({ draw, stages: STAGES });
 })();

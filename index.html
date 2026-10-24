@@ -15,7 +15,7 @@
   <link rel="icon" href="assets/icons/cengames-mark.svg" type="image/svg+xml">
   <link rel="manifest" href="manifest.webmanifest">
   <script src="src/js/theme.js?v=23"></script>
-  <link rel="stylesheet" href="src/css/game.css?v=42">
+  <link rel="stylesheet" href="src/css/game.css?v=53">
   <title>CenGames</title>
 </head>
 <body>
@@ -206,20 +206,46 @@
       </header>
       <div class="fighter-setup-content">
         <p class="screen-kicker">COMBATE LOCAL · CONTRA CPU</p>
-        <h1 id="fighterSetupTitle" tabindex="-1">Arma tu equipo</h1>
-        <p class="fighter-setup-lede">Elige tres peleadores distintos y decide quién entra primero.</p>
-        <div class="fighter-selection-summary" id="fighterSelectionSummary" role="status" aria-live="polite">0 de 3 seleccionados</div>
-        <div class="fighter-roster-grid" id="fighterRoster" role="group" aria-label="Roster de peleadores"></div>
-        <fieldset class="fighter-difficulty-fieldset">
-          <legend>Dificultad de la CPU</legend>
-          <label><input type="radio" name="fighterDifficulty" value="muy-facil"><span><strong>Muy fácil</strong><small>Para aprender los controles</small></span></label>
-          <label><input type="radio" name="fighterDifficulty" value="normal" checked><span><strong>Normal</strong><small>Un reto equilibrado</small></span></label>
-          <label><input type="radio" name="fighterDifficulty" value="dificil"><span><strong>Difícil</strong><small>Reacciona y castiga mejor</small></span></label>
-        </fieldset>
-        <div class="fighter-setup-actions">
-          <button class="fighter-secondary-button" id="resetFighterLearningButton" type="button">Reiniciar aprendizaje</button>
-          <button class="fighter-primary-button" id="startFighterMatchButton" type="button" disabled>Empezar combate <span aria-hidden="true">→</span></button>
-        </div>
+        <nav class="fighter-setup-steps" aria-label="Preparación del combate">
+          <span class="is-current" data-setup-step-indicator="fighters"><b>01</b> Peleadores</span>
+          <span data-setup-step-indicator="stage"><b>02</b> Escenario</span>
+          <span data-setup-step-indicator="difficulty"><b>03</b> Dificultad</span>
+        </nav>
+        <section class="fighter-setup-step" data-setup-step="fighters" aria-labelledby="fighterSetupTitle">
+          <div class="fighter-setup-heading">
+            <div><h1 id="fighterSetupTitle" tabindex="-1">Elige a tus peleadores</h1><p class="fighter-setup-lede">Arma un equipo de tres. El orden de selección define quién entra primero.</p></div>
+            <div class="fighter-selection-summary" id="fighterSelectionSummary" role="status" aria-live="polite">0 de 3 seleccionados</div>
+          </div>
+          <div class="fighter-picker-layout">
+            <aside class="fighter-feature-card fighter-feature-fighter" aria-live="polite">
+              <div class="fighter-feature-art"><canvas class="fighter-feature-sprite" id="fighterFeaturedSprite" width="307" height="512" aria-hidden="true"></canvas><span class="fighter-feature-order" id="fighterFeaturedOrder"></span></div>
+              <div class="fighter-feature-copy"><span class="fighter-feature-label">PELEADOR</span><h2 id="fighterFeaturedName">Selecciona un personaje</h2><p id="fighterFeaturedArchetype">Diez estilos por descubrir</p></div>
+            </aside>
+            <div class="fighter-roster-grid" id="fighterRoster" role="group" aria-label="Elige tres peleadores"></div>
+          </div>
+          <div class="fighter-setup-actions"><span class="fighter-picker-hint">Elige 3 distintos · toca una tarjeta para sumar o quitar</span><button class="fighter-primary-button" id="continueToStageButton" type="button" disabled>Elegir escenario <span aria-hidden="true">→</span></button></div>
+        </section>
+        <section class="fighter-setup-step" data-setup-step="stage" aria-labelledby="fighterStageTitle" hidden>
+          <div class="fighter-setup-heading"><div><h1 id="fighterStageTitle" tabindex="-1">Elige el escenario</h1><p class="fighter-setup-lede">Este fondo se mantiene durante los cinco duelos del torneo.</p></div><span class="fighter-setup-chip">5 ESCENARIOS</span></div>
+          <div class="fighter-picker-layout">
+            <aside class="fighter-feature-card fighter-feature-stage" aria-live="polite"><div class="fighter-stage-preview" id="fighterFeaturedStageArt" role="img" aria-label="Vista previa del escenario"></div><div class="fighter-feature-copy"><span class="fighter-feature-label">ESCENARIO ELEGIDO</span><h2 id="fighterFeaturedStageName">Biblioteca</h2><p id="fighterFeaturedStageDescription">Duelo bajo la luz del campus.</p></div></aside>
+            <div class="fighter-stage-grid" id="fighterStageGrid" role="group" aria-label="Elige un escenario"></div>
+          </div>
+          <div class="fighter-setup-actions"><button class="fighter-secondary-button" id="backToFightersButton" type="button">← Peleadores</button><span class="fighter-picker-hint">Un escenario para todo el torneo</span><button class="fighter-primary-button" id="continueToDifficultyButton" type="button">Elegir dificultad <span aria-hidden="true">→</span></button></div>
+        </section>
+        <section class="fighter-setup-step" data-setup-step="difficulty" aria-labelledby="fighterDifficultyTitle" hidden>
+          <div class="fighter-setup-heading"><div><h1 id="fighterDifficultyTitle" tabindex="-1">Ajusta el reto</h1><p class="fighter-setup-lede">La CPU cambia su ritmo y respuesta según el nivel.</p></div><span class="fighter-setup-chip">CPU LOCAL</span></div>
+          <div class="fighter-picker-layout fighter-difficulty-layout">
+            <aside class="fighter-feature-card fighter-feature-difficulty" id="fighterDifficultyFeature" aria-live="polite"><div class="fighter-difficulty-art" aria-hidden="true"><canvas class="fighter-difficulty-canvas" id="fighterDifficultyPreview" width="680" height="280"></canvas></div><div class="fighter-feature-copy"><span class="fighter-feature-label">DIFICULTAD</span><h2 id="fighterFeaturedDifficultyName">Normal</h2><p id="fighterFeaturedDifficultyDescription">Un reto equilibrado para aprender y pelear.</p></div></aside>
+            <fieldset class="fighter-difficulty-fieldset" aria-label="Elige la dificultad de la CPU">
+              <legend>Dificultad de la CPU</legend>
+              <label data-difficulty="muy-facil"><input type="radio" name="fighterDifficulty" value="muy-facil"><span class="difficulty-card-icon" aria-hidden="true">☆</span><span><strong>Muy fácil</strong><small>Para aprender los controles</small></span></label>
+              <label data-difficulty="normal"><input type="radio" name="fighterDifficulty" value="normal" checked><span class="difficulty-card-icon" aria-hidden="true">⚔</span><span><strong>Normal</strong><small>Un reto equilibrado</small></span></label>
+              <label data-difficulty="dificil"><input type="radio" name="fighterDifficulty" value="dificil"><span class="difficulty-card-icon" aria-hidden="true">✦</span><span><strong>Difícil</strong><small>Reacciona y castiga mejor</small></span></label>
+            </fieldset>
+          </div>
+          <div class="fighter-setup-actions"><button class="fighter-secondary-button" id="backToStageButton" type="button">← Escenario</button><button class="fighter-learning-reset" id="resetFighterLearningButton" type="button">Reiniciar aprendizaje</button><button class="fighter-primary-button" id="startFighterMatchButton" type="button" disabled>Empezar torneo <span aria-hidden="true">→</span></button></div>
+        </section>
       </div>
     </section>
 
@@ -367,7 +393,7 @@
   <script src="src/js/fighter/team-match.js" defer></script>
   <script src="src/js/fighter/cpu.js" defer></script>
   <script src="src/js/fighter/learning.js" defer></script>
-  <script src="src/js/fighter/renderer.js?v=42" defer></script>
-  <script src="src/js/fighter/game.js?v=42" defer></script>
+  <script src="src/js/fighter/renderer.js?v=43" defer></script>
+  <script src="src/js/fighter/game.js?v=46" defer></script>
 </body>
 </html>

@@ -1627,3 +1627,144 @@ input:focus-visible { outline: 3px solid var(--gold); outline-offset: 3px; }
   .fighter-analog-control { right: max(9px, env(safe-area-inset-right)); bottom: max(8px, env(safe-area-inset-bottom)); }
   .fighter-analog-stick { width: 80px; height: 80px; min-width: 80px !important; min-height: 80px !important; }
 }
+
+/* Selectores tipo arcade: una vista principal y opciones en cuadrícula. */
+.fighter-setup-content { width: min(100%, 1120px); margin-top: clamp(18px, 3.5vh, 34px); }
+.fighter-setup-content > .screen-kicker { margin-bottom: 12px; font-size: 10px; font-weight: 900; }
+.fighter-setup-steps { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 7px; width: min(100%, 620px); margin: 0 0 24px; }
+.fighter-setup-steps > span { display: flex; align-items: center; gap: 8px; padding: 9px 12px; border: 2px solid #39334d; background: #1c1a30; color: #827d96; font-size: 10px; font-weight: 850; text-transform: uppercase; }
+.fighter-setup-steps b { color: #817b98; font-size: 13px; }
+.fighter-setup-steps > .is-current { border-color: #ffc76f; background: #33253a; color: #ffe7b2; box-shadow: inset 0 -3px #e97964; }
+.fighter-setup-steps > .is-current b { color: #ffd27e; }
+.fighter-setup-steps > .is-complete { border-color: #557c75; color: #b3d9cf; }
+.fighter-setup-steps > .is-complete b { color: #78d5c5; }
+.fighter-setup-step[hidden] { display: none; }
+.fighter-setup-heading { display: flex; align-items: end; justify-content: space-between; gap: 16px; margin-bottom: 19px; }
+.fighter-setup-heading h1 { font-size: clamp(28px, 4vw, 44px); }
+.fighter-setup-heading .fighter-setup-lede { margin-top: 8px; font-size: 12px; }
+.fighter-selection-summary { flex: 0 0 auto; margin: 0 0 2px; font-size: 10px; }
+.fighter-setup-chip { flex: 0 0 auto; padding: 8px 10px; border: 2px solid #514363; background: #211d35; color: #9ee0d7; font-size: 10px; font-weight: 900; }
+.fighter-picker-layout { display: grid; grid-template-columns: minmax(250px, .82fr) minmax(0, 1.5fr); gap: 16px; align-items: stretch; }
+.fighter-feature-card { min-width: 0; min-height: 410px; display: flex; flex-direction: column; overflow: hidden; border: 3px solid #51415e; background: #1d1b32; box-shadow: 5px 5px 0 #0d0e19; }
+.fighter-feature-art { position: relative; height: 325px; flex: 0 0 325px; display: grid; place-items: end center; overflow: hidden; background: linear-gradient(180deg, #293b66 0 48%, #ab5963 49% 73%, #4e314e 74%); }
+.fighter-feature-art::before { position: absolute; inset: 12px; border: 1px solid rgba(255, 228, 178, .22); background: repeating-linear-gradient(0deg, transparent 0 28px, rgba(255, 255, 255, .035) 29px 30px), repeating-linear-gradient(90deg, transparent 0 28px, rgba(255, 255, 255, .035) 29px 30px); content: ""; }
+.fighter-feature-sprite { position: relative; z-index: 1; width: auto; max-width: 100%; height: 300px; aspect-ratio: 307 / 512; object-fit: contain; image-rendering: pixelated; filter: drop-shadow(4px 4px #201b31); }
+.fighter-feature-order { position: absolute; z-index: 2; top: 13px; left: 13px; padding: 7px 9px; border: 2px solid #ffe2a2; background: #281f39; color: #ffe2a2; font-size: 9px; font-weight: 900; }
+.fighter-feature-copy { display: grid; gap: 5px; padding: 14px 16px 16px; border-top: 3px solid #51415e; background: #211e36; }
+.fighter-feature-label { color: #80d9d1; font-size: 9px; font-weight: 900; letter-spacing: .13em; }
+.fighter-feature-copy h2 { margin: 0; overflow: hidden; color: #ffce78; font-size: clamp(20px, 2.2vw, 28px); line-height: 1.1; text-overflow: ellipsis; white-space: nowrap; text-shadow: 2px 2px #6a344e; }
+.fighter-feature-copy p { margin: 0; color: #c1b5b5; font-size: 10px; line-height: 1.45; }
+.fighter-roster-grid { min-width: 0; grid-template-columns: repeat(5, minmax(0, 1fr)); grid-auto-rows: minmax(0, 1fr); gap: 8px; }
+.fighter-select-card { min-height: 0; min-width: 0; padding: 8px 4px 7px; gap: 5px; }
+.fighter-select-avatar { width: auto; max-width: 90%; height: 100px; flex: 0 0 auto; min-height: 0; border: 0; border-radius: 0; background-color: transparent; background-repeat: no-repeat; box-shadow: none; object-fit: contain; }
+.fighter-select-card strong { font-size: 10px; }
+.fighter-select-card small { max-width: 100%; overflow: hidden; font-size: 8px; text-overflow: ellipsis; white-space: nowrap; }
+.fighter-select-index { top: 5px; left: 5px; min-width: 19px; height: 19px; border-radius: 2px; font-size: 8px; }
+.fighter-setup-actions { align-items: center; justify-content: space-between; margin-top: 19px; }
+.fighter-picker-hint { color: #b5aebc; font-size: 9px; }
+.fighter-stage-grid { min-width: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); grid-auto-rows: minmax(0, 1fr); gap: 10px; }
+.fighter-stage-card { position: relative; min-width: 0; min-height: 0; display: grid; grid-template-rows: 1fr auto; overflow: hidden; padding: 0; border: 2px solid #4e425e; background: #24213a; color: #f8e9ca; text-align: left; box-shadow: 3px 3px #0e101b; cursor: pointer; }
+.fighter-stage-card:hover,
+.fighter-stage-card[aria-pressed="true"] { border-color: #ffc76f; box-shadow: 3px 3px #0e101b, inset 0 0 0 2px rgba(255, 199, 111, .2); }
+.fighter-stage-card-art { width: 100%; min-height: 0; aspect-ratio: 16 / 9; background-position: center; background-size: cover; image-rendering: pixelated; }
+.fighter-stage-card strong { display: block; overflow: hidden; padding: 7px 9px; font-size: 10px; text-overflow: ellipsis; white-space: nowrap; }
+.fighter-stage-index { position: absolute; top: 6px; left: 6px; display: grid; min-width: 22px; height: 19px; place-items: center; border: 1px solid #ffe2a2; background: #211d35; color: #ffe2a2; font-size: 8px; font-weight: 900; }
+.fighter-feature-stage { min-height: 410px; }
+.fighter-stage-preview { flex: 1; min-height: 0; background-position: center; background-size: cover; image-rendering: pixelated; }
+.fighter-difficulty-fieldset { min-width: 0; display: flex; flex-direction: column; gap: 10px; margin: 0; }
+.fighter-difficulty-fieldset legend { margin-bottom: 9px; }
+.fighter-difficulty-fieldset label { position: relative; flex: 1 1 0; min-height: 0; gap: 12px; padding: 12px; }
+.fighter-difficulty-fieldset label:has(input:checked) { border-color: #78d5cf; box-shadow: inset 4px 0 #78d5cf, 0 0 0 1px rgba(120, 213, 207, .15); }
+.fighter-difficulty-fieldset label:has(input:focus-visible) { outline: 3px solid #fff0c9; outline-offset: 2px; }
+.fighter-difficulty-fieldset input { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: pointer; }
+.fighter-difficulty-fieldset label > span:not(.difficulty-card-icon) { display: grid; gap: 5px; }
+.fighter-difficulty-fieldset label > span:not(.difficulty-card-icon) strong { font-size: 14px; }
+.fighter-difficulty-fieldset label > span:not(.difficulty-card-icon) small { font-size: 10px; }
+.difficulty-card-icon { width: 39px; height: 39px; display: grid; flex: 0 0 auto; place-items: center; border: 2px solid #66516b; background: #352a48; color: #ffd27e; font-size: 20px; }
+.fighter-feature-difficulty { position: relative; height: 410px; min-height: 410px; background: linear-gradient(180deg, #25446e 0 55%, #b55060 56% 73%, #332b4c 74%); }
+.fighter-feature-difficulty .fighter-feature-copy { position: relative; z-index: 1; margin-top: auto; }
+.fighter-difficulty-art { position: relative; z-index: 1; flex: 0 0 280px; height: 280px; overflow: hidden; background: linear-gradient(180deg, #25446e 0 55%, #b55060 56% 73%, #332b4c 74%); }
+.fighter-difficulty-canvas { position: relative; z-index: 1; width: 100%; height: 100%; display: block; image-rendering: pixelated; }
+.fighter-feature-difficulty .fighter-feature-copy { z-index: 2; }
+.fighter-difficulty-art::before { position: absolute; right: 0; bottom: 24px; left: 0; height: 1px; background: #f8cf8b; box-shadow: 0 -12px #88516c, 0 -24px #6d4666; content: ""; }
+.fighter-learning-reset { min-height: 40px; margin-right: auto; padding: 0 10px; border: 0; background: transparent; color: #aaa2b5; font: 700 9px "Courier New", Courier, monospace; text-decoration: underline; cursor: pointer; }
+.fighter-learning-reset:focus-visible,
+.fighter-stage-card:focus-visible { outline: 3px solid #fff0c9; outline-offset: 3px; }
+:root[data-theme="light"] .fighter-setup-screen .fighter-select-card { border-color: #4e425e; background: #24213a; color: #f8e9ca; }
+:root[data-theme="light"] .fighter-setup-screen .fighter-select-card[aria-pressed="true"] { border-color: #ffc76f; background: #33253a; }
+:root[data-theme="light"] .fighter-setup-screen .fighter-select-card strong { color: #f8e9ca; }
+:root[data-theme="light"] .fighter-setup-screen .fighter-select-card small { color: #c1b5b5; }
+:root[data-theme="light"] .fighter-setup-screen .fighter-stage-card { border-color: #4e425e; background: #24213a; color: #f8e9ca; }
+:root[data-theme="light"] .fighter-setup-screen .fighter-stage-card[aria-pressed="true"] { border-color: #ffc76f; }
+:root[data-theme="light"] .fighter-setup-screen .fighter-difficulty-fieldset label { border-color: #483d56; background: #211e35; }
+:root[data-theme="light"] .fighter-setup-screen .fighter-difficulty-fieldset label:has(input:checked) { border-color: #78d5cf; }
+:root[data-theme="light"] .fighter-setup-screen .fighter-difficulty-fieldset strong { color: #f8e9ca; }
+:root[data-theme="light"] .fighter-setup-screen .fighter-difficulty-fieldset small { color: #c1b5b5; }
+@media (max-width: 760px) {
+  .fighter-setup-content { margin-top: 20px; }
+  .fighter-setup-steps { margin-bottom: 18px; }
+  .fighter-setup-steps > span { justify-content: center; padding: 8px 4px; font-size: 8px; }
+  .fighter-setup-steps b { font-size: 11px; }
+  .fighter-setup-heading { align-items: start; margin-bottom: 13px; }
+  .fighter-setup-heading h1 { font-size: clamp(25px, 6vw, 36px); }
+  .fighter-setup-heading .fighter-setup-lede { max-width: 42ch; font-size: 10px; }
+  .fighter-selection-summary { max-width: 42%; padding: 6px 7px; font-size: 8px; }
+  .fighter-picker-layout { grid-template-columns: 1fr; gap: 11px; }
+  .fighter-feature-card { min-height: 0; }
+  .fighter-feature-art { height: clamp(190px, 38vh, 270px); min-height: 0; flex: 0 0 clamp(190px, 38vh, 270px); }
+  .fighter-feature-sprite { height: clamp(170px, 34vh, 250px); }
+  .fighter-feature-stage { min-height: 0; }
+  .fighter-stage-preview { flex: none; height: clamp(180px, 42vw, 245px); }
+  .fighter-feature-copy { padding: 10px 12px; }
+  .fighter-feature-copy h2 { font-size: 20px; }
+  .fighter-roster-grid { grid-template-columns: repeat(5, minmax(0, 1fr)); grid-auto-rows: 116px; gap: 6px; }
+  .fighter-select-card { padding: 5px 2px; }
+  .fighter-select-avatar { height: 88px; }
+  .fighter-select-card strong { font-size: 9px; }
+  .fighter-select-card small { font-size: 7px; }
+  .fighter-stage-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); grid-auto-rows: auto; }
+  .fighter-stage-card strong { padding: 6px; font-size: 9px; }
+  .fighter-difficulty-layout .fighter-feature-card { min-height: 0; }
+  .fighter-feature-difficulty { height: 300px; min-height: 300px; }
+  .fighter-difficulty-art { height: 220px; flex-basis: 220px; }
+  .fighter-difficulty-fieldset { display: grid; grid-template-columns: 1fr; gap: 7px; }
+  .fighter-difficulty-fieldset label { min-height: 64px; flex: none; }
+  .fighter-setup-actions { flex-wrap: wrap; gap: 8px; margin-top: 13px; }
+  .fighter-setup-actions > .fighter-primary-button { min-height: 43px; }
+  .fighter-picker-hint { width: 100%; order: 3; text-align: center; }
+  .fighter-learning-reset { margin-right: auto; }
+}
+@media (max-width: 420px) {
+  .fighter-setup-screen { padding-right: 11px; padding-left: 11px; }
+  .fighter-setup-heading { display: block; }
+  .fighter-selection-summary { max-width: none; width: fit-content; margin-top: 9px; }
+  .fighter-roster-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); grid-auto-rows: 128px; }
+  .fighter-select-avatar { height: 98px; }
+  .fighter-stage-grid { gap: 7px; }
+  .fighter-setup-actions > .fighter-primary-button { flex: 1 1 100%; }
+  .fighter-setup-actions > .fighter-secondary-button { flex: 1 0 auto; }
+}
+@media (orientation: landscape) and (max-height: 600px) {
+  .fighter-setup-content { margin-top: 11px; }
+  .fighter-setup-content > .screen-kicker { margin-bottom: 5px; }
+  .fighter-setup-steps { margin-bottom: 9px; }
+  .fighter-setup-heading { margin-bottom: 8px; }
+  .fighter-picker-layout { grid-template-columns: minmax(190px, .7fr) minmax(0, 1.5fr); gap: 9px; }
+  .fighter-feature-card { min-height: 280px; }
+  .fighter-feature-difficulty { height: 280px; min-height: 280px; }
+  .fighter-difficulty-art { height: 200px; flex-basis: 200px; }
+  .fighter-feature-art { height: 215px; min-height: 215px; flex-basis: 215px; }
+  .fighter-feature-sprite { height: 195px; }
+  .fighter-feature-stage { min-height: 280px; }
+  .fighter-roster-grid { grid-auto-rows: 1fr; }
+  .fighter-select-card { padding: 2px; gap: 2px; }
+  .fighter-select-avatar { min-height: 42px; }
+  .fighter-stage-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .fighter-difficulty-art { min-height: 160px; }
+  .fighter-setup-actions { margin-top: 9px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .fighter-setup-steps > span,
+  .fighter-stage-card,
+  .fighter-feature-card { scroll-behavior: auto; transition: none; }
+}

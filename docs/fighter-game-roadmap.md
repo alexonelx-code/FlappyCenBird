@@ -10,8 +10,8 @@ El documento maestro de diseño está en [`output/pdf/plan-maestro-juego-de-pele
 
 | Fase | Alcance | Criterio de salida | Estado |
 | --- | --- | --- | --- |
-| 1. Motor de duelo | Simulación pura a 60 ticks por segundo; movimiento, salto, agacharse, defensa, golpes, hitboxes, daño, stun, retroceso y reloj. No depende de DOM, Canvas ni sprites. Los cuerpos no bloquean el movimiento: se pueden cruzar y se orientan hacia el rival. | La misma secuencia de entradas y configuración produce el mismo estado; ataques respetan startup/active/recovery, impactan una vez y el duelo resuelve KO, timeout o muerte súbita. | Base del motor implementada; todavía no está conectada a una pantalla. |
-| 2. Equipos 3 contra 3 | Selector de tres personajes sin duplicados dentro del equipo, orden de entrada, reservas, sustituciones y vida persistente del superviviente. | Barrida, turnos mixtos, doble KO, timeout y fin de equipo producen un resultado único y reproducible. | Base de reglas implementada; falta la interfaz de selección. |
+| 1. Motor de duelo | Simulación pura a 60 ticks por segundo; movimiento, salto, agacharse, defensa, golpes, hitboxes, daño, stun, retroceso y reloj. No depende de DOM, Canvas ni sprites. Los cuerpos no bloquean el movimiento: se pueden cruzar y se orientan hacia el rival. | La misma secuencia de entradas y configuración produce el mismo estado; ataques respetan startup/active/recovery, impactan una vez y el duelo resuelve KO, timeout o muerte súbita. | Motor determinista implementado e integrado al ciclo de combate. |
+| 2. Equipos 3 contra 3 | Selector de tres personajes sin duplicados dentro del equipo, orden de entrada, reservas, sustituciones y vida persistente del superviviente. | Barrida, turnos mixtos, doble KO, timeout y fin de equipo producen un resultado único y reproducible. | Reglas e interfaz por pasos implementadas. |
 | 3. CPU base y dificultad | Controlador de acciones legales con Muy fácil, Normal y Difícil. | Los niveles se distinguen por reacción y decisión; ninguno modifica vida, daño ni información disponible. | Controlador heurístico implementado; el aprendizaje queda para la fase 4. |
 | 4. Aprendizaje local | Política Q-learning compacta, entrenada primero mediante simulaciones y ajustada por perfil tras partidas completas. | La CPU adapta preferencias dentro de límites de dificultad, conserva una política base, se puede reiniciar y funciona sin red. | Implementada |
 | 5. Integración del portal y economía | Lobby, pantalla de pelea, pausa, teclado/touch, perfil, estadísticas y pago único por matchId. | La partida se puede iniciar, pausar, abandonar y completar desde el portal; Cent y estadísticas no se duplican al reintentar un guardado. | Implementada |
@@ -22,6 +22,7 @@ El documento maestro de diseño está en [`output/pdf/plan-maestro-juego-de-pele
 ## Reglas base ya decididas
 
 - Un peleador activo por equipo; el banco permanece fuera del combate.
+- La preparación ofrece tres pasos separados: escoger equipo, escoger uno de cinco escenarios y escoger dificultad. El escenario elegido permanece durante los cinco duelos del torneo.
 - Cada duelo inicia con reloj de 40 segundos. Un KO elimina al derrotado; entra el siguiente con vida completa. El superviviente conserva vida y vuelve a estado neutral. Cuando existan movimientos especiales, sus enfriamientos también se conservarán; todavía no hay especiales en el prototipo.
 - A tiempo, gana el peleador con mayor porcentaje de vida; si empatan, hay hasta cinco segundos de muerte súbita. El primer ataque que toca al rival decide, aunque lo bloquee. Sin contacto o con intercambio simultáneo, ambos quedan eliminados.
 - Hay hasta cinco duelos. El límite teórico es 3:49 de combate y transiciones, más intro y resultado; el objetivo normal es una partida de dos a tres minutos.
@@ -41,16 +42,16 @@ Al iniciar una partida, la pantalla crea el controlador con `seed: match.cpuSeed
 ## Fases 4 y 5 implementadas
 
 - `learning.js` entrena una tabla Q-learning determinista en simulaciones breves del motor. Observa distancia, amenaza, ventaja de vida y estado del peleador; elige acercarse, retirarse, bloquear, golpear ligero/fuerte o saltar. Las tres dificultades cambian reacción y exploración, sin tocar vida, daño ni información visible. El ajuste de una partida se escribe solo al terminarla y se puede borrar por perfil desde el selector.
-- El lobby abre un selector de tres integrantes únicos y su orden de entrada. El roster sigue usando diez IDs temporales mientras se esperan los nombres y sprites finales.
-- `game.js` integra el tick fijo de 60 Hz, Canvas provisional, reloj por duelo, vida del activo, reservas, pausa, abandono, teclado y controles táctiles. Las teclas son A/D o flechas para moverse; W, Espacio o ↑ para saltar; ↓ o S para agacharse; J/Shift para bloquear; U para golpe ligero e I para golpe fuerte.
+- El lobby guía al jugador por tres pasos: elegir tres integrantes únicos y su orden de entrada, elegir escenario y elegir dificultad. El roster sigue usando diez IDs temporales mientras se esperan los nombres definitivos.
+- `game.js` integra el tick fijo de 60 Hz, Canvas provisional, reloj por duelo, vida del activo, reservas, pausa, abandono, teclado y controles táctiles. Las teclas son A/D o flechas para moverse; W, Espacio o ↑ para saltar; ↓ o S para agacharse; J/Shift para bloquear; Z, X, C y V para los cuatro ataques.
 - Una partida terminada entrega 5 Cent; la victoria añade 2. El empate paga 5. Abandonar o recargar antes del resultado no registra ni paga una partida. La pantalla manda un ID único y la economía limita repeticiones a 2,000 recibos retenidos por perfil.
 - El perfil publicado y el aprendizaje viven en `localStorage`; la API opcional solo en localhost añade resultados en SQLite y migra las bases ya existentes. No hay sincronización entre dispositivos ni ML remoto.
 
 ## Fases 6 y 7 implementadas
 
 - `sprite-contract.js` valida atlases locales, tamaño de frame, ancla de pies, clips (quieto, caminar, salto, agacharse, bloquear, ligero, fuerte, recibir daño, KO y entrada) y cajas de cuerpo/ataque. Los índices recorren el atlas por filas; el ancla se mide desde la esquina superior izquierda del frame. Las cajas se miden desde el ancla, con `y` negativo hacia arriba; son datos de inspección del arte y el motor conserva sus propios hitboxes de combate.
-- `renderer.js` puede dibujar esos clips usando el ancla y la orientación del peleador, con fallback automático a figuras temporales cuando aún no existe un sprite cargado. El catálogo deja `sprite` vacío hasta recibir las hojas de sprites.
-- `roster.js` incluye diez nombres provisionales y paletas. Cada peleador tiene un arquetipo y ajustes individuales de vida, velocidad, salto, defensa y movimientos; espejo entre equipos sigue permitido.
+- `renderer.js` puede dibujar esos clips usando el ancla y la orientación del peleador, con fallback al atlas provisional y a figuras temporales cuando aún no existe una hoja animada. El catálogo deja `sprite` vacío hasta recibir las hojas finales.
+- `roster.js` incluye diez nombres provisionales y paletas. El selector muestra una vista grande del peleador enfocado y el atlas completo en cuadrícula. Cada peleador tiene un arquetipo y ajustes individuales de vida, velocidad, salto, defensa y movimientos; espejo entre equipos sigue permitido.
 - `engine.js`, `team-match.js`, la CPU y el aprendizaje consumen los atributos y movimientos individuales sin alterar las reglas de reloj, reservas o recompensa.
 - Las cifras sirven como primer pase de balance, no como valores finales. Cuando llegue el arte real, reemplazaremos los nombres provisionales y afinaremos el roster mirando hurtboxes y matchups reproducibles.
 

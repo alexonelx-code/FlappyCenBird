@@ -8,6 +8,11 @@
   const rosterRoot = document.getElementById('fighterRoster');
   const selectionSummary = document.getElementById('fighterSelectionSummary');
   const startButton = document.getElementById('startFighterMatchButton');
+  const continueToStageButton = document.getElementById('continueToStageButton');
+  const stageGrid = document.getElementById('fighterStageGrid');
+  const stages = globalThis.CenFighterRenderer.stages;
+  const rosterAtlas = new Image();
+  rosterAtlas.src = 'assets/fighters/roster-atlas.png';
   const soundButton = document.getElementById('fighterSoundButton');
   const status = document.getElementById('fighterStatus');
   const pauseOverlay = document.getElementById('fighterPauseOverlay');
@@ -17,6 +22,8 @@
   const touchAnalog = { x: 0, y: 0 };
   let chosen = [];
   let roster = globalThis.CenFighterRoster?.entries || globalThis.CenFighterTeams.DEFAULT_ROSTER;
+  let featuredFighterId = '';
+  let selectedStageId = stages[0].id;
   let match = null;
   let controller = null;
   let matchId = '';
@@ -34,6 +41,27 @@
   let lastHudSignature = '';
   let playerName = 'Jugador';
   const tickDuration = 1000 / globalThis.CenFighterConfig.tickRate;
+
+  function drawAtlasCell(canvas, index) {
+    if (!rosterAtlas.complete || !rosterAtlas.naturalWidth) return;
+    const cellWidth = rosterAtlas.naturalWidth / 5;
+    const cellHeight = rosterAtlas.naturalHeight / 2;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    canvas.width = cellWidth;
+    canvas.height = cellHeight;
+    ctx.imageSmoothingEnabled = false;
+    ctx.clearRect(0, 0, cellWidth, cellHeight);
+    ctx.drawImage(rosterAtlas, (index % 5) * cellWidth, Math.floor(index / 5) * cellHeight,
+      cellWidth, cellHeight, 0, 0, cellWidth, cellHeight);
+  }
+
+  rosterAtlas.addEventListener('load', () => {
+    document.querySelectorAll('.fighter-select-avatar, .fighter-feature-sprite').forEach((canvas) => {
+      drawAtlasCell(canvas, Number(canvas.dataset.atlasIndex) || 0);
+    });
+    drawDifficultyPreview();
+  });
 
   function announce(message) {
     status.textContent = '';
@@ -61,6 +89,54 @@
     return roster.find((fighter) => fighter.id === id) || { id, name: id };
   }
 
+  function showFeaturedFighter(id) {
+    const fighter = fighterById(id);
+    const index = roster.findIndex((item) => item.id === fighter.id);
+    if (index < 0) return;
+    featuredFighterId = fighter.id;
+    document.getElementById('fighterFeaturedName').textContent = fighter.name;
+    document.getElementById('fighterFeaturedArchetype').textContent = fighter.archetype || 'Peleador';
+    const sprite = document.getElementById('fighterFeaturedSprite');
+    sprite.dataset.atlasIndex = String(index);
+    drawAtlasCell(sprite, index);
+    if (fighter.palette) {
+      sprite.style.setProperty('--fighter-accent', fighter.palette.accent);
+      sprite.style.setProperty('--fighter-shadow', fighter.palette.shadow);
+    }
+    const order = chosen.indexOf(fighter.id);
+    document.getElementById('fighterFeaturedOrder').textContent = order >= 0 ? `EQUIPO · ${order + 1}` : 'VISTA PREVIA';
+  }
+
+  function drawDifficultyPreview() {
+    if (!rosterAtlas.complete || !rosterAtlas.naturalWidth) return;
+    const canvas = document.getElementById('fighterDifficultyPreview');
+    const ctx = canvas?.getContext('2d');
+    if (!ctx) return;
+    const cellWidth = rosterAtlas.naturalWidth / 5;
+    const cellHeight = rosterAtlas.naturalHeight / 2;
+    const playerId = chosen[0] || roster[0]?.id;
+    const playerIndex = Math.max(0, roster.findIndex((fighter) => fighter.id === playerId));
+    const opponentCandidate = roster.findIndex((fighter, index) => index !== playerIndex && !chosen.includes(fighter.id));
+    const opponentIndex = opponentCandidate >= 0 ? opponentCandidate : (playerIndex + 1) % roster.length;
+    const artHeight = Math.min(canvas.height - 20, 250);
+    const artWidth = artHeight * cellWidth / cellHeight;
+    const ground = canvas.height - 8;
+    const drawFighter = (index, x, flip = false) => {
+      ctx.save();
+      ctx.imageSmoothingEnabled = false;
+      if (flip) {
+        ctx.translate(x * 2 + artWidth, 0);
+        ctx.scale(-1, 1);
+      }
+      ctx.drawImage(rosterAtlas, (index % 5) * cellWidth, Math.floor(index / 5) * cellHeight,
+        cellWidth, cellHeight, x, ground - artHeight, artWidth, artHeight);
+      ctx.restore();
+    };
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    drawFighter(playerIndex, canvas.width * 0.23);
+    drawFighter(opponentIndex, canvas.width * 0.56, true);
+  }
+
   function renderRoster() {
     rosterRoot.replaceChildren();
     roster.forEach((fighter, index) => {
@@ -72,12 +148,13 @@
       badge.className = 'fighter-select-index';
       badge.textContent = String(index + 1).padStart(2, '0');
       badge.setAttribute('aria-hidden', 'true');
-      const avatar = document.createElement('span');
+      const avatar = document.createElement('canvas');
       avatar.className = 'fighter-select-avatar';
       avatar.dataset.palette = String(index % 10);
-      avatar.style.backgroundImage = 'url("assets/fighters/roster-atlas.png")';
-      avatar.style.backgroundSize = '500% 200%';
-      avatar.style.backgroundPosition = `${(index % 5) * 25}% ${Math.floor(index / 5) * 100}%`;
+      avatar.width = 307;
+      avatar.height = 512;
+      avatar.dataset.atlasIndex = String(index);
+      drawAtlasCell(avatar, index);
       if (fighter.palette) {
         avatar.style.setProperty('--fighter-accent', fighter.palette.accent);
         avatar.style.setProperty('--fighter-shadow', fighter.palette.shadow);
@@ -88,10 +165,96 @@
       const archetype = document.createElement('small');
       archetype.textContent = fighter.archetype || 'Peleador';
       button.append(badge, avatar, name, archetype);
-      button.addEventListener('click', () => toggleFighter(fighter.id));
+      button.addEventListener('click', () => {
+        showFeaturedFighter(fighter.id);
+        toggleFighter(fighter.id);
+      });
+      button.addEventListener('focus', () => showFeaturedFighter(fighter.id));
+      button.addEventListener('pointerenter', () => showFeaturedFighter(fighter.id));
       rosterRoot.append(button);
     });
+    showFeaturedFighter(featuredFighterId && roster.some((fighter) => fighter.id === featuredFighterId)
+      ? featuredFighterId
+      : roster[0]?.id);
     updateSelection();
+  }
+
+  function renderStages() {
+    stageGrid.replaceChildren();
+    stages.forEach((stage, index) => {
+      const button = document.createElement('button');
+      button.className = 'fighter-stage-card';
+      button.type = 'button';
+      button.dataset.stageId = stage.id;
+      button.setAttribute('aria-pressed', String(stage.id === selectedStageId));
+      const preview = document.createElement('span');
+      preview.className = 'fighter-stage-card-art';
+      preview.style.backgroundImage = `url("assets/fighters/stages/${stage.file}")`;
+      preview.setAttribute('aria-hidden', 'true');
+      const number = document.createElement('span');
+      number.className = 'fighter-stage-index';
+      number.textContent = String(index + 1).padStart(2, '0');
+      number.setAttribute('aria-hidden', 'true');
+      const name = document.createElement('strong');
+      name.textContent = stage.name;
+      button.append(preview, number, name);
+      button.addEventListener('click', () => chooseStage(stage.id));
+      stageGrid.append(button);
+    });
+    updateStageSelection();
+  }
+
+  function updateStageSelection() {
+    const stage = stages.find((item) => item.id === selectedStageId) || stages[0];
+    selectedStageId = stage.id;
+    stageGrid.querySelectorAll('.fighter-stage-card').forEach((button) => {
+      button.setAttribute('aria-pressed', String(button.dataset.stageId === stage.id));
+    });
+    const art = document.getElementById('fighterFeaturedStageArt');
+    art.style.backgroundImage = `url("assets/fighters/stages/${stage.file}")`;
+    art.setAttribute('aria-label', `Vista previa: ${stage.name}`);
+    document.getElementById('fighterFeaturedStageName').textContent = stage.name;
+    document.getElementById('fighterFeaturedStageDescription').textContent = stage.description;
+  }
+
+  function chooseStage(id) {
+    if (!stages.some((stage) => stage.id === id)) return;
+    selectedStageId = id;
+    updateStageSelection();
+  }
+
+  function setSetupStep(step, focus = true) {
+    const titleIds = { fighters: 'fighterSetupTitle', stage: 'fighterStageTitle', difficulty: 'fighterDifficultyTitle' };
+    setupScreen.setAttribute('aria-labelledby', titleIds[step]);
+    document.querySelectorAll('[data-setup-step]').forEach((panel) => {
+      panel.hidden = panel.dataset.setupStep !== step;
+    });
+    document.querySelectorAll('[data-setup-step-indicator]').forEach((indicator) => {
+      const current = indicator.dataset.setupStepIndicator === step;
+      const steps = ['fighters', 'stage', 'difficulty'];
+      indicator.classList.toggle('is-current', current);
+      indicator.classList.toggle('is-complete', steps.indexOf(indicator.dataset.setupStepIndicator) < steps.indexOf(step));
+      if (current) indicator.setAttribute('aria-current', 'step');
+      else indicator.removeAttribute('aria-current');
+    });
+    if (focus) {
+      const heading = document.querySelector(`[data-setup-step="${step}"] h1`);
+      heading?.focus({ preventScroll: true });
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  }
+
+  function updateDifficultyFeature() {
+    const descriptions = {
+      'muy-facil': 'La CPU deja más espacio para practicar y aprender los controles.',
+      normal: 'Un reto equilibrado para aprender y pelear.',
+      dificil: 'La CPU presiona más y aprovecha mejor tus errores.'
+    };
+    const input = document.querySelector('input[name="fighterDifficulty"]:checked');
+    const label = input?.closest('label');
+    document.getElementById('fighterFeaturedDifficultyName').textContent = label?.querySelector('strong')?.textContent || 'Normal';
+    document.getElementById('fighterFeaturedDifficultyDescription').textContent = descriptions[input?.value] || descriptions.normal;
+    document.getElementById('fighterDifficultyFeature').dataset.level = input?.value || 'normal';
   }
 
   function toggleFighter(id) {
@@ -111,7 +274,10 @@
     selectionSummary.textContent = chosen.length === 3
       ? `Equipo listo · ${descriptions.join(' · ')}`
       : `${chosen.length} de 3 seleccionados${descriptions.length ? ` · ${descriptions.join(' · ')}` : ''}`;
+    continueToStageButton.disabled = chosen.length !== 3;
     startButton.disabled = chosen.length !== 3;
+    if (featuredFighterId) showFeaturedFighter(featuredFighterId);
+    drawDifficultyPreview();
     document.getElementById('fighterSetupBalance').textContent = String(window.CenEconomy.getProfile()?.cents || 0);
   }
 
@@ -128,7 +294,7 @@
   }
 
   function startMatch() {
-    if (chosen.length !== 3) return;
+    if (chosen.length !== 3 || !stages.some((stage) => stage.id === selectedStageId)) return;
     playerName = window.CenGamesUI.getPlayerName();
     matchId = makeMatchId();
     const seed = globalThis.CenFighterRandom.normalizeSeed(matchId);
@@ -201,7 +367,7 @@
   function draw() {
     impactEffects = impactEffects.filter((effect) => renderFrame - effect.frame <= 10);
     applyCanvasTransform();
-    globalThis.CenFighterRenderer.draw(context, match, renderFrame, impactEffects, { portrait: canvasPortrait });
+    globalThis.CenFighterRenderer.draw(context, match, renderFrame, impactEffects, { portrait: canvasPortrait, stageId: selectedStageId });
   }
 
   function processEvents(events) {
@@ -521,6 +687,9 @@
     chosen = [];
     roster = globalThis.CenFighterRoster?.entries || globalThis.CenFighterTeams.DEFAULT_ROSTER;
     renderRoster();
+    renderStages();
+    updateDifficultyFeature();
+    setSetupStep('fighters', false);
     window.CenGamesUI.showScreen('fighterSetup');
     document.getElementById('fighterSetupTitle').focus({ preventScroll: true });
   }
@@ -536,6 +705,15 @@
   document.getElementById('resetFighterLearningButton').addEventListener('click', () => {
     const reset = globalThis.CenFighterLearning.resetPolicy(window.CenGamesUI.getProfileId() || playerName);
     announce(reset ? 'Aprendizaje de la CPU reiniciado para este perfil.' : 'El almacenamiento no está disponible ahora.');
+  });
+  continueToStageButton.addEventListener('click', () => {
+    if (chosen.length === 3) setSetupStep('stage');
+  });
+  document.getElementById('backToFightersButton').addEventListener('click', () => setSetupStep('fighters'));
+  document.getElementById('continueToDifficultyButton').addEventListener('click', () => setSetupStep('difficulty'));
+  document.getElementById('backToStageButton').addEventListener('click', () => setSetupStep('stage'));
+  document.querySelectorAll('input[name="fighterDifficulty"]').forEach((input) => {
+    input.addEventListener('change', updateDifficultyFeature);
   });
   startButton.addEventListener('click', startMatch);
   document.getElementById('fighterPauseButton').addEventListener('click', () => setPaused(true));
@@ -557,5 +735,7 @@
   });
   syncSoundButton();
   bindTouchControls();
+  renderStages();
+  updateDifficultyFeature();
   renderRoster();
 })();
