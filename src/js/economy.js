@@ -19,15 +19,15 @@
     { id: 'rayo', name: 'Avatar 04', price: 0, image: 'assets/avatars/community/avatar-04.webp', mood: 'coral' },
     { id: 'ola', name: 'Avatar 05', price: 0, image: 'assets/avatars/community/avatar-05.webp', mood: 'blue' },
     { id: 'cometa', name: 'Avatar 06', price: 40, image: 'assets/avatars/community/avatar-06.webp', mood: 'mint' },
-    { id: 'prisma', name: 'Avatar 07', price: 55, image: 'assets/avatars/community/avatar-07.webp', mood: 'lavender' },
-    { id: 'orbita', name: 'Avatar 08', price: 70, image: 'assets/avatars/community/avatar-08.webp', mood: 'coral' },
-    { id: 'flora', name: 'Avatar 09', price: 85, image: 'assets/avatars/community/avatar-09.webp', mood: 'gold' },
-    { id: 'neon', name: 'Avatar 10', price: 100, image: 'assets/avatars/community/avatar-10.webp', mood: 'lavender' },
-    { id: 'avatar-11', name: 'Avatar 11', price: 110, image: 'assets/avatars/community/avatar-11.webp', mood: 'gold' },
-    { id: 'avatar-12', name: 'Avatar 12', price: 120, image: 'assets/avatars/community/avatar-12.webp', mood: 'lavender' },
-    { id: 'avatar-13', name: 'Avatar 13', price: 130, image: 'assets/avatars/community/avatar-13.webp', mood: 'mint' },
-    { id: 'avatar-14', name: 'Avatar 14', price: 140, image: 'assets/avatars/community/avatar-14.webp', mood: 'coral' },
-    { id: 'avatar-15', name: 'Avatar 15', price: 150, image: 'assets/avatars/community/avatar-15.webp', mood: 'blue' }
+    { id: 'prisma', name: 'Avatar 07', price: 40, image: 'assets/avatars/community/avatar-07.webp', mood: 'lavender' },
+    { id: 'orbita', name: 'Avatar 08', price: 40, image: 'assets/avatars/community/avatar-08.webp', mood: 'coral' },
+    { id: 'flora', name: 'Avatar 09', price: 40, image: 'assets/avatars/community/avatar-09.webp', mood: 'gold' },
+    { id: 'neon', name: 'Avatar 10', price: 40, image: 'assets/avatars/community/avatar-10.webp', mood: 'lavender' },
+    { id: 'avatar-11', name: 'Avatar 11', price: 60, image: 'assets/avatars/community/avatar-11.webp', mood: 'gold' },
+    { id: 'avatar-12', name: 'Avatar 12', price: 60, image: 'assets/avatars/community/avatar-12.webp', mood: 'lavender' },
+    { id: 'avatar-13', name: 'Avatar 13', price: 60, image: 'assets/avatars/community/avatar-13.webp', mood: 'mint' },
+    { id: 'avatar-14', name: 'Avatar 14', price: 60, image: 'assets/avatars/community/avatar-14.webp', mood: 'coral' },
+    { id: 'avatar-15', name: 'Avatar 15', price: 60, image: 'assets/avatars/community/avatar-15.webp', mood: 'blue' }
   ];
   const FREE_BIRDS = [
     { id: 'friend', name: 'Cen', icon: 'assets/images/personaje/cuerpo.png' },

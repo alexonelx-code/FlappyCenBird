@@ -14,15 +14,15 @@ from uuid import UUID
 FREE_AVATARS = ("sol", "luna", "pixel", "rayo", "ola")
 AVATAR_PRICES = {
     "cometa": 40,
-    "prisma": 55,
-    "orbita": 70,
-    "flora": 85,
-    "neon": 100,
-    "avatar-11": 110,
-    "avatar-12": 120,
-    "avatar-13": 130,
-    "avatar-14": 140,
-    "avatar-15": 150,
+    "prisma": 40,
+    "orbita": 40,
+    "flora": 40,
+    "neon": 40,
+    "avatar-11": 60,
+    "avatar-12": 60,
+    "avatar-13": 60,
+    "avatar-14": 60,
+    "avatar-15": 60,
 }
 FREE_BIRDS = ("friend", "classic", "laguna", "mango", "nube")
 FREE_BACKGROUNDS = ("costa", "aurora")
