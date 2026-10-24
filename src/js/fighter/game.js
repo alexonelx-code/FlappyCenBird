@@ -50,6 +50,10 @@
       const avatar = document.createElement('span');
       avatar.className = 'fighter-select-avatar';
       avatar.dataset.palette = String(index % 10);
+      if (fighter.palette) {
+        avatar.style.setProperty('--fighter-accent', fighter.palette.accent);
+        avatar.style.setProperty('--fighter-shadow', fighter.palette.shadow);
+      }
       avatar.setAttribute('aria-hidden', 'true');
       avatar.textContent = '✦';
       const name = document.createElement('strong');

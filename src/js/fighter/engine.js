@@ -52,19 +52,21 @@
         || !Number.isFinite(config.duel.suddenDeathSeconds) || config.duel.suddenDeathSeconds < 0) {
       throw new RangeError('Los límites de tiempo del duelo no son válidos.');
     }
-    Object.entries(config.moves).forEach(([id, move]) => {
-      if (!move || !Number.isInteger(move.startupFrames) || move.startupFrames < 0
-          || !Number.isInteger(move.activeFrames) || move.activeFrames < 1
-          || !Number.isInteger(move.recoveryFrames) || move.recoveryFrames < 0
-          || !Number.isFinite(move.damage) || move.damage < 0
-          || !Number.isFinite(move.reach) || move.reach <= 0
-          || !Number.isFinite(move.knockback) || move.knockback < 0
-          || (move.hitstunFrames !== undefined && (!Number.isInteger(move.hitstunFrames) || move.hitstunFrames < 0))
-          || !Number.isFinite(move.hitboxTop) || !Number.isFinite(move.hitboxBottom)
-          || move.hitboxTop < 0 || move.hitboxBottom > 1 || move.hitboxTop >= move.hitboxBottom) {
-        throw new RangeError(`El movimiento ${id} tiene datos inválidos.`);
-      }
-    });
+    Object.entries(config.moves).forEach(([id, move]) => assertMove(move, id));
+  }
+
+  function assertMove(move, id) {
+    if (!move || !Number.isInteger(move.startupFrames) || move.startupFrames < 0
+        || !Number.isInteger(move.activeFrames) || move.activeFrames < 1
+        || !Number.isInteger(move.recoveryFrames) || move.recoveryFrames < 0
+        || !Number.isFinite(move.damage) || move.damage < 0
+        || !Number.isFinite(move.reach) || move.reach <= 0
+        || !Number.isFinite(move.knockback) || move.knockback < 0
+        || (move.hitstunFrames !== undefined && (!Number.isInteger(move.hitstunFrames) || move.hitstunFrames < 0))
+        || !Number.isFinite(move.hitboxTop) || !Number.isFinite(move.hitboxBottom)
+        || move.hitboxTop < 0 || move.hitboxBottom > 1 || move.hitboxTop >= move.hitboxBottom) {
+      throw new RangeError(`El movimiento ${id} tiene datos inválidos.`);
+    }
   }
 
   function freezeDeep(value) {
@@ -88,14 +90,91 @@
     return Math.max(min, Math.min(max, value));
   }
 
+  function makeStats(input, rules) {
+    if (!input || typeof input !== 'object' || Array.isArray(input)) {
+      throw new TypeError('La definición del peleador debe ser un objeto.');
+    }
+    const source = input.stats === undefined ? {} : input.stats;
+    if (!source || typeof source !== 'object' || Array.isArray(source)) {
+      throw new TypeError('Las estadísticas del peleador deben ser un objeto.');
+    }
+    const statKeys = new Set(['width', 'height', 'crouchHeight', 'health', 'groundSpeed', 'airSpeed', 'jumpVelocity',
+      'guardDamageScale', 'chipDamage', 'guardKnockbackScale', 'hitstunFrames', 'inputBufferFrames']);
+    if (Object.keys(source).some((key) => !statKeys.has(key))) throw new RangeError('Hay una estadística de peleador desconocida.');
+    const directKeys = ['width', 'height', 'crouchHeight', 'maxHealth', 'moveSpeed', 'airSpeed', 'jumpVelocity',
+      'guardDamageScale', 'chipDamage', 'guardKnockbackScale', 'hitstunFrames', 'inputBufferFrames'];
+    if (directKeys.some((key) => input[key] !== undefined && !Number.isFinite(input[key]))) {
+      throw new RangeError('Las estadísticas directas del peleador deben ser números finitos.');
+    }
+    const value = (key, direct, fallback) => source[key] === undefined
+      ? finiteOr(input[direct], fallback)
+      : source[key];
+    const stats = {
+      width: value('width', 'width', rules.fighter.width),
+      height: value('height', 'height', rules.fighter.height),
+      crouchHeight: value('crouchHeight', 'crouchHeight', rules.fighter.crouchHeight),
+      health: value('health', 'maxHealth', rules.fighter.health),
+      groundSpeed: value('groundSpeed', 'moveSpeed', rules.physics.moveSpeed),
+      airSpeed: value('airSpeed', 'airSpeed', rules.physics.airSpeed),
+      jumpVelocity: value('jumpVelocity', 'jumpVelocity', rules.physics.jumpVelocity),
+      guardDamageScale: value('guardDamageScale', 'guardDamageScale', rules.fighter.guardDamageScale),
+      chipDamage: value('chipDamage', 'chipDamage', rules.fighter.chipDamage),
+      guardKnockbackScale: value('guardKnockbackScale', 'guardKnockbackScale', rules.fighter.guardKnockbackScale),
+      hitstunFrames: value('hitstunFrames', 'hitstunFrames', rules.fighter.hitstunFrames),
+      inputBufferFrames: value('inputBufferFrames', 'inputBufferFrames', rules.fighter.inputBufferFrames)
+    };
+    if (Object.values(stats).some((item) => !Number.isFinite(item))
+        || stats.width <= 0 || stats.width > rules.arena.width - rules.arena.wallPadding * 2
+        || stats.height <= 0 || stats.crouchHeight <= 0 || stats.crouchHeight > stats.height
+        || !Number.isInteger(stats.health) || stats.health <= 0
+        || stats.groundSpeed <= 0 || stats.airSpeed <= 0 || stats.jumpVelocity <= 0
+        || stats.guardDamageScale < 0 || stats.guardDamageScale > 1
+        || stats.chipDamage < 0
+        || stats.guardKnockbackScale < 0 || stats.guardKnockbackScale > 1
+        || !Number.isInteger(stats.hitstunFrames) || stats.hitstunFrames < 0
+        || !Number.isInteger(stats.inputBufferFrames) || stats.inputBufferFrames < 0) {
+      throw new RangeError('Las estadísticas individuales del peleador no son válidas.');
+    }
+    return stats;
+  }
+
+  function makeMoveSet(input, rules) {
+    const overrides = input.moves === undefined ? {} : input.moves;
+    if (!overrides || typeof overrides !== 'object' || Array.isArray(overrides)) {
+      throw new TypeError('Los movimientos del peleador deben ser un objeto.');
+    }
+    const moves = JSON.parse(JSON.stringify(rules.moves));
+    const moveKeys = new Set(['startupFrames', 'activeFrames', 'recoveryFrames', 'damage', 'reach', 'knockback',
+      'hitstunFrames', 'hitboxTop', 'hitboxBottom']);
+    Object.entries(overrides).forEach(([id, values]) => {
+      if (!moves[id] || !values || typeof values !== 'object' || Array.isArray(values)) {
+        throw new RangeError(`El movimiento ${id} no está disponible para este peleador.`);
+      }
+      if (Object.keys(values).some((key) => !moveKeys.has(key))) throw new RangeError(`El movimiento ${id} tiene un atributo desconocido.`);
+      moves[id] = { ...moves[id], ...values };
+      assertMove(moves[id], id);
+    });
+    return moves;
+  }
+
   function makeFighter(input, side, rules) {
-    const width = Math.max(1, finiteOr(input.width, rules.fighter.width));
-    const height = Math.max(1, finiteOr(input.height, rules.fighter.height));
-    const maxHealth = Math.max(1, Math.floor(finiteOr(input.maxHealth, rules.fighter.health)));
+    const stats = makeStats(input, rules);
+    const moves = makeMoveSet(input, rules);
+    const width = stats.width;
+    const height = stats.height;
+    const maxHealth = stats.health;
+    if (rules.arena.width <= rules.arena.wallPadding * 2 + width) {
+      throw new RangeError('El ancho del peleador no cabe en la arena.');
+    }
     const defaultX = rules.arena.width * (side === 'left' ? 0.28 : 0.72);
     const x = finiteOr(input.x, defaultX);
     return {
       id: String(input.id || side),
+      characterId: String(input.characterId || input.id || side),
+      name: String(input.name || input.characterId || input.id || side),
+      archetype: String(input.archetype || 'Peleador'),
+      palette: input.palette ? freezeDeep({ ...input.palette }) : null,
+      sprite: input.sprite ? freezeDeep(JSON.parse(JSON.stringify(input.sprite))) : null,
       x: clamp(x, rules.arena.wallPadding + width / 2, rules.arena.width - rules.arena.wallPadding - width / 2),
       y: rules.arena.floorY,
       vx: 0,
@@ -103,7 +182,9 @@
       facing: side === 'left' ? 1 : -1,
       width,
       height,
-      crouchHeight: clamp(finiteOr(input.crouchHeight, rules.fighter.crouchHeight), 1, height),
+      crouchHeight: stats.crouchHeight,
+      stats: freezeDeep(stats),
+      moves: freezeDeep(moves),
       health: clamp(Math.floor(finiteOr(input.health, maxHealth)), 0, maxHealth),
       maxHealth,
       grounded: true,
@@ -118,6 +199,15 @@
       previousJump: false,
       knockedOut: false
     };
+  }
+
+  function validateFighterDefinition(input = {}, config = defaultConfig) {
+    const fighter = makeFighter(input, 'left', copyConfig(config || defaultConfig));
+    return { stats: { ...fighter.stats }, moves: Object.fromEntries(Object.entries(fighter.moves).map(([id, move]) => [id, { ...move }])) };
+  }
+
+  function moveFor(fighter, moveId, rules) {
+    return fighter && fighter.moves && fighter.moves[moveId] || rules.moves[moveId];
   }
 
   function createDuel(options = {}) {
@@ -189,8 +279,8 @@
     fighter.guarding = false;
     fighter.crouching = false;
 
-    if (actionPressed && rules.moves[input.attack] && (hadAttack || wasStunned)) {
-      fighter.bufferedAttack = { id: input.attack, frames: rules.fighter.inputBufferFrames };
+    if (actionPressed && fighter.moves[input.attack] && (hadAttack || wasStunned)) {
+      fighter.bufferedAttack = { id: input.attack, frames: fighter.stats.inputBufferFrames };
     }
 
     if (fighter.knockedOut) return;
@@ -203,7 +293,7 @@
     } else if (!hadAttack && input.crouch && fighter.grounded) {
       fighter.crouching = true;
     } else if (!hadAttack && !input.block && !input.crouch) {
-      if (actionPressed && rules.moves[input.attack] && fighter.grounded) {
+      if (actionPressed && fighter.moves[input.attack] && fighter.grounded) {
         startAttack(fighter, input.attack);
       } else if (fighter.bufferedAttack && fighter.bufferedAttack.frames > 0 && fighter.grounded) {
         startAttack(fighter, fighter.bufferedAttack.id);
@@ -212,7 +302,7 @@
 
     const canMove = !fighter.attackId && !wasStunned && !fighter.guarding;
     const moveX = canMove ? input.moveX : 0;
-    const speed = fighter.grounded ? rules.physics.moveSpeed : rules.physics.airSpeed;
+    const speed = fighter.grounded ? fighter.stats.groundSpeed : fighter.stats.airSpeed;
     if (moveX) {
       fighter.vx = moveX * speed;
     } else {
@@ -223,7 +313,7 @@
 
     if (jumpPressed && fighter.grounded && !fighter.attackId && !wasStunned && !fighter.guarding) {
       fighter.grounded = false;
-      fighter.vy = -rules.physics.jumpVelocity;
+      fighter.vy = -fighter.stats.jumpVelocity;
     }
 
     fighter.vy = Math.min(fighter.vy + rules.physics.gravity / rules.tickRate, rules.physics.maxFallSpeed);
@@ -293,7 +383,7 @@
 
   function canConnect(attacker, defender, rules) {
     if (!attacker.attackId || attacker.attackConnected || attacker.knockedOut) return false;
-    const move = rules.moves[attacker.attackId];
+    const move = attacker.moves[attacker.attackId];
     const activeStart = move.startupFrames;
     const activeEnd = activeStart + move.activeFrames;
     if (attacker.attackFrame < activeStart || attacker.attackFrame >= activeEnd) return false;
@@ -307,10 +397,10 @@
   }
 
   function resolveStrike(attacker, defender, moveId, rules, events) {
-    const move = rules.moves[moveId];
+    const move = attacker.moves[moveId];
     const blocked = defender.guarding;
     const proposedDamage = blocked
-      ? Math.max(rules.fighter.chipDamage, Math.floor(move.damage * rules.fighter.guardDamageScale))
+      ? Math.max(defender.stats.chipDamage, Math.floor(move.damage * defender.stats.guardDamageScale))
       : move.damage;
     const damage = blocked
       ? Math.min(proposedDamage, Math.max(0, defender.health - 1))
@@ -318,9 +408,9 @@
 
     if (attacker.attackId === moveId) attacker.attackConnected = true;
     defender.health = Math.max(0, defender.health - damage);
-    defender.vx = attacker.facing * move.knockback * (blocked ? rules.fighter.guardKnockbackScale : 1);
+    defender.vx = attacker.facing * move.knockback * (blocked ? defender.stats.guardKnockbackScale : 1);
     if (!blocked) {
-      defender.hitstunFrames = move.hitstunFrames || rules.fighter.hitstunFrames;
+      defender.hitstunFrames = move.hitstunFrames || defender.stats.hitstunFrames;
       defender.attackId = null;
       defender.attackFrame = 0;
       defender.attackConnected = false;
@@ -345,7 +435,7 @@
 
   function advanceAttackFrames(fighter, rules) {
     if (!fighter.attackId) return;
-    const move = rules.moves[fighter.attackId];
+    const move = fighter.moves[fighter.attackId];
     const totalFrames = move.startupFrames + move.activeFrames + move.recoveryFrames;
     if (fighter.attackFrame + 1 >= totalFrames) {
       fighter.attackId = null;
@@ -460,6 +550,8 @@
   return Object.freeze({
     createDuel,
     stepDuel,
+    validateFighterDefinition,
+    moveFor,
     defaultConfig
   });
 });

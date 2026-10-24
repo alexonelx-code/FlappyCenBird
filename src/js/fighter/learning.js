@@ -40,7 +40,7 @@
     const actor = duel[side];
     const opponent = duel[side === 'left' ? 'right' : 'left'];
     const distance = distanceBetween(actor, opponent);
-    const move = opponent.attackId && duel.rules.moves[opponent.attackId];
+    const move = opponent.attackId && (opponent.moves?.[opponent.attackId] || duel.rules.moves[opponent.attackId]);
     const threat = Boolean(move && distance <= move.reach + 12
       && opponent.attackFrame >= Math.max(0, move.startupFrames - 7)
       && opponent.attackFrame < move.startupFrames + move.activeFrames);
@@ -73,8 +73,9 @@
     const toward = actor.x < opponent.x ? 1 : -1;
     const distance = distanceBetween(actor, opponent);
     const moveId = action;
-    if ((moveId === 'light' || moveId === 'heavy') && rules.moves[moveId]
-        && distance <= rules.moves[moveId].reach) {
+    const moves = actor.moves || rules.moves;
+    if ((moveId === 'light' || moveId === 'heavy') && moves[moveId]
+        && distance <= moves[moveId].reach) {
       return { moveX: 0, crouch: false, block: false, jump: false, attack: moveId };
     }
     if (action === 'block') return { moveX: 0, crouch: false, block: true, jump: false, attack: null };
