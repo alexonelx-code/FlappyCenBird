@@ -6,7 +6,7 @@ CenGames es un proyecto personal de ocio para jugar entre amigos. No es un produ
 
 - Un portal web adaptable a teléfonos y computadoras, hecho con HTML, CSS y JavaScript sin dependencias externas.
 - Flappy BirdCen, dibujado en Canvas, con controles táctiles y de teclado, récord, tabla, sonido, cinco personajes gratuitos y velocidad progresiva con tramos aleatorios que se estabiliza cerca de los 50 puntos.
-- Cen Fighters, un juego local contra la computadora con equipos de tres, roster provisional de diez, tres dificultades, controles de teclado y touch y aprendizaje Q-learning guardado por perfil.
+- Cen Fighters, un juego local contra la computadora con equipos de tres, roster provisional de diez, tres dificultades, controles de teclado y touch, aprendizaje Q-learning guardado por perfil, sonidos retro, efectos de impacto y pausa accesible.
 - Un perfil por nombre en cada navegador, con récords, estadísticas, saldo común de Cent y avatar seleccionado.
 - Una tienda de 15 avatares: los primeros cinco son gratis, los siguientes cinco cuestan 40 Cent cada uno y los últimos cinco cuestan 60 Cent cada uno.
 - Una tienda de Flappy BirdCen con cinco pájaros disponibles y cinco diseños reservados en beta, además de cinco fondos: Costa dorada y Aurora polar gratis; Órbita (60 Cent), Último sol (80 Cent) y Neón urbano (100 Cent).
@@ -24,6 +24,8 @@ El motor vive en `src/js/fighter/`, separado de la simulación de Flappy. Ya inc
 El sitio publicado es estático y usa la capa gratuita de Azure Static Web Apps. No necesita una base de datos en la nube ni servicios de pago.
 
 En el sitio publicado, el perfil, los Cent, la tienda, las estadísticas, los récords, los recibos de combates y la política aprendida de la CPU se guardan en el almacenamiento del navegador. Los perfiles no se sincronizan entre amigos, navegadores o dispositivos; borrar los datos del sitio puede borrar el progreso y el aprendizaje. Elegir el mismo nombre en otro dispositivo crea un perfil separado allí.
+
+El service worker guarda los archivos estáticos del portal y del juego de pelea para volver a abrirlos sin conexión después de la primera carga completa, en un navegador que admita service workers. Al incorporar los sprites finales, agrégalos a su lista de precarga en `service-worker.js`.
 
 La API SQLite solo funciona en desarrollo local y escucha en `127.0.0.1`. Registra perfiles, partidas de Flappy y resultados/recompensas de Cen Fighters con SQLite. Su archivo `data/cengames.sqlite3` está excluido de Git. No se publica con Azure y no sincroniza los perfiles de los visitantes del sitio. Los nombres son apodos locales, no hay autenticación por contraseña ni protección contra trampas; no uses información privada.
 
@@ -79,6 +81,12 @@ Comprueba roster, atributos y contrato de sprites:
 
 ```bash
 node --test tests/fighter-roster.test.cjs
+```
+
+Comprueba el renderer y los efectos Canvas:
+
+```bash
+node --test tests/fighter-renderer.test.cjs
 ```
 
 Valida la curva de velocidad sin instalar dependencias:

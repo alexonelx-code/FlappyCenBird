@@ -9,6 +9,10 @@
     ['#8fdae5', '#356377', '#f4c89f'], ['#efa95d', '#8c4d32', '#ffe0aa']
   ];
   const spriteImages = new Map();
+  const motionQuery = typeof window !== 'undefined' && typeof window.matchMedia === 'function'
+    ? window.matchMedia('(prefers-reduced-motion: reduce)')
+    : null;
+  let backgroundCanvas = null;
 
   function paletteFor(fighter) {
     if (fighter.palette) return [fighter.palette.accent, fighter.palette.shadow, fighter.palette.skin];
@@ -27,7 +31,7 @@
     return image.complete && image.naturalWidth ? image : null;
   }
 
-  function drawSprite(ctx, fighter, frame, bodyHeight) {
+  function drawSprite(ctx, fighter, frame, bodyHeight, reducedMotion) {
     const sprite = fighter.sprite;
     const contract = globalThis.CenFighterArtContract;
     if (!sprite || !contract) return false;
@@ -37,7 +41,12 @@
     const columns = Math.floor(image.naturalWidth / sprite.frameWidth);
     const rows = Math.floor(image.naturalHeight / sprite.frameHeight);
     if (!columns || !rows || clip.frames.some((index) => index >= columns * rows)) return false;
-    const step = Math.floor(frame * clip.fps / 60);
+    const animationFrame = fighter.attackId
+      ? fighter.attackFrame
+      : fighter.hitstunFrames > 0 && fighter.stats
+        ? Math.max(0, fighter.stats.hitstunFrames - fighter.hitstunFrames)
+        : frame;
+    const step = reducedMotion ? 0 : Math.floor(animationFrame * clip.fps / 60);
     const clipStep = clip.loop ? step % clip.frames.length : Math.min(step, clip.frames.length - 1);
     const index = clip.frames[clipStep];
     const scale = bodyHeight / sprite.anchor.y;
@@ -59,7 +68,7 @@
     ctx.fillRect(Math.round(x), Math.round(y), Math.round(width), Math.round(height));
   }
 
-  function drawFighter(ctx, fighter, side, frame) {
+  function drawFighter(ctx, fighter, side, frame, reducedMotion) {
     const [accent, shadow, skin] = paletteFor(fighter);
     const bodyHeight = fighter.crouching && fighter.grounded ? fighter.crouchHeight : fighter.height;
     const scale = bodyHeight / 116;
@@ -68,8 +77,8 @@
     const width = fighter.width;
     const facing = fighter.facing;
     const moving = Math.abs(fighter.vx) > 18;
-    const stride = moving && fighter.grounded ? Math.sin(frame * 0.28) * 4 : 0;
-    const flash = fighter.hitstunFrames > 0 && Math.floor(frame / 3) % 2 === 0;
+    const stride = moving && fighter.grounded && !reducedMotion ? Math.sin(frame * 0.28) * 4 : 0;
+    const flash = !reducedMotion && fighter.hitstunFrames > 0 && Math.floor(frame / 3) % 2 === 0;
     const main = flash ? '#fff2c5' : accent;
     const outline = flash ? '#ffffff' : '#101e2e';
     const rect = (offsetX, offsetY, rectWidth, rectHeight, color) => pixel(ctx,
@@ -80,7 +89,7 @@
       color);
 
     ctx.save();
-    if (drawSprite(ctx, fighter, frame, bodyHeight)) {
+    if (drawSprite(ctx, fighter, frame, bodyHeight, reducedMotion)) {
       ctx.restore();
       return;
     }
@@ -137,7 +146,7 @@
     ctx.restore();
   }
 
-  function drawBackground(ctx, frame) {
+  function drawBackgroundBase(ctx) {
     const sky = ctx.createLinearGradient(0, 0, 0, 540);
     sky.addColorStop(0, '#20385c');
     sky.addColorStop(0.58, '#596a84');
@@ -162,23 +171,70 @@
     pixel(ctx, 0, 365, 960, 175, '#1e3145');
     pixel(ctx, 0, 369, 960, 12, '#f3b776');
     pixel(ctx, 0, 381, 960, 159, '#21364a');
-    ctx.globalAlpha = 0.14;
-    for (let index = 0; index < 35; index += 1) {
-      const x = (index * 127 + frame * 0.28) % 960;
-      pixel(ctx, x, 395 + (index * 29 % 126), 31, 3, '#b5d5dc');
-    }
-    ctx.globalAlpha = 1;
     pixel(ctx, 0, 508, 960, 32, '#15263a');
     for (let index = 0; index < 60; index += 1) {
       pixel(ctx, index * 17, 510, 8, 3, index % 2 ? '#8c7a72' : '#b38875');
     }
   }
 
-  function draw(context, match, frame = 0) {
+  function staticBackground() {
+    if (typeof document === 'undefined') return null;
+    if (backgroundCanvas) return backgroundCanvas;
+    const canvas = document.createElement('canvas');
+    canvas.width = 960;
+    canvas.height = 540;
+    const context = canvas.getContext('2d');
+    if (!context) return null;
+    drawBackgroundBase(context);
+    backgroundCanvas = canvas;
+    return backgroundCanvas;
+  }
+
+  function drawBackground(ctx, frame, reducedMotion) {
+    const background = staticBackground();
+    if (background) {
+      const smoothing = ctx.imageSmoothingEnabled;
+      ctx.imageSmoothingEnabled = false;
+      ctx.drawImage(background, 0, 0);
+      ctx.imageSmoothingEnabled = smoothing;
+    }
+    else drawBackgroundBase(ctx);
+    ctx.globalAlpha = 0.14;
+    for (let index = 0; index < 35; index += 1) {
+      const x = (index * 127 + (reducedMotion ? 0 : frame * 0.28)) % 960;
+      pixel(ctx, x, 395 + (index * 29 % 126), 31, 3, '#b5d5dc');
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  function drawImpact(ctx, effect, frame, reducedMotion) {
+    const age = frame - effect.frame;
+    if (age < 0 || age > 10) return;
+    const growth = reducedMotion ? 0 : Math.floor(age / 2) * 3;
+    const size = reducedMotion ? 4 : Math.max(2, 5 - Math.floor(age / 3));
+    const radius = 9 + growth;
+    const color = effect.type === 'blocked' ? '#a9eaff' : '#ffe2a1';
+    ctx.save();
+    ctx.globalAlpha = reducedMotion ? 0.78 : 1 - age / 11;
+    pixel(ctx, effect.x - size / 2, effect.y - size / 2, size, size, '#fff8d8');
+    pixel(ctx, effect.x - radius, effect.y - 2, size, size, color);
+    pixel(ctx, effect.x + radius - size, effect.y - 2, size, size, color);
+    pixel(ctx, effect.x - 2, effect.y - radius, size, size, color);
+    pixel(ctx, effect.x - 2, effect.y + radius - size, size, size, color);
+    if (!reducedMotion) {
+      pixel(ctx, effect.x - radius * 0.7, effect.y - radius * 0.7, size, size, color);
+      pixel(ctx, effect.x + radius * 0.7, effect.y + radius * 0.7, size, size, color);
+    }
+    ctx.restore();
+  }
+
+  function draw(context, match, frame = 0, effects = []) {
     if (!context || !match || !match.duel) return;
-    drawBackground(context, frame);
-    drawFighter(context, match.duel.left, 'left', frame);
-    drawFighter(context, match.duel.right, 'right', frame);
+    const reducedMotion = Boolean(motionQuery && motionQuery.matches);
+    drawBackground(context, frame, reducedMotion);
+    drawFighter(context, match.duel.left, 'left', frame, reducedMotion);
+    drawFighter(context, match.duel.right, 'right', frame, reducedMotion);
+    effects.forEach((effect) => drawImpact(context, effect, frame, reducedMotion));
   }
 
   globalThis.CenFighterRenderer = Object.freeze({ draw });

@@ -61,6 +61,26 @@
       tone(140, 0.13, 'triangle', 0.055, 70);
       tone(94, 0.09, 'sine', 0.02, 48, 0.015);
     },
+    fighterHit() {
+      tone(190, 0.1, 'square', 0.028, 88);
+      tone(540, 0.07, 'triangle', 0.018, 180, 0.012);
+    },
+    fighterBlock() {
+      tone(440, 0.08, 'triangle', 0.024, 230);
+      tone(720, 0.05, 'sine', 0.012, 360, 0.01);
+    },
+    fighterKo() {
+      tone(240, 0.22, 'square', 0.026, 78);
+      tone(120, 0.2, 'triangle', 0.025, 50, 0.06);
+    },
+    fighterEnter() {
+      tone(330, 0.1, 'triangle', 0.022, 520);
+      tone(660, 0.11, 'sine', 0.014, 880, 0.065);
+    },
+    fighterResult(result) {
+      const notes = result === 'win' ? [523, 659, 784] : result === 'loss' ? [392, 330, 262] : [392, 523, 440];
+      notes.forEach((note, index) => tone(note, 0.16, 'triangle', 0.018, note * 1.08, index * 0.09));
+    },
     die()   {
       tone(360, 0.38, 'sine', 0.04, 120);
       tone(230, 0.42, 'triangle', 0.025, 78, 0.055);

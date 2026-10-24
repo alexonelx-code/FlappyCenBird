@@ -15,7 +15,7 @@
   <link rel="icon" href="assets/icons/cengames-mark.svg" type="image/svg+xml">
   <link rel="manifest" href="manifest.webmanifest">
   <script src="src/js/theme.js?v=23"></script>
-  <link rel="stylesheet" href="src/css/game.css?v=33">
+  <link rel="stylesheet" href="src/css/game.css?v=34">
   <title>CenGames</title>
 </head>
 <body>
@@ -229,6 +229,7 @@
       <header class="fighter-match-header">
         <button class="fighter-back-button" id="fighterPauseButton" type="button" aria-label="Pausar el combate">Ⅱ <span>Pausar</span></button>
         <div class="fighter-match-title"><span class="fighter-brand">CEN <strong>FIGHTERS</strong></span><span id="fighterBoutLabel">Combate 1 de 5</span></div>
+        <button class="fighter-back-button fighter-sound-button" id="fighterSoundButton" type="button" aria-label="Silenciar sonido" aria-pressed="false"><span aria-hidden="true">♪</span></button>
         <div class="fighter-match-clock" id="fighterClock" aria-label="Tiempo restante">40</div>
       </header>
       <div class="fighter-match-hud" aria-label="Estado de los equipos">
@@ -242,7 +243,7 @@
         <div class="fighter-attack-pad"><button type="button" data-fighter-hold="crouch" aria-label="Agacharse">AGA</button><button type="button" data-fighter-hold="block" aria-label="Bloquear">DEF</button><button type="button" data-fighter-attack="light" aria-label="Golpe ligero">LIG</button><button type="button" data-fighter-attack="heavy" aria-label="Golpe fuerte">FUE</button></div>
       </div></div>
       <div class="fighter-modal-overlay" id="fighterPauseOverlay" hidden><section class="fighter-modal-card" role="dialog" aria-modal="true" aria-labelledby="fighterPauseTitle"><p class="screen-kicker">COMBATE EN PAUSA</p><h2 id="fighterPauseTitle">Tómate un respiro</h2><p>Si abandonas, este combate no entrega Cent.</p><button class="fighter-primary-button" id="resumeFighterButton" type="button">Seguir jugando</button><button class="fighter-secondary-button" id="abandonFighterButton" type="button">Rendirse y volver</button></section></div>
-      <div class="fighter-modal-overlay" id="fighterResultOverlay" hidden><section class="fighter-modal-card" role="status" aria-live="polite" aria-labelledby="fighterResultTitle"><p class="screen-kicker">FIN DEL COMBATE</p><h2 id="fighterResultTitle">Resultado</h2><p id="fighterResultCopy"></p><div class="fighter-result-reward" id="fighterResultReward"></div><button class="fighter-primary-button" id="fighterResultContinueButton" type="button">Volver a minijuegos</button></section></div>
+      <div class="fighter-modal-overlay" id="fighterResultOverlay" hidden><section class="fighter-modal-card" role="dialog" aria-modal="true" aria-labelledby="fighterResultTitle"><p class="screen-kicker">FIN DEL COMBATE</p><h2 id="fighterResultTitle">Resultado</h2><p id="fighterResultCopy"></p><div class="fighter-result-reward" id="fighterResultReward"></div><button class="fighter-primary-button" id="fighterResultContinueButton" type="button">Volver a minijuegos</button></section></div>
     </section>
   </main>
 
@@ -339,7 +340,7 @@
     </div>
   </dialog>
 
-  <script src="src/js/audio.js" defer></script>
+  <script src="src/js/audio.js?v=34" defer></script>
   <script src="src/js/economy.js?v=30" defer></script>
   <script src="src/js/store-ui.js?v=28" defer></script>
   <script src="src/js/ui.js?v=30" defer></script>
@@ -357,7 +358,7 @@
   <script src="src/js/fighter/team-match.js" defer></script>
   <script src="src/js/fighter/cpu.js" defer></script>
   <script src="src/js/fighter/learning.js" defer></script>
-  <script src="src/js/fighter/renderer.js" defer></script>
-  <script src="src/js/fighter/game.js" defer></script>
+  <script src="src/js/fighter/renderer.js?v=35" defer></script>
+  <script src="src/js/fighter/game.js?v=35" defer></script>
 </body>
 </html>
