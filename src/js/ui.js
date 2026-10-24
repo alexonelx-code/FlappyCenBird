@@ -483,7 +483,7 @@
       }));
       storeCatalog.append(
         makeStoreSection('Avatares gratis', '5 para empezar', freeCards),
-        makeStoreSection('Para desbloquear', 'se compran con Cent', paidCards)
+        makeStoreSection('Para desbloquear', `${paid.length} disponibles · se compran con Cent`, paidCards)
       );
     } else if (activeStoreTab === 'flappy' && activeFlappyStoreTab === 'birds') {
       const freeBirds = window.CenEconomy.getFreeBirds();

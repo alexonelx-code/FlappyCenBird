@@ -1,4 +1,4 @@
-const CACHE_NAME = 'minijuegos-cen-v23';
+const CACHE_NAME = 'minijuegos-cen-v24';
 const APP_FILES = [
   './',
   './index.html',
@@ -7,7 +7,7 @@ const APP_FILES = [
   './src/js/audio.js',
   './src/js/economy.js',
   './src/js/theme.js?v=23',
-  './src/js/ui.js?v=23',
+  './src/js/ui.js?v=24',
   './src/js/game.js?v=23',
   './assets/icons/flappy-cen.svg',
   './assets/icons/cengames-mark.svg',
@@ -22,6 +22,21 @@ const APP_FILES = [
   './assets/avatars/orbita.svg',
   './assets/avatars/flora.svg',
   './assets/avatars/neon.svg',
+  './assets/avatars/community/avatar-01.webp',
+  './assets/avatars/community/avatar-02.webp',
+  './assets/avatars/community/avatar-03.webp',
+  './assets/avatars/community/avatar-04.webp',
+  './assets/avatars/community/avatar-05.webp',
+  './assets/avatars/community/avatar-06.webp',
+  './assets/avatars/community/avatar-07.webp',
+  './assets/avatars/community/avatar-08.webp',
+  './assets/avatars/community/avatar-09.webp',
+  './assets/avatars/community/avatar-10.webp',
+  './assets/avatars/community/avatar-11.webp',
+  './assets/avatars/community/avatar-12.webp',
+  './assets/avatars/community/avatar-13.webp',
+  './assets/avatars/community/avatar-14.webp',
+  './assets/avatars/community/avatar-15.webp',
   './assets/images/personaje/cuerpo.png',
   './assets/images/personaje/brazo_i.png',
   './assets/images/personaje/brazo_d.png'
