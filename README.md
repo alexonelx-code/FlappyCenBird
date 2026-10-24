@@ -30,6 +30,8 @@ El sitio publicado es estático y está pensado para la capa gratuita de Azure S
 
 En la versión publicada, el nombre, la billetera, los avatares, personajes, récords y estadísticas se conservan en el almacenamiento del navegador. La tabla es de ese navegador; los datos no se sincronizan entre amigos, navegadores ni dispositivos. Si se borra el almacenamiento del navegador, también se puede borrar el progreso.
 
+El tema claro u oscuro se elige dentro del juego y se conserva en ese navegador. Si Samsung Internet tiene activado su modo que fuerza colores oscuros en todas las páginas, puede alterar el tema del sitio; hay que elegir el modo del sitio en los ajustes del navegador. Una página web no puede desactivar por su cuenta ese ajuste de Samsung.
+
 La API Python con SQLite es para desarrollo local. La base queda en `data/cengames.sqlite3`, que está excluida de Git. En desarrollo, la API permite usar un mismo almacenamiento local entre los perfiles de esa computadora. No se sube esa base a Azure ni se comparte por internet.
 
 ## Ejecutar en la computadora

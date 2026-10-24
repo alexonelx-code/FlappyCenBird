@@ -67,6 +67,8 @@
   const muteLabel = document.getElementById('muteLabel');
   const retryButton = document.getElementById('retryButton');
   const gameStatus = document.getElementById('gameStatus');
+  const appDialogs = [leaderboardDialog, profileDialog, storeDialog, gameMenuDialog];
+  const dialogCloseTimers = new WeakMap();
 
   function syncThemeControls() {
     if (!window.CenTheme) return;
@@ -239,13 +241,50 @@
     document.getElementById('game').focus({ preventScroll: true });
   }
 
-  function closeDialog(dialog) {
-    if (dialog.open && typeof dialog.close === 'function') dialog.close();
-    else dialog.removeAttribute('open');
+  function closeDialog(dialog, animate = true) {
+    if (!dialog.open || dialog.classList.contains('is-closing')) return;
+    if (!animate || window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) {
+      finishDialogClose(dialog);
+      return;
+    }
+    dialog.classList.add('is-closing');
+    dialogCloseTimers.set(dialog, window.setTimeout(() => finishDialogClose(dialog), 200));
   }
 
+  function finishDialogClose(dialog) {
+    const timer = dialogCloseTimers.get(dialog);
+    if (timer) window.clearTimeout(timer);
+    dialogCloseTimers.delete(dialog);
+    if (dialog.open && typeof dialog.close === 'function') dialog.close();
+    else dialog.removeAttribute('open');
+    dialog.classList.remove('is-closing');
+  }
+
+  function openDialog(dialog) {
+    const timer = dialogCloseTimers.get(dialog);
+    if (timer) window.clearTimeout(timer);
+    dialogCloseTimers.delete(dialog);
+    dialog.classList.remove('is-closing');
+    if (dialog.open) return;
+    if (typeof dialog.showModal === 'function') dialog.showModal();
+    else dialog.setAttribute('open', '');
+  }
+
+  appDialogs.forEach((dialog) => {
+    dialog.addEventListener('cancel', (event) => {
+      event.preventDefault();
+      closeDialog(dialog);
+    });
+    dialog.addEventListener('submit', (event) => {
+      if (event.target instanceof HTMLFormElement && event.target.method === 'dialog') {
+        event.preventDefault();
+        closeDialog(dialog);
+      }
+    }, true);
+  });
+
   function signOut() {
-    [profileDialog, gameMenuDialog, leaderboardDialog, storeDialog].forEach(closeDialog);
+    [profileDialog, gameMenuDialog, leaderboardDialog, storeDialog].forEach((dialog) => closeDialog(dialog, false));
     updatePlayerName('');
     character = 'friend';
     hasChosenCharacter = false;
@@ -278,7 +317,7 @@
 
   registrationBackButton.addEventListener('click', () => setScreen(registrationReturnScreen));
   editNameButton.addEventListener('click', () => {
-    closeDialog(profileDialog);
+    closeDialog(profileDialog, false);
     openRegistration('games', true);
   });
   exitGamesButton.addEventListener('click', signOut);
@@ -312,8 +351,7 @@
   });
 
   gameMenuButton.addEventListener('click', () => {
-    if (typeof gameMenuDialog.showModal === 'function') gameMenuDialog.showModal();
-    else gameMenuDialog.setAttribute('open', '');
+    openDialog(gameMenuDialog);
   });
 
   characterOptions.forEach((button) => {
@@ -335,13 +373,13 @@
   });
 
   backToGamesButton.addEventListener('click', () => {
-    closeDialog(gameMenuDialog);
+    closeDialog(gameMenuDialog, false);
     if (window.FlappyGame) window.FlappyGame.reset();
     setScreen('games');
   });
 
   changeCharacterButton.addEventListener('click', () => {
-    closeDialog(gameMenuDialog);
+    closeDialog(gameMenuDialog, false);
     openCharacterPicker('game');
   });
 
@@ -351,13 +389,12 @@
   let activeFlappyStoreTab = 'birds';
 
   function openStore(tab = 'avatars', flappyTab = activeFlappyStoreTab) {
-    if (gameMenuDialog.open) closeDialog(gameMenuDialog);
+    if (gameMenuDialog.open) closeDialog(gameMenuDialog, false);
     activeStoreTab = tab;
     activeFlappyStoreTab = flappyTab;
     storeFeedback.textContent = '';
     renderStore();
-    if (typeof storeDialog.showModal === 'function') storeDialog.showModal();
-    else storeDialog.setAttribute('open', '');
+    openDialog(storeDialog);
   }
 
   function makeStoreSection(title, detail, items) {
@@ -627,8 +664,7 @@
 
   profileButton.addEventListener('click', () => {
     renderProfile();
-    if (typeof profileDialog.showModal === 'function') profileDialog.showModal();
-    else profileDialog.setAttribute('open', '');
+    openDialog(profileDialog);
   });
 
   logoutButton.addEventListener('click', signOut);
@@ -729,8 +765,7 @@
 
   leaderboardButton.addEventListener('click', () => {
     renderLeaderboard();
-    if (typeof leaderboardDialog.showModal === 'function') leaderboardDialog.showModal();
-    else leaderboardDialog.setAttribute('open', '');
+    openDialog(leaderboardDialog);
   });
 
   function syncMuteButton(muted) {
