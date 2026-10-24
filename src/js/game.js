@@ -12,6 +12,16 @@
   const GRAVITY = 1500;
   const FLAP_V = -430;
   const SPAWN_DIST = 210;      // separación entre tuberías (px)
+  // Ritmo en px/s: sube con los puntos y alterna tramos de impulso y respiro.
+  const PACE = {
+    initialSpeed: 142,
+    speedPerPoint: 2.1,
+    maxRamp: 52,
+    breathingRange: 8,
+    breathingCycle: 10,
+    maxSpeed: 202,
+    transitionRate: 2.4
+  };
   const STORAGE_KEY = 'flappy_best_v1';
   const BEST_MIGRATION_KEY = 'flappy_best_migrated_v2';
   const gameScreen = document.getElementById('gameScreen');
@@ -99,6 +109,7 @@
   let shake = 0;
   let flash = 0;
   let scorePop = 0;
+  let currentPipeSpeed = PACE.initialSpeed;
 
   function emitState() {
     window.dispatchEvent(new CustomEvent('flappy:state', {
@@ -166,8 +177,17 @@
     pipes.push({ x: W + 40, gapY, gap, scored: false });
   }
 
-  function pipeSpeed() {
-    return 148 + Math.min(score * 1.7, 56);
+  function targetPipeSpeed() {
+    const ramp = Math.min(score * PACE.speedPerPoint, PACE.maxRamp);
+    const breathing = Math.sin((score / PACE.breathingCycle) * Math.PI * 2) * PACE.breathingRange;
+    return Math.max(PACE.initialSpeed, Math.min(PACE.maxSpeed, PACE.initialSpeed + ramp + breathing));
+  }
+
+  function pipeSpeed(dt) {
+    // Cambios suaves para que cada tramo acelere o dé un respiro sin saltos bruscos.
+    const blend = 1 - Math.exp(-PACE.transitionRate * dt);
+    currentPipeSpeed += (targetPipeSpeed() - currentPipeSpeed) * blend;
+    return currentPipeSpeed;
   }
 
   function resetGame() {
@@ -180,6 +200,7 @@
     shake = 0;
     flash = 0;
     scorePop = 0;
+    currentPipeSpeed = PACE.initialSpeed;
     spawnDist = 140;
     groundOff = 0;
     bird.y = 330;
@@ -205,6 +226,7 @@
     shake = 0;
     flash = 0;
     scorePop = 0;
+    currentPipeSpeed = PACE.initialSpeed;
     bird.y = 300;
     bird.vy = 0;
     bird.rot = 0;
@@ -310,7 +332,7 @@
   }
 
   function physics(dt) {
-    const speed = pipeSpeed();
+    const speed = pipeSpeed(dt);
     const profile = birdProfile();
 
     bird.vy = Math.min(bird.vy + GRAVITY * dt, 780);
