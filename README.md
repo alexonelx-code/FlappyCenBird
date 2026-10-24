@@ -12,6 +12,9 @@ No hay pagos reales. **Cent** es una moneda virtual sin valor fuera del juego: c
 - Una tabla con los mejores récords, el perfil del jugador y sus estadísticas.
 - Una billetera común de Cent dentro del perfil.
 - Cinco avatares gratuitos y cinco avatares que se pueden desbloquear con Cent.
+- La tienda está organizada en dos secciones principales: Avatares y Flappy BirdCen. Dentro de Flappy BirdCen se eligen pájaros o fondos; esos fondos cambian el escenario y las tuberías de ese minijuego.
+- Tema claro y oscuro para CenGames y las pantallas de sus minijuegos, guardado en el navegador.
+- Cinco fondos jugables para Flappy BirdCen: Costa dorada y Aurora polar son gratis; Órbita, Último sol y Neón urbano se desbloquean con Cent. Cada fondo cambia el cielo, el paisaje, el suelo y el diseño de las tuberías.
 - Una sección de tienda para futuros pájaros. Está en beta y sus cinco espacios quedan reservados hasta agregar los diseños.
 - Un modo con API Python y base SQLite para jugar y guardar perfiles en la computadora de desarrollo.
 
@@ -19,7 +22,7 @@ No hay pagos reales. **Cent** es una moneda virtual sin valor fuera del juego: c
 
 Cada punto de una partida de Flappy BirdCen otorga 1 Cent al terminarla. La API local evita volver a sumar la misma partida si se repite una solicitud. El saldo se descuenta en el momento de comprar un avatar.
 
-Los precios actuales de los cinco avatares de tienda son 40, 55, 70, 85 y 100 Cent. Los pájaros que se agregarán después no se pueden comprar todavía: sus diseños están en beta.
+Los precios actuales de los cinco avatares de tienda son 40, 55, 70, 85 y 100 Cent. Los fondos Órbita, Último sol y Neón urbano cuestan 60, 80 y 100 Cent. Los pájaros que se agregarán después no se pueden comprar todavía: sus diseños están en beta.
 
 ## Guardado y modo gratis
 
@@ -64,11 +67,12 @@ Para borrar la base de desarrollo, detén la API y elimina `data/cengames.sqlite
 index.html                  Pantallas y diálogos
 src/css/game.css            Diseño adaptable
 src/js/audio.js             Sonido y preferencia de silencio
-src/js/economy.js           Moneda Cent, tienda y guardado del navegador/API
+src/js/theme.js             Preferencia global de tema claro u oscuro
+src/js/economy.js           Moneda Cent, tienda de avatares y fondos, guardado del navegador/API
 src/js/ui.js                Navegación, perfil, selector y diálogos
 src/js/game.js              Física y dibujo de Flappy BirdCen en Canvas
-api/economy.py              Reglas y persistencia SQLite
-api/http_api.py             Rutas de perfil, partida, tabla y tienda
+api/economy.py              Reglas y persistencia SQLite de perfiles, partidas y fondos
+api/http_api.py             Rutas de perfil, partida, tabla y tiendas
 api/local_server.py         Servidor Python local para la API
 assets/                     Iconos, avatares y recursos del juego
 .github/dependabot.yml      Actualización periódica de GitHub Actions

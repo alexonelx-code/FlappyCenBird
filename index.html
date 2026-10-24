@@ -13,11 +13,16 @@
   <meta property="og:description" content="Entra, elige un minijuego y juega.">
   <link rel="icon" href="assets/icons/cengames-mark.svg" type="image/svg+xml">
   <link rel="manifest" href="manifest.webmanifest">
-  <link rel="stylesheet" href="src/css/game.css?v=19">
+  <script src="src/js/theme.js"></script>
+  <link rel="stylesheet" href="src/css/game.css?v=22">
   <title>CenGames</title>
 </head>
 <body>
   <main class="app-shell" id="appShell">
+    <button class="lobby-icon-button screen-theme-toggle theme-toggle-button" id="screenThemeToggleButton" type="button" aria-label="Cambiar a modo claro" title="Modo claro">
+      <svg class="theme-sun-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M4.93 4.93l1.42 1.42m11.3 11.3 1.42 1.42M2 12h2m16 0h2M4.93 19.07l1.42-1.42m11.3-11.3 1.42 1.42"/></svg>
+      <svg class="theme-moon-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.4 15.2A8.6 8.6 0 0 1 8.8 3.6 8.7 8.7 0 1 0 20.4 15.2Z"/></svg>
+    </button>
     <section class="portal-screen welcome-screen" id="welcomeScreen" aria-labelledby="welcomeTitle">
       <div class="welcome-panel">
         <div class="welcome-copy">
@@ -117,6 +122,10 @@
           <span>Cen<span class="logo-accent">Games</span></span>
         </div>
         <nav class="lobby-actions" aria-label="Jugador y navegación">
+          <button class="lobby-icon-button theme-toggle-button" id="themeToggleButton" type="button" aria-label="Cambiar a modo claro" title="Modo claro">
+            <svg class="theme-sun-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M4.93 4.93l1.42 1.42m11.3 11.3 1.42 1.42M2 12h2m16 0h2M4.93 19.07l1.42-1.42m11.3-11.3 1.42-1.42"/></svg>
+            <svg class="theme-moon-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.4 15.2A8.6 8.6 0 0 1 8.8 3.6 8.7 8.7 0 1 0 20.4 15.2Z"/></svg>
+          </button>
           <button class="shop-balance-button" id="shopButton" type="button" aria-label="Abrir tienda. Saldo: 0 Cent" title="Tienda" aria-haspopup="dialog" aria-controls="storeDialog">
             <span class="cent-coin" aria-hidden="true">¢</span>
             <span id="lobbyCentBalance">0</span>
@@ -234,7 +243,11 @@
     </div>
     <nav class="store-tabs" aria-label="Secciones de la tienda">
       <button class="store-tab" type="button" data-store-tab="avatars" aria-selected="true">Avatares</button>
-      <button class="store-tab" type="button" data-store-tab="birds" aria-selected="false">Flappy BirdCen</button>
+      <button class="store-tab" type="button" data-store-tab="flappy" aria-selected="false">Flappy BirdCen</button>
+    </nav>
+    <nav class="store-subtabs" id="flappyStoreTabs" aria-label="Tienda de Flappy BirdCen" hidden>
+      <button class="store-subtab" type="button" data-store-subtab="birds" aria-selected="true">Pájaros</button>
+      <button class="store-subtab" type="button" data-store-subtab="backgrounds" aria-selected="false">Fondos</button>
     </nav>
     <div class="store-view" id="storeCatalog" aria-live="polite"></div>
     <p class="store-feedback" id="storeFeedback" role="status" aria-live="polite"></p>
@@ -251,8 +264,7 @@
       </button>
       <button class="game-menu-action" id="gameShopButton" type="button" aria-haspopup="dialog" aria-controls="storeDialog">
         <svg class="game-menu-action-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h16l-1.2 11H5.2L4 9Z"/><path d="M8 9V6a4 4 0 0 1 8 0v3"/></svg>
-        Tienda de pájaros
-        <span class="menu-beta-tag">Beta</span>
+        Tienda Flappy BirdCen
       </button>
       <button class="game-menu-action game-menu-sound" id="menuMuteButton" type="button" aria-label="Silenciar sonido" aria-pressed="false">
         <svg class="game-menu-action-icon sound-icon" id="muteIcon" viewBox="0 0 24 24" aria-hidden="true">
@@ -261,6 +273,11 @@
           <path id="muteSlash" d="m16 9 5 6m0-6-5 6" hidden />
         </svg>
         <span id="muteLabel">Sonido activado</span>
+      </button>
+      <button class="game-menu-action" id="menuThemeButton" type="button" aria-label="Cambiar a modo claro">
+        <svg class="game-menu-action-icon theme-sun-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M4.93 4.93l1.42 1.42m11.3 11.3 1.42 1.42M2 12h2m16 0h2M4.93 19.07l1.42-1.42m11.3-11.3 1.42-1.42"/></svg>
+        <svg class="game-menu-action-icon theme-moon-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.4 15.2A8.6 8.6 0 0 1 8.8 3.6 8.7 8.7 0 1 0 20.4 15.2Z"/></svg>
+        <span id="menuThemeLabel">Modo claro</span>
       </button>
       <button class="game-menu-action" id="backToGamesButton" type="button">
         <svg class="game-menu-action-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-6v-7h-4v7H4a1 1 0 0 1-1-1z"/></svg>
@@ -272,7 +289,7 @@
 
   <script src="src/js/audio.js" defer></script>
   <script src="src/js/economy.js" defer></script>
-  <script src="src/js/ui.js?v=19" defer></script>
-  <script src="src/js/game.js?v=19" defer></script>
+  <script src="src/js/ui.js?v=22" defer></script>
+  <script src="src/js/game.js?v=22" defer></script>
 </body>
 </html>

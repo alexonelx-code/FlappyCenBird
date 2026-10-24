@@ -32,6 +32,8 @@ class Api:
                 return 200, {"profile": self.store.choose_avatar(player_id, name, payload.get("avatarId"))}
             if route == "/api/profile/character" and method == "POST":
                 return 200, {"profile": self.store.choose_bird(player_id, name, payload.get("characterId"))}
+            if route == "/api/profile/background" and method == "POST":
+                return 200, {"profile": self.store.choose_background(player_id, name, payload.get("backgroundId"))}
             if route == "/api/runs" and method == "POST":
                 result = self.store.record_run(
                     player_id, name, payload.get("runId"), payload.get("gameId"), payload.get("score")
@@ -39,6 +41,8 @@ class Api:
                 return 200, {"profile": result}
             if route == "/api/store/purchase" and method == "POST":
                 return 200, {"profile": self.store.purchase_avatar(player_id, name, payload.get("avatarId"))}
+            if route == "/api/store/background/purchase" and method == "POST":
+                return 200, {"profile": self.store.purchase_background(player_id, name, payload.get("backgroundId"))}
             return 404, {"error": "No se encontró esa ruta."}
         except ApiError as error:
             return error.status, {"error": error.message}

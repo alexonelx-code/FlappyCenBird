@@ -1,13 +1,14 @@
-const CACHE_NAME = 'minijuegos-cen-v19';
+const CACHE_NAME = 'minijuegos-cen-v22';
 const APP_FILES = [
   './',
   './index.html',
   './manifest.webmanifest',
-  './src/css/game.css?v=19',
+  './src/css/game.css?v=22',
   './src/js/audio.js',
   './src/js/economy.js',
-  './src/js/ui.js?v=19',
-  './src/js/game.js?v=19',
+  './src/js/theme.js',
+  './src/js/ui.js?v=22',
+  './src/js/game.js?v=22',
   './assets/icons/flappy-cen.svg',
   './assets/icons/cengames-mark.svg',
   './assets/icons/flappy-birdcen-logo.svg',
