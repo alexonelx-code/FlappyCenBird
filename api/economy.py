@@ -30,6 +30,8 @@ FREE_BACKGROUNDS = ("costa", "aurora")
 BACKGROUND_PRICES = {"cosmos": 60, "atardecer": 80, "neon": 100}
 MAX_RUN_SCORE = 10_000
 MAX_RUN_IDS = 2000
+FIGHTER_MATCH_REWARD = 5
+FIGHTER_WIN_BONUS = 2
 PLAYER_ID_PATTERN = re.compile(r"^[a-f0-9-]{36}$")
 
 
@@ -85,6 +87,11 @@ class Economy:
                     flappy_points INTEGER NOT NULL DEFAULT 0,
                     flappy_best INTEGER NOT NULL DEFAULT 0,
                     processed_runs TEXT NOT NULL DEFAULT '[]',
+                    fighter_matches INTEGER NOT NULL DEFAULT 0,
+                    fighter_wins INTEGER NOT NULL DEFAULT 0,
+                    fighter_draws INTEGER NOT NULL DEFAULT 0,
+                    fighter_earned INTEGER NOT NULL DEFAULT 0,
+                    processed_fighter_matches TEXT NOT NULL DEFAULT '[]',
                     updated_at INTEGER NOT NULL
                 )"""
             )
@@ -93,6 +100,16 @@ class Economy:
                 db.execute("ALTER TABLE players ADD COLUMN background_id TEXT NOT NULL DEFAULT 'costa'")
             if "owned_backgrounds" not in columns:
                 db.execute("ALTER TABLE players ADD COLUMN owned_backgrounds TEXT NOT NULL DEFAULT '[\"costa\", \"aurora\"]'")
+            fighter_columns = {
+                "fighter_matches": "INTEGER NOT NULL DEFAULT 0",
+                "fighter_wins": "INTEGER NOT NULL DEFAULT 0",
+                "fighter_draws": "INTEGER NOT NULL DEFAULT 0",
+                "fighter_earned": "INTEGER NOT NULL DEFAULT 0",
+                "processed_fighter_matches": "TEXT NOT NULL DEFAULT '[]'",
+            }
+            for column, definition in fighter_columns.items():
+                if column not in columns:
+                    db.execute(f"ALTER TABLE players ADD COLUMN {column} {definition}")
 
     @staticmethod
     def _identity(player_id: Any, name: Any) -> tuple[str, str]:
@@ -145,6 +162,12 @@ class Economy:
                 "plays": row["flappy_plays"],
                 "points": row["flappy_points"],
                 "best": row["flappy_best"],
+            },
+            "fighter": {
+                "plays": row["fighter_matches"],
+                "wins": row["fighter_wins"],
+                "draws": row["fighter_draws"],
+                "earned": row["fighter_earned"],
             },
             "updatedAt": row["updated_at"],
         }
@@ -221,6 +244,46 @@ class Economy:
             profile = self._to_profile(updated)
             profile["duplicateRun"] = False
             profile["earnedCents"] = points
+            return profile
+
+    def record_fighter_match(self, player_id: Any, name: Any, match_id: Any, result: Any) -> dict[str, Any]:
+        identity, player_name = self._identity(player_id, name)
+        try:
+            match_key = str(UUID(str(match_id)))
+        except (ValueError, TypeError, AttributeError) as error:
+            raise ApiError(400, "El combate no tiene un identificador válido.") from error
+        outcome = str(result or "")
+        if outcome not in {"player", "cpu", "draw"}:
+            raise ApiError(400, "El resultado del combate no es válido.")
+        award = FIGHTER_MATCH_REWARD + (FIGHTER_WIN_BONUS if outcome == "player" else 0)
+
+        with closing(self._connect()) as db:
+            db.execute("BEGIN IMMEDIATE")
+            row = self._ensure(db, identity, player_name)
+            processed = json.loads(row["processed_fighter_matches"])
+            if match_key in processed:
+                db.commit()
+                profile = self._to_profile(row)
+                profile["duplicateFighterMatch"] = True
+                profile["earnedCents"] = 0
+                return profile
+
+            processed = (processed + [match_key])[-MAX_RUN_IDS:]
+            now = int(time.time() * 1000)
+            db.execute(
+                """UPDATE players SET
+                    name = ?, cents = cents + ?, fighter_matches = fighter_matches + 1,
+                    fighter_wins = fighter_wins + ?, fighter_draws = fighter_draws + ?,
+                    fighter_earned = fighter_earned + ?, processed_fighter_matches = ?, updated_at = ?
+                    WHERE id = ?""",
+                (player_name, award, int(outcome == "player"), int(outcome == "draw"), award,
+                 json.dumps(processed), now, identity),
+            )
+            updated = db.execute("SELECT * FROM players WHERE id = ?", (identity,)).fetchone()
+            db.commit()
+            profile = self._to_profile(updated)
+            profile["duplicateFighterMatch"] = False
+            profile["earnedCents"] = award
             return profile
 
     def purchase_avatar(self, player_id: Any, name: Any, avatar_id: Any) -> dict[str, Any]:

@@ -12,7 +12,9 @@
     registration: document.getElementById('registrationScreen'),
     character: document.getElementById('characterScreen'),
     games: document.getElementById('gamesScreen'),
-    game: document.getElementById('gameScreen')
+    game: document.getElementById('gameScreen'),
+    fighterSetup: document.getElementById('fighterSetupScreen'),
+    fighterGame: document.getElementById('fighterGameScreen')
   };
   const startButton = document.getElementById('startButton');
   const registrationBackButton = document.getElementById('registrationBackButton');
@@ -32,6 +34,9 @@
   const profileFlappyPlays = document.getElementById('profileFlappyPlays');
   const profileFlappyBest = document.getElementById('profileFlappyBest');
   const profileFlappyPoints = document.getElementById('profileFlappyPoints');
+  const profileFighterPlays = document.getElementById('profileFighterPlays');
+  const profileFighterWins = document.getElementById('profileFighterWins');
+  const profileFighterEarned = document.getElementById('profileFighterEarned');
   const lobbyCentBalance = document.getElementById('lobbyCentBalance');
   const profileCentBalance = document.getElementById('profileCentBalance');
   const storeDialog = document.getElementById('storeDialog');
@@ -41,6 +46,7 @@
   const editNameButton = document.getElementById('editNameButton');
   const exitGamesButton = document.getElementById('exitGamesButton');
   const flappyCard = document.getElementById('flappyCard');
+  const fighterCard = document.getElementById('fighterCard');
   const gameMenuButton = document.getElementById('gameMenuButton');
   const gameMenuDialog = document.getElementById('gameMenuDialog');
   const shopButton = document.getElementById('shopButton');
@@ -175,8 +181,8 @@
     Object.entries(screens).forEach(([screenName, element]) => {
       element.hidden = screenName !== name;
     });
-    screenThemeToggleButton.hidden = name === 'games' || name === 'game';
-    document.title = name === 'game' ? 'Flappy BirdCen | CenGames' : 'CenGames';
+    screenThemeToggleButton.hidden = ['games', 'game', 'fighterSetup', 'fighterGame'].includes(name);
+    document.title = name === 'game' ? 'Flappy BirdCen | CenGames' : name.startsWith('fighter') ? 'Cen Fighters | CenGames' : 'CenGames';
     window.scrollTo(0, 0);
     const focusTarget = name === 'welcome'
       ? document.getElementById('welcomeTitle')
@@ -186,7 +192,11 @@
           ? characterTitle
           : name === 'game'
             ? document.getElementById('game')
-            : null;
+            : name === 'fighterSetup'
+              ? document.getElementById('fighterSetupTitle')
+              : name === 'fighterGame'
+                ? document.getElementById('fighterCanvas')
+                : null;
     if (focusTarget) focusTarget.focus({ preventScroll: true });
   }
 
@@ -354,6 +364,14 @@
     else launchFlappy();
   });
 
+  fighterCard.addEventListener('click', () => {
+    if (!playerName) {
+      openRegistration('welcome');
+      return;
+    }
+    window.dispatchEvent(new CustomEvent('cengames:fighter-open'));
+  });
+
   gameMenuButton.addEventListener('click', () => {
     openDialog(gameMenuDialog);
   });
@@ -449,6 +467,7 @@
     const economyProfile = window.CenEconomy && window.CenEconomy.getProfile();
     const storedStats = readProfileStats();
     const remoteStats = economyProfile && economyProfile.flappy ? economyProfile.flappy : {};
+    const fighterStats = economyProfile && economyProfile.fighter ? economyProfile.fighter : {};
     const stats = {
       plays: Math.max(Number(storedStats.plays) || 0, Number(remoteStats.plays) || 0),
       points: Math.max(Number(storedStats.points) || 0, Number(remoteStats.points) || 0),
@@ -461,6 +480,9 @@
     profileFlappyPlays.textContent = String(stats.plays);
     profileFlappyBest.textContent = String(Math.max(stats.best, liveBest));
     profileFlappyPoints.textContent = String(stats.points);
+    profileFighterPlays.textContent = String(Math.max(0, Number(fighterStats.plays) || 0));
+    profileFighterWins.textContent = String(Math.max(0, Number(fighterStats.wins) || 0));
+    profileFighterEarned.textContent = String(Math.max(0, Number(fighterStats.earned) || 0));
     if (economyProfile) profileCentBalance.textContent = String(Math.max(0, Number(economyProfile.cents) || 0));
   }
 
@@ -607,6 +629,13 @@
     getPlayerName() { return playerName || 'Jugador'; },
     hasPlayerName() { return Boolean(playerName); },
     getCharacter() { return character; }
+  });
+
+  window.CenGamesUI = Object.freeze({
+    showScreen: setScreen,
+    getPlayerName() { return playerName || 'Jugador'; },
+    getProfileId() { return window.CenEconomy.getProfile()?.id || ''; },
+    announce
   });
 
   lobbyName.textContent = playerName || 'Jugador';

@@ -82,8 +82,8 @@
     if (!available.length) return null;
 
     const byName = Object.fromEntries(available);
-    const light = byName.light || available[0];
-    const heavy = byName.heavy || available[available.length - 1];
+    const light = byName.light ? ['light', byName.light] : available[0];
+    const heavy = byName.heavy ? ['heavy', byName.heavy] : available[available.length - 1];
     const profile = DIFFICULTIES[difficulty];
     const canPunish = opponent.hitstunFrames > heavy[1].startupFrames + 1;
     if (canPunish && draw(controller) < profile.heavyChance) return heavy[0];

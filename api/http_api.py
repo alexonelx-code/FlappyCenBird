@@ -39,6 +39,11 @@ class Api:
                     player_id, name, payload.get("runId"), payload.get("gameId"), payload.get("score")
                 )
                 return 200, {"profile": result}
+            if route == "/api/fighter/matches" and method == "POST":
+                result = self.store.record_fighter_match(
+                    player_id, name, payload.get("matchId"), payload.get("result")
+                )
+                return 200, {"profile": result}
             if route == "/api/store/purchase" and method == "POST":
                 return 200, {"profile": self.store.purchase_avatar(player_id, name, payload.get("avatarId"))}
             if route == "/api/store/background/purchase" and method == "POST":

@@ -15,7 +15,7 @@
   <link rel="icon" href="assets/icons/cengames-mark.svg" type="image/svg+xml">
   <link rel="manifest" href="manifest.webmanifest">
   <script src="src/js/theme.js?v=23"></script>
-  <link rel="stylesheet" href="src/css/game.css?v=24">
+  <link rel="stylesheet" href="src/css/game.css?v=33">
   <title>CenGames</title>
 </head>
 <body>
@@ -157,12 +157,13 @@
           </div>
         </button>
 
-        <article class="game-card coming-card" aria-label="Próximamente">
-          <div class="coming-art" aria-hidden="true"><span>+</span></div>
+        <button class="game-card fighter-card" id="fighterCard" type="button" aria-label="Jugar a Cen Fighters">
+          <div class="fighter-card-art" aria-hidden="true"><span class="fighter-card-orbit"></span><span class="fighter-card-silhouette fighter-card-left">✦</span><span class="fighter-card-silhouette fighter-card-right">✦</span><span class="fighter-card-vs">VS</span></div>
           <div class="card-copy">
-            <h2>Próximamente</h2>
+            <h2>Cen Fighters</h2>
+            <span class="card-action">Jugar <span aria-hidden="true">→</span></span>
           </div>
-        </article>
+        </button>
 
         <article class="game-card coming-card" aria-label="Próximamente">
           <div class="coming-art coming-art-alt" aria-hidden="true"><span>✦</span></div>
@@ -195,6 +196,53 @@
 
         <p class="sr-only" id="gameStatus" role="status" aria-live="polite" aria-atomic="true">Toca para jugar. También puedes usar Espacio, flecha arriba o W.</p>
       </div>
+    </section>
+
+    <section class="fighter-setup-screen" id="fighterSetupScreen" aria-labelledby="fighterSetupTitle" hidden>
+      <header class="fighter-app-header">
+        <button class="fighter-back-button" id="fighterSetupBackButton" type="button">← <span>Minijuegos</span></button>
+        <span class="fighter-brand">CEN <strong>FIGHTERS</strong></span>
+        <span class="fighter-wallet"><span aria-hidden="true">¢</span><strong id="fighterSetupBalance">0</strong></span>
+      </header>
+      <div class="fighter-setup-content">
+        <p class="screen-kicker">COMBATE LOCAL · CONTRA CPU</p>
+        <h1 id="fighterSetupTitle" tabindex="-1">Arma tu equipo</h1>
+        <p class="fighter-setup-lede">Elige tres peleadores distintos y decide quién entra primero.</p>
+        <div class="fighter-selection-summary" id="fighterSelectionSummary" role="status" aria-live="polite">0 de 3 seleccionados</div>
+        <div class="fighter-roster-grid" id="fighterRoster" role="group" aria-label="Roster de peleadores"></div>
+        <fieldset class="fighter-difficulty-fieldset">
+          <legend>Dificultad de la CPU</legend>
+          <label><input type="radio" name="fighterDifficulty" value="muy-facil"><span><strong>Muy fácil</strong><small>Para aprender los controles</small></span></label>
+          <label><input type="radio" name="fighterDifficulty" value="normal" checked><span><strong>Normal</strong><small>Un reto equilibrado</small></span></label>
+          <label><input type="radio" name="fighterDifficulty" value="dificil"><span><strong>Difícil</strong><small>Reacciona y castiga mejor</small></span></label>
+        </fieldset>
+        <div class="fighter-learning-note"><span aria-hidden="true">✦</span><span>La CPU ajusta su estrategia con las partidas completas de este perfil. Ese aprendizaje se guarda en este dispositivo.</span></div>
+        <p class="fighter-reward-note">5 Cent por completar el combate · +2 Cent por ganar · abandonar no paga.</p>
+        <div class="fighter-setup-actions">
+          <button class="fighter-secondary-button" id="resetFighterLearningButton" type="button">Reiniciar aprendizaje</button>
+          <button class="fighter-primary-button" id="startFighterMatchButton" type="button" disabled>Empezar combate <span aria-hidden="true">→</span></button>
+        </div>
+      </div>
+    </section>
+
+    <section class="fighter-game-screen" id="fighterGameScreen" aria-label="Combate de Cen Fighters" hidden>
+      <header class="fighter-match-header">
+        <button class="fighter-back-button" id="fighterPauseButton" type="button" aria-label="Pausar el combate">Ⅱ <span>Pausar</span></button>
+        <div class="fighter-match-title"><span class="fighter-brand">CEN <strong>FIGHTERS</strong></span><span id="fighterBoutLabel">Combate 1 de 5</span></div>
+        <div class="fighter-match-clock" id="fighterClock" aria-label="Tiempo restante">40</div>
+      </header>
+      <div class="fighter-match-hud" aria-label="Estado de los equipos">
+        <div class="fighter-team-hud fighter-player-hud"><div class="fighter-hud-heading"><strong id="fighterPlayerName">Jugador</strong><span id="fighterPlayerActive">Peleador 01</span></div><div class="fighter-health-track"><span id="fighterPlayerHealth"></span></div><div class="fighter-reserves" id="fighterPlayerReserves" aria-label="Reservas del jugador"></div></div>
+        <div class="fighter-hud-center"><span>EQUIPOS</span><strong>3v3</strong></div>
+        <div class="fighter-team-hud fighter-cpu-hud"><div class="fighter-hud-heading"><strong>CPU</strong><span id="fighterCpuActive">Peleador 04</span></div><div class="fighter-health-track"><span id="fighterCpuHealth"></span></div><div class="fighter-reserves" id="fighterCpuReserves" aria-label="Reservas de la CPU"></div></div>
+      </div>
+      <div class="fighter-arena-shell"><canvas id="fighterCanvas" width="960" height="540" tabindex="0" role="img" aria-label="Arena de combate. Usa A y D o las flechas para moverte, W o Espacio para saltar, J para bloquear, U para golpe ligero e I para golpe fuerte.">Este navegador no soporta Canvas.</canvas><p class="sr-only" id="fighterStatus" role="status" aria-live="polite" aria-atomic="true">El combate está listo.</p></div>
+      <div class="fighter-controls-row"><p>← → mover · ↑ saltar · ↓ agacharse · J bloquear · U ligero · I fuerte</p><div class="fighter-touch-controls" aria-label="Controles táctiles">
+        <div class="fighter-direction-pad"><button type="button" data-fighter-hold="left" aria-label="Mover a la izquierda">←</button><button type="button" data-fighter-hold="jump" aria-label="Saltar">↑</button><button type="button" data-fighter-hold="right" aria-label="Mover a la derecha">→</button></div>
+        <div class="fighter-attack-pad"><button type="button" data-fighter-hold="crouch" aria-label="Agacharse">AGA</button><button type="button" data-fighter-hold="block" aria-label="Bloquear">DEF</button><button type="button" data-fighter-attack="light" aria-label="Golpe ligero">LIG</button><button type="button" data-fighter-attack="heavy" aria-label="Golpe fuerte">FUE</button></div>
+      </div></div>
+      <div class="fighter-modal-overlay" id="fighterPauseOverlay" hidden><section class="fighter-modal-card" role="dialog" aria-modal="true" aria-labelledby="fighterPauseTitle"><p class="screen-kicker">COMBATE EN PAUSA</p><h2 id="fighterPauseTitle">Tómate un respiro</h2><p>Si abandonas, este combate no entrega Cent.</p><button class="fighter-primary-button" id="resumeFighterButton" type="button">Seguir jugando</button><button class="fighter-secondary-button" id="abandonFighterButton" type="button">Rendirse y volver</button></section></div>
+      <div class="fighter-modal-overlay" id="fighterResultOverlay" hidden><section class="fighter-modal-card" role="status" aria-live="polite" aria-labelledby="fighterResultTitle"><p class="screen-kicker">FIN DEL COMBATE</p><h2 id="fighterResultTitle">Resultado</h2><p id="fighterResultCopy"></p><div class="fighter-result-reward" id="fighterResultReward"></div><button class="fighter-primary-button" id="fighterResultContinueButton" type="button">Volver a minijuegos</button></section></div>
     </section>
   </main>
 
@@ -229,7 +277,10 @@
           <div><dt>Cent ganados</dt><dd id="profileFlappyPoints">0</dd></div>
         </dl>
       </article>
-      <article class="profile-upcoming-game"><span aria-hidden="true">✦</span><div><h4>Próximos minijuegos</h4><p>Sus estadísticas aparecerán aquí cuando estén disponibles.</p></div></article>
+      <article class="profile-game-stats fighter-profile-stats">
+        <div class="profile-game-heading"><span class="profile-game-dot fighter-profile-dot" aria-hidden="true">C</span><h4>Cen Fighters</h4></div>
+        <dl class="profile-stat-grid"><div><dt>Combates</dt><dd id="profileFighterPlays">0</dd></div><div><dt>Victorias</dt><dd id="profileFighterWins">0</dd></div><div><dt>Cent ganados</dt><dd id="profileFighterEarned">0</dd></div></dl>
+      </article>
     </section>
     <div class="profile-dialog-actions">
       <button class="profile-switch-button" id="editNameButton" type="button">Cambiar jugador</button>
@@ -289,14 +340,22 @@
   </dialog>
 
   <script src="src/js/audio.js" defer></script>
-  <script src="src/js/economy.js?v=28" defer></script>
+  <script src="src/js/economy.js?v=30" defer></script>
   <script src="src/js/store-ui.js?v=28" defer></script>
-  <script src="src/js/ui.js?v=28" defer></script>
+  <script src="src/js/ui.js?v=30" defer></script>
   <script src="src/js/game-config.js?v=29" defer></script>
   <script src="src/js/game-pace.js?v=29" defer></script>
   <script src="src/js/game-scene.js?v=29" defer></script>
   <script src="src/js/game-character.js?v=28" defer></script>
   <script src="src/js/game-overlay.js?v=28" defer></script>
   <script src="src/js/game.js?v=29" defer></script>
+  <script src="src/js/fighter/config.js" defer></script>
+  <script src="src/js/fighter/engine.js" defer></script>
+  <script src="src/js/fighter/random.js" defer></script>
+  <script src="src/js/fighter/team-match.js" defer></script>
+  <script src="src/js/fighter/cpu.js" defer></script>
+  <script src="src/js/fighter/learning.js" defer></script>
+  <script src="src/js/fighter/renderer.js" defer></script>
+  <script src="src/js/fighter/game.js" defer></script>
 </body>
 </html>
