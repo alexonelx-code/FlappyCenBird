@@ -13,7 +13,7 @@
   <meta property="og:description" content="Entra, elige un minijuego y juega.">
   <link rel="icon" href="assets/icons/cengames-mark.svg" type="image/svg+xml">
   <link rel="manifest" href="manifest.webmanifest">
-  <link rel="stylesheet" href="src/css/game.css">
+  <link rel="stylesheet" href="src/css/game.css?v=19">
   <title>CenGames</title>
 </head>
 <body>
@@ -83,7 +83,6 @@
         </button>
         <div class="character-heading">
           <h1 id="characterTitle" tabindex="-1">Elige tu personaje</h1>
-          <p id="characterDescription" hidden></p>
         </div>
         <div class="character-options" role="group" aria-label="Personajes disponibles">
           <button class="character-option" type="button" data-character="friend" aria-pressed="false">
@@ -117,24 +116,19 @@
           <img class="brand-mark" src="assets/icons/cengames-mark.svg" alt="" aria-hidden="true">
           <span>Cen<span class="logo-accent">Games</span></span>
         </div>
-        <nav class="lobby-actions" aria-label="Perfil y navegación">
-          <div class="cent-balance" aria-label="Saldo de Cent">
+        <nav class="lobby-actions" aria-label="Jugador y navegación">
+          <button class="shop-balance-button" id="shopButton" type="button" aria-label="Abrir tienda. Saldo: 0 Cent" title="Tienda" aria-haspopup="dialog" aria-controls="storeDialog">
             <span class="cent-coin" aria-hidden="true">¢</span>
             <span id="lobbyCentBalance">0</span>
-            <span class="cent-label">Cent</span>
-          </div>
-          <button class="lobby-icon-button shop-icon-button" id="shopButton" type="button" aria-label="Abrir tienda" title="Tienda" aria-haspopup="dialog" aria-controls="storeDialog">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h16l-1.2 11H5.2L4 9Z"/><path d="M8 9V6a4 4 0 0 1 8 0v3"/><path d="M9 13v.5m6-.5v.5"/></svg>
+            <span class="shop-balance-label">Cent</span>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h16l-1.2 11H5.2L4 9Z"/><path d="M8 9V6a4 4 0 0 1 8 0v3"/></svg>
           </button>
           <button class="profile-button" id="profileButton" type="button" aria-haspopup="dialog" aria-controls="profileDialog">
             <img class="profile-button-avatar" id="lobbyAvatar" src="assets/avatars/sol.svg" alt="">
             <span id="lobbyName">Jugador</span>
           </button>
-          <button class="lobby-icon-button" id="editNameButton" type="button" aria-label="Cambiar jugador" title="Cambiar jugador">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="10" r="2.5"/><path d="M8.3 19c.4-2.4 1.6-3.7 3.7-3.7s3.3 1.3 3.7 3.7M4 8a8 8 0 0 1 13-5l2 2m0-4v4h-4M20 16a8 8 0 0 1-13 5l-2-2m0 4v-4h4"/></svg>
-          </button>
-          <button class="lobby-icon-button home-icon-button" id="exitGamesButton" type="button" aria-label="Volver al inicio" title="Volver al inicio">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-6v-7h-4v7H4a1 1 0 0 1-1-1z"/></svg>
+          <button class="lobby-icon-button exit-icon-button" id="exitGamesButton" type="button" aria-label="Salir al inicio" title="Salir">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 5H5v14h5"/><path d="M4 12h12m-5-5 5 5-5 5"/><path d="M15 5h4v14h-4"/></svg>
           </button>
         </nav>
       </header>
@@ -186,7 +180,7 @@
         </nav>
 
         <div class="game-actions" aria-label="Acciones de la partida">
-          <button class="action-button retry-button" id="retryButton" type="button" hidden>Revancha</button>
+          <button class="action-button retry-button" id="retryButton" type="button" hidden>Volver a intentarlo</button>
         </div>
 
         <p class="sr-only" id="gameStatus" role="status" aria-live="polite" aria-atomic="true">Toca para jugar. También puedes usar Espacio, flecha arriba o W.</p>
@@ -210,27 +204,26 @@
     <div class="profile-dialog-heading">
       <div class="profile-heading-identity">
         <span class="profile-avatar" aria-hidden="true"><img id="profileAvatar" src="assets/avatars/sol.svg" alt=""></span>
-        <div><p class="screen-kicker">CENGAMES</p><h2 id="profileTitle">Mi perfil</h2></div>
+        <div class="profile-heading-copy"><h2 id="profileTitle">Mi perfil</h2><p>Jugando como <strong id="profileName">Jugador</strong></p></div>
       </div>
       <form method="dialog"><button class="dialog-close" type="submit" aria-label="Cerrar perfil">×</button></form>
     </div>
-    <p class="profile-name-line">Jugando como <strong id="profileName">Jugador</strong><span class="profile-cent-balance"><span aria-hidden="true">¢</span><strong id="profileCentBalance">0</strong> Cent</span></p>
+    <div class="profile-wallet-row"><span>Saldo disponible</span><span class="profile-cent-balance"><span aria-hidden="true">¢</span><strong id="profileCentBalance">0</strong> Cent</span></div>
     <section class="profile-stats-section" aria-labelledby="profileStatsTitle">
       <h3 id="profileStatsTitle">Estadísticas por juego</h3>
       <article class="profile-game-stats">
         <div class="profile-game-heading"><span class="profile-game-dot" aria-hidden="true">F</span><h4>Flappy BirdCen</h4></div>
         <dl class="profile-stat-grid">
-          <div><dt>Partidas nuevas</dt><dd id="profileFlappyPlays">0</dd></div>
+          <div><dt>Partidas</dt><dd id="profileFlappyPlays">0</dd></div>
           <div><dt>Récord</dt><dd id="profileFlappyBest">0</dd></div>
           <div><dt>Cent ganados</dt><dd id="profileFlappyPoints">0</dd></div>
         </dl>
-        <p class="profile-medal-note">Cada punto de Flappy BirdCen suma 1 Cent a tu saldo.</p>
       </article>
       <article class="profile-upcoming-game"><span aria-hidden="true">✦</span><div><h4>Próximos minijuegos</h4><p>Sus estadísticas aparecerán aquí cuando estén disponibles.</p></div></article>
     </section>
     <div class="profile-dialog-actions">
+      <button class="profile-switch-button" id="editNameButton" type="button">Cambiar jugador</button>
       <button class="profile-logout-button" id="logoutButton" type="button">Salir del perfil</button>
-      <form method="dialog"><button class="profile-close-button" type="submit">Listo</button></form>
     </div>
   </dialog>
 
@@ -279,7 +272,7 @@
 
   <script src="src/js/audio.js" defer></script>
   <script src="src/js/economy.js" defer></script>
-  <script src="src/js/ui.js" defer></script>
-  <script src="src/js/game.js" defer></script>
+  <script src="src/js/ui.js?v=19" defer></script>
+  <script src="src/js/game.js?v=19" defer></script>
 </body>
 </html>

@@ -420,7 +420,7 @@
   }
 
   function text(str, x, y, size, fill, stroke, lw, align) {
-    ctx.font = 'bold ' + size + 'px "Trebuchet MS", "Segoe UI", sans-serif';
+    ctx.font = '700 ' + size + 'px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
     ctx.textAlign = align || 'center';
     ctx.textBaseline = 'middle';
     if (stroke && lw) {
@@ -957,81 +957,72 @@
   }
 
   function drawGameOver() {
-    const px = 28, py = 145, pw = 304, ph = 315;
+    const px = 22, py = 154, pw = 316, ph = 324;
 
     ctx.save();
-    ctx.shadowColor = 'rgba(8, 23, 30, .36)';
-    ctx.shadowBlur = 16;
-    ctx.shadowOffsetY = 6;
-    ctx.fillStyle = '#132e37';
-    rr(px, py, pw, ph, 16);
+    ctx.shadowColor = 'rgba(4, 16, 22, .3)';
+    ctx.shadowBlur = 24;
+    ctx.shadowOffsetY = 8;
+    const glass = ctx.createLinearGradient(px, py, px + pw, py + ph);
+    glass.addColorStop(0, 'rgba(20, 53, 64, .8)');
+    glass.addColorStop(1, 'rgba(10, 31, 40, .76)');
+    ctx.fillStyle = glass;
+    rr(px, py, pw, ph, 24);
     ctx.fill();
     ctx.restore();
 
-    ctx.strokeStyle = '#edbd78';
-    ctx.lineWidth = 2;
-    rr(px, py, pw, ph, 16);
+    ctx.strokeStyle = 'rgba(255, 240, 209, .65)';
+    ctx.lineWidth = 1.5;
+    rr(px, py, pw, ph, 24);
     ctx.stroke();
 
-    ctx.fillStyle = 'rgba(242, 184, 111, .12)';
-    ctx.beginPath();
-    ctx.arc(W / 2, py + 34, 19, 0, Math.PI * 2);
-    ctx.fill();
-    starPath(W / 2, py + 34, 5, 9, 4);
-    ctx.fillStyle = '#f2b86f';
-    ctx.fill();
-    text(score > 0 ? 'VUELO TERMINADO' : 'CASI, CASI', W / 2, py + 68, 20, '#fff0d1');
-    text(newBest ? '¡NUEVO RÉCORD!' : 'VUELVE A INTENTARLO', W / 2, py + 89, 10, '#b8c7bd');
-
-    // El resultado y la recompensa comparten una tarjeta para que cada vuelo se lea de un vistazo.
-    ctx.fillStyle = '#203d43';
-    rr(48, 244, 170, 58, 11);
-    ctx.fill();
-    ctx.strokeStyle = 'rgba(244, 201, 142, .3)';
+    ctx.strokeStyle = 'rgba(255, 255, 255, .13)';
     ctx.lineWidth = 1;
+    rr(px + 4, py + 4, pw - 8, ph - 8, 21);
     ctx.stroke();
-    text('PUNTOS', 62, 263, 10, '#f2c78d', null, 0, 'left');
-    text(String(score), 202, 276, 29, '#fff0d1', null, 0, 'right');
 
-    ctx.fillStyle = '#203d43';
-    rr(48, 311, 170, 48, 10);
-    ctx.fill();
-    ctx.strokeStyle = 'rgba(244, 201, 142, .3)';
-    ctx.lineWidth = 1;
-    ctx.stroke();
-    text('RÉCORD', 62, 340, 10, newBest ? '#f2b86f' : '#d0b991', null, 0, 'left');
-    text(String(best), 202, 343, 20, '#fff0d1', null, 0, 'right');
+    text('VUELO TERMINADO', W / 2, 198, 18, '#fff0d1');
+    text(newBest ? '¡RÉCORD PERSONAL!' : score > 0 ? 'SIGUE ALETEANDO' : 'UN ALETEO MÁS', W / 2, 222, 10, '#c1d1c8');
 
-    ctx.fillStyle = 'rgba(242, 184, 111, .075)';
-    rr(232, 244, 80, 115, 14);
-    ctx.fill();
-    drawMedal(272, 294, 34, score);
-    text(score >= 40 ? 'LEYENDA' : score >= 20 ? 'ORO' : score >= 10 ? 'PLATA' : score >= 5 ? 'BRONCE' : 'META: 5', 272, 347, 9, '#d7c49f');
-
-    const rewardY = 372;
-    ctx.fillStyle = 'rgba(242, 184, 111, .15)';
-    rr(48, rewardY, 264, 32, 10);
-    ctx.fill();
-    ctx.strokeStyle = 'rgba(242, 184, 111, .28)';
-    ctx.lineWidth = 1;
-    rr(48, rewardY, 264, 32, 10);
-    ctx.stroke();
-    text(`¢  +${score} CENT`, W / 2, rewardY + 16, 12, '#ffd38f');
-
-    const buttons = window.matchMedia('(orientation: landscape) and (max-height: 520px)').matches ? [] : [
-      { y: 418, fill: '#f2b86f', label: 'REVANCHA', color: '#243d43' }
-    ];
-    for (const button of buttons) {
-      const bx = W / 2 - 120, bw = 240, bh = 44;
-      ctx.fillStyle = button.fill;
-      rr(bx, button.y, bw, bh, 15);
+    const statCard = (y, label, value) => {
+      ctx.fillStyle = 'rgba(239, 247, 242, .075)';
+      rr(44, y, 166, 56, 14);
       ctx.fill();
-      ctx.strokeStyle = button.fill === '#f2b86f' ? 'rgba(255, 240, 209, .58)' : 'rgba(255, 240, 209, .3)';
+      ctx.strokeStyle = 'rgba(239, 247, 242, .2)';
       ctx.lineWidth = 1;
-      rr(bx + 1, button.y + 1, bw - 2, bh - 2, 14);
+      rr(44, y, 166, 56, 14);
       ctx.stroke();
-      text(button.label, W / 2, button.y + bh / 2 + 1, 14, button.color);
-    }
+      text(label, 58, y + 19, 10, '#c6d4cb', null, 0, 'left');
+      text(String(value), 194, y + 38, 23, '#fff0d1', null, 0, 'right');
+    };
+    statCard(242, 'PUNTOS', score);
+    statCard(305, 'RÉCORD', best);
+
+    ctx.fillStyle = 'rgba(255, 255, 255, .045)';
+    rr(222, 242, 94, 119, 17);
+    ctx.fill();
+    drawMedal(269, 286, 27, score);
+    text(score >= 40 ? 'LEYENDA' : score >= 20 ? 'ORO' : score >= 10 ? 'PLATA' : score >= 5 ? 'BRONCE' : 'META: 5', 269, 343, 8, '#d7c49f');
+
+    const rewardY = 373;
+    ctx.fillStyle = 'rgba(242, 184, 111, .12)';
+    rr(44, rewardY, 272, 30, 12);
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(242, 184, 111, .3)';
+    ctx.lineWidth = 1;
+    rr(44, rewardY, 272, 30, 12);
+    ctx.stroke();
+    text(`¢  +${score} CENT`, W / 2, rewardY + 15, 12, '#ffd38f');
+
+    const bx = W / 2 - 120, by = 418, bw = 240, bh = 46;
+    ctx.fillStyle = '#f2b86f';
+    rr(bx, by, bw, bh, 15);
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(255, 240, 209, .65)';
+    ctx.lineWidth = 1;
+    rr(bx + 1, by + 1, bw - 2, bh - 2, 14);
+    ctx.stroke();
+    text('VOLVER A INTENTARLO', W / 2, by + bh / 2 + 1, 13, '#243d43');
   }
 
   window.FlappyGame = Object.freeze({

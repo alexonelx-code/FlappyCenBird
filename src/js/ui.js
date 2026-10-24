@@ -23,7 +23,6 @@
   const nicknameInput = document.getElementById('nicknameInput');
   const characterBackButton = document.getElementById('characterBackButton');
   const characterTitle = document.getElementById('characterTitle');
-  const characterDescription = document.getElementById('characterDescription');
   const characterOptions = [...document.querySelectorAll('[data-character]')];
   const characterConfirmButton = document.getElementById('characterConfirmButton');
   const lobbyName = document.getElementById('lobbyName');
@@ -137,7 +136,8 @@
     profileAvatar.src = avatar.image;
     profileAvatar.alt = '';
     lobbyAvatar.alt = '';
-    profileButton.setAttribute('aria-label', `Mi perfil: ${playerName || 'Jugador'}, ${cents} Cent`);
+    profileButton.setAttribute('aria-label', `Mi perfil: ${playerName || 'Jugador'}`);
+    shopButton.setAttribute('aria-label', `Abrir tienda. Saldo: ${cents} Cent`);
     if (storeDialog.open) renderStore();
     if (profileDialog.open) renderProfile();
     if (leaderboardDialog.open) renderLeaderboard();
@@ -188,9 +188,6 @@
     characterReturnScreen = returnTo;
     pendingCharacter = hasChosenCharacter ? character : '';
     characterTitle.textContent = 'Elige tu personaje';
-    characterDescription.textContent = hasChosenCharacter
-      ? 'Puedes cambiarlo cuando quieras.'
-      : 'Escoge con quién vas a jugar.';
     updateCharacterOptions();
     setScreen('character');
   }
@@ -236,7 +233,10 @@
   });
 
   registrationBackButton.addEventListener('click', () => setScreen(registrationReturnScreen));
-  editNameButton.addEventListener('click', () => openRegistration('games', true));
+  editNameButton.addEventListener('click', () => {
+    closeDialog(profileDialog);
+    openRegistration('games', true);
+  });
   exitGamesButton.addEventListener('click', () => setScreen('welcome'));
 
   registrationForm.addEventListener('submit', (event) => {
@@ -610,17 +610,25 @@
       const rank = document.createElement('span');
       rank.className = 'leaderboard-rank';
       rank.textContent = String(index + 1).padStart(2, '0');
-      const avatar = document.createElement('img');
-      avatar.className = 'leaderboard-avatar';
-      avatar.src = window.CenEconomy.avatarById(entry.avatarId).image;
-      avatar.alt = '';
+      const characterOption = characterOptions.find((option) => option.dataset.character === entry.characterId)
+        || characterOptions.find((option) => option.dataset.character === 'friend');
+      const characterAvatar = characterOption?.querySelector('.character-avatar');
+      let avatar;
+      if (characterAvatar) {
+        avatar = characterAvatar.cloneNode(true);
+        avatar.classList.add('leaderboard-character');
+        avatar.setAttribute('aria-hidden', 'true');
+      } else {
+        avatar = document.createElement('img');
+        avatar.className = 'leaderboard-avatar';
+        avatar.src = window.CenEconomy.avatarById(entry.avatarId).image;
+        avatar.alt = '';
+      }
       const name = document.createElement('span');
       name.className = 'leaderboard-name';
       name.textContent = entry.name;
       if (normalizedPlayerName(entry.name) === normalizedPlayerName(playerName)) {
-        const you = document.createElement('small');
-        you.textContent = ' · tú';
-        name.appendChild(you);
+        row.classList.add('is-current-player');
       }
       const score = document.createElement('span');
       score.className = 'leaderboard-score';
