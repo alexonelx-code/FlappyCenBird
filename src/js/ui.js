@@ -464,6 +464,8 @@
       const owned = new Set(current.ownedAvatars || []);
       const free = catalog.filter((item) => item.price === 0);
       const paid = catalog.filter((item) => item.price > 0);
+      const collection = paid.filter((item) => item.price === 40);
+      const special = paid.filter((item) => item.price === 60);
       const freeCards = free.map((item) => makeStoreCard({
         name: item.name,
         image: item.image,
@@ -472,7 +474,7 @@
         price: 0,
         onAction: () => equipAvatar(item.id, item.name)
       }));
-      const paidCards = paid.map((item) => makeStoreCard({
+      const paidCards = (items) => items.map((item) => makeStoreCard({
         name: item.name,
         image: item.image,
         owned: owned.has(item.id),
@@ -483,7 +485,8 @@
       }));
       storeCatalog.append(
         makeStoreSection('Avatares gratis', '5 para empezar', freeCards),
-        makeStoreSection('Para desbloquear', `${paid.length} disponibles · se compran con Cent`, paidCards)
+        makeStoreSection('Colección', `${collection.length} avatares · 40 Cent cada uno`, paidCards(collection)),
+        makeStoreSection('Selección especial', `${special.length} avatares · 60 Cent cada uno`, paidCards(special))
       );
     } else if (activeStoreTab === 'flappy' && activeFlappyStoreTab === 'birds') {
       const freeBirds = window.CenEconomy.getFreeBirds();
