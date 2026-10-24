@@ -568,7 +568,6 @@ input:focus-visible { outline: 3px solid var(--gold); outline-offset: 3px; }
 .leaderboard-rank { color: #e5bd82; font-size: 12px; font-weight: 900; text-align: center; }
 .leaderboard-avatar { width: 34px; height: 34px; display: block; overflow: hidden; border: 1px solid rgba(255, 240, 209, .22); border-radius: 50%; background: #173640; object-fit: cover; }
 .leaderboard-row.is-current-player { border-color: rgba(242, 184, 111, .38); background: rgba(242, 184, 111, .055); }
-.leaderboard-row .leaderboard-character { width: 34px; height: 34px; display: grid; flex: 0 0 auto; place-items: center; }
 .leaderboard-name { overflow: hidden; color: #f7eedb; font-size: 14px; font-weight: 800; text-overflow: ellipsis; white-space: nowrap; }
 .leaderboard-score { color: var(--gold); font-size: 17px; font-weight: 900; white-space: nowrap; }
 .leaderboard-score small { margin-left: 4px; color: #b7c3b8; font-size: 10px; font-weight: 700; }

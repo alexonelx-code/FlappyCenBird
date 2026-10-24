@@ -7,9 +7,10 @@ import os
 import re
 import sqlite3
 import time
+from contextlib import closing
 from pathlib import Path
 from typing import Any
-from uuid import UUID
+from uuid import UUID, uuid4
 
 FREE_AVATARS = ("sol", "luna", "pixel", "rayo", "ola")
 AVATAR_PRICES = {
@@ -27,7 +28,7 @@ AVATAR_PRICES = {
 FREE_BIRDS = ("friend", "classic", "laguna", "mango", "nube")
 FREE_BACKGROUNDS = ("costa", "aurora")
 BACKGROUND_PRICES = {"cosmos": 60, "atardecer": 80, "neon": 100}
-MAX_RUN_SCORE = 500
+MAX_RUN_SCORE = 10_000
 MAX_RUN_IDS = 2000
 PLAYER_ID_PATTERN = re.compile(r"^[a-f0-9-]{36}$")
 
@@ -43,20 +44,31 @@ class Economy:
     """Persistent game profiles stored in a local SQLite database."""
 
     def __init__(self, database_path: str | os.PathLike[str] | None = None):
-        path = Path(database_path or os.environ.get("CENGAMES_DB_PATH", "data/cengames.sqlite3"))
-        if str(path) != ":memory:":
+        configured_path = os.fspath(database_path or os.environ.get("CENGAMES_DB_PATH", "data/cengames.sqlite3"))
+        self._uri = configured_path == ":memory:"
+        self._anchor: sqlite3.Connection | None = None
+        if self._uri:
+            self.database_path = f"file:cengames-{uuid4().hex}?mode=memory&cache=shared"
+            self._anchor = sqlite3.connect(self.database_path, uri=True, isolation_level=None)
+        else:
+            path = Path(configured_path)
             path.parent.mkdir(parents=True, exist_ok=True)
-        self.database_path = str(path)
+            self.database_path = str(path)
         self._initialize()
 
     def _connect(self) -> sqlite3.Connection:
-        connection = sqlite3.connect(self.database_path, timeout=10, isolation_level=None)
+        connection = sqlite3.connect(self.database_path, timeout=10, isolation_level=None, uri=self._uri)
         connection.row_factory = sqlite3.Row
         connection.execute("PRAGMA busy_timeout = 10000")
         return connection
 
+    def close(self) -> None:
+        if self._anchor is not None:
+            self._anchor.close()
+            self._anchor = None
+
     def _initialize(self) -> None:
-        with self._connect() as db:
+        with closing(self._connect()) as db:
             db.execute("PRAGMA journal_mode = WAL")
             db.execute(
                 """CREATE TABLE IF NOT EXISTS players (
@@ -162,7 +174,7 @@ class Economy:
 
     def connect(self, player_id: Any, name: Any, legacy_best: Any = 0) -> dict[str, Any]:
         identity, player_name = self._identity(player_id, name)
-        with self._connect() as db:
+        with closing(self._connect()) as db:
             db.execute("BEGIN IMMEDIATE")
             row = self._ensure(db, identity, player_name, legacy_best)
             db.commit()
@@ -183,7 +195,7 @@ class Economy:
         if points > MAX_RUN_SCORE:
             raise ApiError(400, f"La puntuación supera el máximo de {MAX_RUN_SCORE} por partida.")
 
-        with self._connect() as db:
+        with closing(self._connect()) as db:
             db.execute("BEGIN IMMEDIATE")
             row = self._ensure(db, identity, player_name)
             processed = json.loads(row["processed_runs"])
@@ -217,7 +229,7 @@ class Economy:
         if item_id not in AVATAR_PRICES:
             raise ApiError(404, "Ese artículo no está disponible en la tienda.")
         price = AVATAR_PRICES[item_id]
-        with self._connect() as db:
+        with closing(self._connect()) as db:
             db.execute("BEGIN IMMEDIATE")
             row = self._ensure(db, identity, player_name)
             owned = json.loads(row["owned_avatars"])
@@ -243,7 +255,9 @@ class Economy:
     def choose_avatar(self, player_id: Any, name: Any, avatar_id: Any) -> dict[str, Any]:
         identity, player_name = self._identity(player_id, name)
         item_id = str(avatar_id or "")
-        with self._connect() as db:
+        if item_id not in (*FREE_AVATARS, *AVATAR_PRICES):
+            raise ApiError(404, "Ese avatar no está disponible.")
+        with closing(self._connect()) as db:
             db.execute("BEGIN IMMEDIATE")
             row = self._ensure(db, identity, player_name)
             owned = json.loads(row["owned_avatars"])
@@ -257,7 +271,7 @@ class Economy:
     def choose_bird(self, player_id: Any, name: Any, character_id: Any) -> dict[str, Any]:
         identity, player_name = self._identity(player_id, name)
         bird_id = str(character_id or "")
-        with self._connect() as db:
+        with closing(self._connect()) as db:
             db.execute("BEGIN IMMEDIATE")
             row = self._ensure(db, identity, player_name)
             owned = json.loads(row["owned_birds"])
@@ -271,7 +285,7 @@ class Economy:
     def choose_background(self, player_id: Any, name: Any, background_id: Any) -> dict[str, Any]:
         identity, player_name = self._identity(player_id, name)
         item_id = str(background_id or "")
-        with self._connect() as db:
+        with closing(self._connect()) as db:
             db.execute("BEGIN IMMEDIATE")
             row = self._ensure(db, identity, player_name)
             owned = json.loads(row["owned_backgrounds"])
@@ -288,7 +302,7 @@ class Economy:
         if item_id not in BACKGROUND_PRICES:
             raise ApiError(404, "Ese fondo no está disponible en la tienda.")
         price = BACKGROUND_PRICES[item_id]
-        with self._connect() as db:
+        with closing(self._connect()) as db:
             db.execute("BEGIN IMMEDIATE")
             row = self._ensure(db, identity, player_name)
             owned = json.loads(row["owned_backgrounds"])
@@ -314,7 +328,7 @@ class Economy:
     def leaderboard(self, game_id: Any = "flappy") -> list[dict[str, Any]]:
         if str(game_id or "flappy") != "flappy":
             raise ApiError(400, "Ese minijuego todavía no tiene tabla.")
-        with self._connect() as db:
+        with closing(self._connect()) as db:
             rows = db.execute(
                 """SELECT id, name, avatar_id, character_id, flappy_best, updated_at
                    FROM players WHERE flappy_best > 0
@@ -332,6 +346,8 @@ class Economy:
 def _integer(value: Any, label: str, default: int | None = None) -> int:
     if value is None and default is not None:
         return default
+    if isinstance(value, bool) or (isinstance(value, float) and not value.is_integer()):
+        raise ApiError(400, f"El valor de {label} no es válido.")
     try:
         number = int(value)
     except (TypeError, ValueError, OverflowError) as error:

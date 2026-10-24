@@ -1,27 +1,18 @@
 (() => {
   'use strict';
 
-  /* ---------------------------------------------------------------
-     Configuración
-  --------------------------------------------------------------- */
-  const W = 360;
-  const H = 640;
-  const FLOOR_Y = 544;         // altura del suelo
-  const PIPE_W = 62;
-  const BIRD_X = 96;
-  const GRAVITY = 1500;
-  const FLAP_V = -430;
-  const SPAWN_DIST = 210;      // separación entre tuberías (px)
-  // Ritmo en px/s: sube con los puntos y alterna tramos de impulso y respiro.
-  const PACE = {
-    initialSpeed: 142,
-    speedPerPoint: 2.1,
-    maxRamp: 52,
-    breathingRange: 8,
-    breathingCycle: 10,
-    maxSpeed: 202,
-    transitionRate: 2.4
-  };
+  const {
+    width: W,
+    height: H,
+    floorY: FLOOR_Y,
+    pipeWidth: PIPE_W,
+    birdX: BIRD_X,
+    gravity: GRAVITY,
+    flapVelocity: FLAP_V,
+    spawnDistance: SPAWN_DIST,
+    pace: PACE,
+    birdProfiles: BIRD_PROFILES
+  } = window.FlappyGameConfig;
   const STORAGE_KEY = 'flappy_best_v1';
   const BEST_MIGRATION_KEY = 'flappy_best_migrated_v2';
   const gameScreen = document.getElementById('gameScreen');
@@ -94,12 +85,9 @@
     render();
   });
 
-  /* ---------------------------------------------------------------
-     Estado
-  --------------------------------------------------------------- */
   let best = loadPlayerBest();
 
-  let state = 'ready';        // ready | playing | dying | gameover
+  let state = 'ready';
   let score = 0;
   let newBest = false;
   let t = 0;
@@ -110,6 +98,7 @@
   let flash = 0;
   let scorePop = 0;
   let currentPipeSpeed = PACE.initialSpeed;
+  let paceProfile = [];
 
   function emitState() {
     window.dispatchEvent(new CustomEvent('flappy:state', {
@@ -120,35 +109,6 @@
   const bird = { x: BIRD_X, y: 330, vy: 0, rot: 0, wing: 0, wingSpeed: 9 };
   let pipes = [];
 
-  /* ---------------------------------------------------------------
-     Personaje (sprite recortado de la foto)
-  --------------------------------------------------------------- */
-  const SPR = {
-    pngW: 182,
-    pngH: 260,
-    anchor: { x: 92, y: 140 },
-    pivL: { x: 33.9, y: 86.6 },
-    pivR: { x: 150.9, y: 85.1 },
-    webL: { piv: { x: 33.9, y: 86.6 }, innerX: 40, hemY: 164, dir: 1,
-            edge: [[33.9, 86.6], [33.9, 110], [32.3, 136.6], [31.7, 164]], col: '#15233a' },
-    webR: { piv: { x: 150.9, y: 85.1 }, innerX: 145.5, hemY: 164, dir: -1,
-            edge: [[150.9, 85.1], [151.3, 105.9], [152.1, 136.6], [151.7, 164]], col: '#1e2f49' },
-    height: 110,
-    body: new Image(),
-    armL: new Image(),
-    armR: new Image(),
-    ready: false
-  };
-  (() => {
-    let n = 0;
-    const done = () => { if (++n === 3) SPR.ready = true; };
-    SPR.body.onload = done;
-    SPR.armL.onload = done;
-    SPR.armR.onload = done;
-    SPR.body.src = 'assets/images/personaje/cuerpo.png';
-    SPR.armL.src = 'assets/images/personaje/brazo_i.png';
-    SPR.armR.src = 'assets/images/personaje/brazo_d.png';
-  })();
   let particles = [];
   let clouds = [];
 
@@ -166,9 +126,6 @@
   initClouds();
 
 
-  /* ---------------------------------------------------------------
-     Lógica del juego
-  --------------------------------------------------------------- */
   function addPipe() {
     const gap = Math.max(160, 196 - score * 1.6);
     const minY = 70 + gap / 2;
@@ -178,9 +135,7 @@
   }
 
   function targetPipeSpeed() {
-    const ramp = Math.min(score * PACE.speedPerPoint, PACE.maxRamp);
-    const breathing = Math.sin((score / PACE.breathingCycle) * Math.PI * 2) * PACE.breathingRange;
-    return Math.max(PACE.initialSpeed, Math.min(PACE.maxSpeed, PACE.initialSpeed + ramp + breathing));
+    return window.FlappyPace.speedAt(score, paceProfile, PACE);
   }
 
   function pipeSpeed(dt) {
@@ -195,6 +150,7 @@
     score = 0;
     best = loadPlayerBest();
     newBest = false;
+    paceProfile = window.FlappyPace.createProfile(PACE);
     pipes = [];
     particles = [];
     shake = 0;
@@ -219,6 +175,7 @@
     score = 0;
     best = loadPlayerBest();
     newBest = false;
+    paceProfile = window.FlappyPace.createProfile(PACE);
     pipes = [];
     particles = [];
     spawnDist = 140;
@@ -390,18 +347,10 @@
     return dx * dx + dy * dy < r * r;
   }
 
-  const BIRD_PROFILES = {
-    friend: { top: 60, bottom: 52, hits: [[-34, 18], [-6, 20], [29, 19]] },
-    bird: { top: 22, bottom: 22, hits: [[-8, 12], [3, 13], [14, 12]] }
-  };
-
   function birdProfile() {
     return window.FlappyUI.getCharacter() === 'friend' ? BIRD_PROFILES.friend : BIRD_PROFILES.bird;
   }
 
-  /* ---------------------------------------------------------------
-     Entrada
-  --------------------------------------------------------------- */
   function press() {
     sfx.unlock(); // desbloquea el audio en móviles
     if (state === 'ready') {
@@ -444,787 +393,39 @@
     flap();
   });
 
-  /* ---------------------------------------------------------------
-     Dibujo: utilidades
-  --------------------------------------------------------------- */
-  function rr(x, y, w, h, r) {
-    r = Math.min(r, w / 2, h / 2);
-    ctx.beginPath();
-    ctx.moveTo(x + r, y);
-    ctx.arcTo(x + w, y, x + w, y + h, r);
-    ctx.arcTo(x + w, y + h, x, y + h, r);
-    ctx.arcTo(x, y + h, x, y, r);
-    ctx.arcTo(x, y, x + w, y, r);
-    ctx.closePath();
-  }
-
-  function text(str, x, y, size, fill, stroke, lw, align) {
-    ctx.font = '700 ' + size + 'px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
-    ctx.textAlign = align || 'center';
-    ctx.textBaseline = 'middle';
-    if (stroke && lw) {
-      ctx.lineWidth = lw;
-      ctx.strokeStyle = stroke;
-      ctx.strokeText(str, x, y);
-    }
-    ctx.fillStyle = fill;
-    ctx.fillText(str, x, y);
-  }
-
-  /* ---------------------------------------------------------------
-     Dibujo: escenario
-  --------------------------------------------------------------- */
-  function drawSky() {
-    ctx.fillStyle = skyGrad;
-    ctx.fillRect(0, 0, W, FLOOR_Y);
-  }
-
-  function drawSun() {
-    const scene = activeScene();
-    const cx = 286, cy = 104;
-    if (scene?.scene === 'cosmos') {
-      ctx.save();
-      ctx.strokeStyle = 'rgba(245, 214, 255, .75)';
-      ctx.lineWidth = 3;
-      ctx.beginPath();
-      ctx.ellipse(cx, cy, 46, 14, -.35, 0, Math.PI * 2);
-      ctx.stroke();
-      ctx.fillStyle = '#e2a4d7';
-      ctx.beginPath();
-      ctx.arc(cx, cy, 25, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.fillStyle = 'rgba(94, 53, 119, .34)';
-      ctx.beginPath();
-      ctx.arc(cx - 8, cy - 6, 5, 0, Math.PI * 2);
-      ctx.arc(cx + 9, cy + 8, 7, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.restore();
-      return;
-    }
-    ctx.fillStyle = scene?.scene === 'aurora' ? '#d9f5df' : scene?.scene === 'sunset' ? '#ffe0a1' : scene?.scene === 'neon' ? '#b6f2c4' : '#f4b975';
-    ctx.beginPath();
-    ctx.arc(cx, cy, scene?.scene === 'sunset' ? 33 : 28, 0, Math.PI * 2);
-    ctx.fill();
-
-    ctx.strokeStyle = scene?.scene === 'aurora' ? 'rgba(220, 255, 241, .72)' : 'rgba(255, 226, 184, .72)';
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.arc(cx, cy, 37, 0, Math.PI * 2);
-    ctx.stroke();
-
-    if (scene?.scene !== 'neon') {
-      ctx.fillStyle = 'rgba(95, 70, 72, .28)';
-      ctx.fillRect(cx - 17, cy + 4, 34, 3);
-      ctx.fillRect(cx - 12, cy + 11, 24, 2);
-    }
-  }
-
-  function drawClouds() {
-    const scene = activeScene();
-    for (const c of clouds) {
-      ctx.save();
-      ctx.translate(c.x, c.y);
-      ctx.scale(c.s, c.s);
-      ctx.fillStyle = scene?.scene === 'aurora' ? 'rgba(181, 246, 232, .2)' : scene?.scene === 'cosmos' ? 'rgba(242, 204, 255, .16)' : 'rgba(255, 229, 202, .24)';
-      ctx.beginPath();
-      ctx.arc(0, 0, 18, 0, Math.PI * 2);
-      ctx.arc(20, 4, 14, 0, Math.PI * 2);
-      ctx.arc(-20, 5, 13, 0, Math.PI * 2);
-      ctx.arc(5, -11, 14, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.restore();
-    }
-  }
-
-  function hillPath(off, base, amp, freq) {
-    ctx.beginPath();
-    ctx.moveTo(-12, FLOOR_Y + 2);
-    for (let x = -12; x <= W + 12; x += 6) {
-      const y = base
-        - Math.sin((x + off) * freq) * amp
-        - Math.sin((x + off) * freq * 2.7) * amp * 0.35;
-      ctx.lineTo(x, y);
-    }
-    ctx.lineTo(W + 12, FLOOR_Y + 2);
-    ctx.closePath();
-  }
-
-  function drawHills() {
-    const scene = activeScene() || { hills: ['#426a68', '#244b50'], scene: 'coast' };
-    ctx.fillStyle = scene.hills[0];
-    hillPath(groundOff * 0.16, 476, 26, 0.0085);
-    ctx.fill();
-
-    ctx.fillStyle = scene.hills[1];
-    hillPath(groundOff * 0.3, 512, 20, 0.0135);
-    ctx.fill();
-
-    if (scene.scene === 'coast') {
-      ctx.fillStyle = '#1c4148';
-      ctx.fillRect(52, 459, 8, 39);
-      ctx.beginPath();
-      ctx.moveTo(33, 466);
-      ctx.quadraticCurveTo(56, 438, 80, 466);
-      ctx.quadraticCurveTo(55, 458, 33, 466);
-      ctx.fill();
-    } else if (scene.scene === 'neon') {
-      ctx.fillStyle = 'rgba(7, 27, 48, .7)';
-      for (const [x, y, w, h] of [[15, 447, 35, 61], [55, 430, 43, 82], [103, 452, 28, 58], [259, 435, 42, 73], [308, 448, 36, 63]]) {
-        ctx.fillRect(x, y, w, h);
-        ctx.fillStyle = 'rgba(167, 241, 151, .6)';
-        for (let wx = x + 7; wx < x + w - 3; wx += 12) for (let wy = y + 9; wy < y + h - 6; wy += 15) ctx.fillRect(wx, wy, 3, 4);
-        ctx.fillStyle = 'rgba(7, 27, 48, .7)';
-      }
-    } else if (scene.scene === 'cosmos') {
-      ctx.fillStyle = 'rgba(246, 210, 255, .65)';
-      [[46, 424], [288, 448], [128, 463], [235, 423]].forEach(([x, y]) => {
-        ctx.beginPath(); ctx.arc(x, y, 2, 0, Math.PI * 2); ctx.fill();
-      });
-    }
-  }
-
-  function drawSceneAccents() {
-    const scene = activeScene();
-    if (!scene || scene.scene === 'coast') return;
-    if (scene.scene === 'aurora') {
-      ctx.save();
-      ctx.globalAlpha = .22;
-      ctx.lineWidth = 13;
-      for (let band = 0; band < 3; band++) {
-        ctx.strokeStyle = ['#87f1c8', '#5bd4dc', '#b5a8ff'][band];
-        ctx.beginPath();
-        ctx.moveTo(-20, 177 + band * 24);
-        ctx.bezierCurveTo(83, 100 + band * 22, 184, 248 + band * 15, 380, 137 + band * 25);
-        ctx.stroke();
-      }
-      ctx.restore();
-    }
-    if (scene.scene === 'cosmos' || scene.scene === 'neon') {
-      ctx.save();
-      const starColor = scene.scene === 'cosmos' ? '#f4ddff' : '#b7f4c3';
-      ctx.fillStyle = starColor;
-      for (let i = 0; i < 30; i++) {
-        const x = (i * 97 + 31) % W;
-        const y = (i * 67 + 23) % 380;
-        const size = i % 5 === 0 ? 2 : 1;
-        ctx.globalAlpha = .35 + (i % 4) * .12;
-        if (scene.scene === 'cosmos' && i % 5 === 0) {
-          ctx.fillRect(x - size, y, size * 2, 1);
-          ctx.fillRect(x, y - size, 1, size * 2);
-        } else ctx.fillRect(x, y, size, size);
-      }
-      ctx.restore();
-    }
-    if (scene.scene === 'sunset') {
-      ctx.save();
-      ctx.fillStyle = 'rgba(255, 207, 170, .12)';
-      for (let i = 0; i < 4; i++) ctx.fillRect(246, 145 + i * 9, 82 - i * 10, 3);
-      ctx.restore();
-    }
-  }
-
-  function pipeGradient(x, w) {
-    const colors = activeScene()?.pipes || ['#8f454c', '#f28c68', '#d9655c', '#b44f52', '#783b49'];
-    const g = ctx.createLinearGradient(x, 0, x + w, 0);
-    [0, .18, .48, .82, 1].forEach((stop, index) => g.addColorStop(stop, colors[index]));
-    return g;
-  }
-
-  function pipeBody(x, y, w, h) {
-    if (h <= 0) return;
-    const scene = activeScene();
-    ctx.fillStyle = pipeGradient(x, w);
-    ctx.fillRect(x, y, w, h);
-    ctx.fillStyle = scene?.scene === 'neon' ? 'rgba(7, 33, 43, .28)' : 'rgba(65, 41, 52, .16)';
-    ctx.fillRect(x + w - 8, y, 6, h);
-    ctx.fillStyle = scene?.pipeHighlight || 'rgba(255, 218, 174, .28)';
-    ctx.globalAlpha = .34;
-    ctx.fillRect(x + 6, y, 3, h);
-    ctx.globalAlpha = 1;
-    ctx.strokeStyle = scene?.pipeEdge || '#523641';
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.moveTo(x + 1, y);
-    ctx.lineTo(x + 1, y + h);
-    ctx.moveTo(x + w - 1, y);
-    ctx.lineTo(x + w - 1, y + h);
-    ctx.stroke();
-    if (scene?.scene === 'cosmos' || scene?.scene === 'neon') {
-      ctx.save();
-      ctx.strokeStyle = scene.pipeHighlight;
-      ctx.globalAlpha = .62;
-      ctx.lineWidth = scene.scene === 'neon' ? 2 : 1.5;
-      for (let seamY = y + 34; seamY < y + h - 8; seamY += scene.scene === 'neon' ? 68 : 52) {
-        ctx.beginPath();
-        ctx.moveTo(x + 8, seamY);
-        ctx.lineTo(x + w - 8, seamY);
-        ctx.stroke();
-      }
-      ctx.restore();
-    }
-  }
-
-  function pipeCap(x, y, w, h) {
-    const scene = activeScene();
-    const style = scene?.scene || 'coast';
-    ctx.save();
-    ctx.shadowColor = 'rgba(0, 0, 0, .18)';
-    ctx.shadowBlur = 8;
-    ctx.shadowOffsetY = 3;
-    ctx.fillStyle = pipeGradient(x, w);
-    if (style === 'aurora') {
-      ctx.beginPath(); ctx.moveTo(x + 5, y); ctx.lineTo(x + w - 5, y); ctx.lineTo(x + w, y + h / 2); ctx.lineTo(x + w - 5, y + h); ctx.lineTo(x + 5, y + h); ctx.lineTo(x, y + h / 2); ctx.closePath();
-    } else if (style === 'neon' || style === 'sunset') {
-      ctx.beginPath(); ctx.moveTo(x + 5, y); ctx.lineTo(x + w, y); ctx.lineTo(x + w - 5, y + h); ctx.lineTo(x, y + h); ctx.closePath();
-    } else if (style === 'cosmos') {
-      ctx.beginPath(); ctx.rect(x, y, w, h);
-    } else rr(x, y, w, h, 5);
-    ctx.fill();
-    ctx.restore();
-
-    ctx.strokeStyle = scene?.pipeEdge || '#523641';
-    ctx.lineWidth = 2;
-    if (style === 'coast') {
-      rr(x + 1, y + 1, w - 2, h - 2, 4);
-      ctx.stroke();
-    } else {
-      ctx.strokeRect(x + (style === 'aurora' ? 3 : 2), y + 2, w - (style === 'aurora' ? 6 : 4), h - 4);
-    }
-
-    ctx.fillStyle = scene?.pipeHighlight || 'rgba(255, 216, 164, .72)';
-    ctx.fillRect(x + 8, y + 7, w - 16, 3);
-
-    ctx.strokeStyle = 'rgba(255, 225, 188, .55)';
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.moveTo(x + 7, y + 5);
-    ctx.lineTo(x + 7, y + h - 6);
-    ctx.stroke();
-    if (style === 'cosmos') {
-      ctx.strokeStyle = scene.pipeHighlight;
-      ctx.lineWidth = 1.5;
-      ctx.beginPath();
-      ctx.ellipse(x + w / 2, y + h / 2, Math.max(2, w / 2 - 13), 5, 0, 0, Math.PI * 2);
-      ctx.stroke();
-    } else if (style === 'neon') {
-      ctx.save();
-      ctx.shadowColor = scene.pipeHighlight;
-      ctx.shadowBlur = 7;
-      ctx.strokeStyle = scene.pipeHighlight;
-      ctx.lineWidth = 2;
-      ctx.strokeRect(x + 10, y + 10, w - 20, h - 20);
-      ctx.restore();
-    }
-  }
-
-  function drawPipes() {
-    for (const p of pipes) {
-      const topH = p.gapY - p.gap / 2;
-      const botY = p.gapY + p.gap / 2;
-
-      pipeBody(p.x, 0, PIPE_W, topH - 22);
-      pipeCap(p.x - 5, topH - 24, PIPE_W + 10, 26);
-
-      pipeCap(p.x - 5, botY, PIPE_W + 10, 26);
-      pipeBody(p.x, botY + 24, PIPE_W, FLOOR_Y - botY - 20);
-    }
-  }
-
-  function drawGround() {
-    const scene = activeScene() || { floor: ['#3e5751', '#213a3a'], groundEdge: '#e27b5e', stripes: 'rgba(237, 190, 132, .10)' };
-    const g = ctx.createLinearGradient(0, FLOOR_Y, 0, H);
-    g.addColorStop(0, scene.floor[0]);
-    g.addColorStop(1, scene.floor[1]);
-    ctx.fillStyle = g;
-    ctx.fillRect(0, FLOOR_Y, W, H - FLOOR_Y);
-
-    // Borde de la costa en coral, con una línea oscura para separar el suelo.
-    ctx.fillStyle = scene.groundEdge;
-    ctx.fillRect(0, FLOOR_Y, W, 13);
-    ctx.fillStyle = scene.pipes[0];
-    ctx.fillRect(0, FLOOR_Y + 13, W, 4);
-    ctx.fillStyle = scene.pipeHighlight || 'rgba(255, 229, 190, .34)';
-    ctx.fillRect(0, FLOOR_Y, W, 3);
-
-    // rayas diagonales
-    const step = 34;
-    const off = -(((groundOff % step) + step) % step);
-    ctx.save();
-    ctx.beginPath();
-    ctx.rect(0, FLOOR_Y + 17, W, H - FLOOR_Y - 17);
-    ctx.clip();
-    ctx.fillStyle = scene.stripes;
-    for (let x = -step * 2 + off; x < W + step; x += step) {
-      ctx.beginPath();
-      ctx.moveTo(x, FLOOR_Y + 17);
-      ctx.lineTo(x + 17, FLOOR_Y + 17);
-      ctx.lineTo(x + 17 - 26, H);
-      ctx.lineTo(x - 26, H);
-      ctx.closePath();
-      ctx.fill();
-    }
-    ctx.restore();
-
-    ctx.fillStyle = 'rgba(0, 0, 0, .18)';
-    ctx.fillRect(0, FLOOR_Y + 17, W, 2);
-  }
-
-  function drawParticles() {
-    for (const p of particles) {
-      const a = Math.max(0, p.life / p.max);
-      ctx.save();
-      ctx.globalAlpha = a;
-      ctx.translate(p.x, p.y);
-      ctx.rotate(p.rot);
-      ctx.fillStyle = p.color;
-      ctx.beginPath();
-      ctx.ellipse(0, 0, p.size, p.size * 0.62, 0, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.restore();
-    }
-    ctx.globalAlpha = 1;
-  }
-
-  /* ---------------------------------------------------------------
-     Dibujo: pájaro
-  --------------------------------------------------------------- */
-  function drawBird() {
-    const character = window.FlappyUI.getCharacter();
-    if (character !== 'friend' || !SPR.ready) {
-      drawBirdClassic(character);
-      return;
-    }
-
-    const s = SPR.height / SPR.pngH;
-    const amp = 0.5 - 0.5 * Math.cos(bird.wing);
-    const ang = (24 * amp) * Math.PI / 180;
-
-    ctx.save();
-    ctx.translate(bird.x, bird.y);
-    ctx.rotate(bird.rot);
-    ctx.shadowColor = 'rgba(9, 24, 31, .48)';
-    ctx.shadowBlur = 5;
-    ctx.shadowOffsetY = 3;
-
-    // web, arms and body, in that order: the body covers every seam
-    drawWeb(SPR.webL, ang, s);
-    drawWeb(SPR.webR, -ang, s);
-    drawArm(SPR.armL, SPR.pivL, ang, s);
-    drawArm(SPR.armR, SPR.pivR, -ang, s);
-
-    ctx.drawImage(
-      SPR.body,
-      -SPR.anchor.x * s, -SPR.anchor.y * s,
-      SPR.pngW * s, SPR.pngH * s
-    );
-
-    ctx.restore();
-  }
-
-  // tela de la camiseta entre el torso y el brazo levantado
-  function drawWeb(w, ang, s) {
-    const c = Math.cos(ang), sn = Math.sin(ang);
-    const dx = w.innerX - w.piv.x, dy = w.hemY - w.piv.y;
-    const ax = w.piv.x + dx * c - dy * sn;
-    const ay = w.piv.y + dx * sn + dy * c;
-
-    ctx.save();
-    ctx.translate(-SPR.anchor.x * s, -SPR.anchor.y * s);
-    ctx.scale(s, s);
-    ctx.beginPath();
-    ctx.moveTo(w.piv.x, w.piv.y);
-    for (const p of w.edge) ctx.lineTo(p[0] + 2 * w.dir, p[1]);
-    ctx.lineTo(ax, ay);
-    ctx.closePath();
-    ctx.fillStyle = w.col;
-    ctx.fill();
-    ctx.restore();
-  }
-
-  function drawArm(img, piv, ang, s) {
-    ctx.save();
-    ctx.translate((piv.x - SPR.anchor.x) * s, (piv.y - SPR.anchor.y) * s);
-    ctx.rotate(ang);
-    ctx.drawImage(img, -piv.x * s, -piv.y * s, SPR.pngW * s, SPR.pngH * s);
-    ctx.restore();
-  }
-
-  function drawBirdClassic(character) {
-    const styles = {
-      classic: {
-        light: '#fff0cf', mid: '#e8ae5d', dark: '#ca704c', edge: '#503747',
-        wing: '#fff0d0', wingEdge: '#9e5c4d', beak: '#f08757', beakEdge: '#793f4a',
-        tail: '#edbd72', cheek: 'rgba(240, 127, 92, .4)'
-      },
-      laguna: {
-        light: '#d9f2dd', mid: '#62b8a6', dark: '#287b7c', edge: '#214c59',
-        wing: '#f0e9cf', wingEdge: '#47817c', beak: '#f08757', beakEdge: '#793f4a',
-        tail: '#66c3b0', cheek: 'rgba(240, 127, 92, .42)'
-      },
-      mango: {
-        light: '#ffe0bd', mid: '#e9825d', dark: '#ad4f54', edge: '#513649',
-        wing: '#fff0d8', wingEdge: '#a34e51', beak: '#f5bd72', beakEdge: '#805042',
-        tail: '#ec9265', cheek: 'rgba(255, 224, 174, .48)'
-      },
-      nube: {
-        light: '#eef6e8', mid: '#9abbd3', dark: '#597e9a', edge: '#3e5d78',
-        wing: '#f8f4df', wingEdge: '#6f92a3', beak: '#f2b86f', beakEdge: '#805042',
-        tail: '#b8cee0', cheek: 'rgba(255, 220, 177, .45)'
-      }
-    };
-    const style = styles[character] || styles.classic;
-
-    ctx.save();
-    ctx.translate(bird.x, bird.y);
-    ctx.rotate(bird.rot);
-    ctx.scale(1.18, 1.18);
-
-    // sombra suave
-    ctx.fillStyle = 'rgba(0, 0, 0, .10)';
-    ctx.beginPath();
-    ctx.ellipse(0, 15, 15, 5, 0, 0, Math.PI * 2);
-    ctx.fill();
-
-    // cola
-    ctx.beginPath();
-    ctx.moveTo(-12.5, -4);
-    ctx.quadraticCurveTo(-20, -7.5, -22, -4.5);
-    ctx.quadraticCurveTo(-18, -1.5, -21, 2.5);
-    ctx.quadraticCurveTo(-17, 2.5, -12, 1.5);
-    ctx.closePath();
-    ctx.fillStyle = style.tail;
-    ctx.strokeStyle = style.edge;
-    ctx.lineWidth = 2;
-    ctx.fill();
-    ctx.stroke();
-
-    // cuerpo
-    ctx.fillStyle = style.mid;
-    ctx.strokeStyle = style.edge;
-    ctx.lineWidth = 2.2;
-    ctx.beginPath();
-    ctx.ellipse(0, 0, 16, 13.5, 0, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.stroke();
-
-    // Pecho claro en una sola forma, como marca de cada personaje.
-    ctx.fillStyle = style.light;
-    ctx.beginPath();
-    ctx.ellipse(-4, 5, 7.5, 5.5, -0.2, 0, Math.PI * 2);
-    ctx.fill();
-
-    // ala
-    const wing = Math.sin(bird.wing) * 7;
-    ctx.save();
-    ctx.translate(-3, 1.5);
-    ctx.rotate(-0.32 + Math.sin(bird.wing) * 0.24);
-    ctx.beginPath();
-    ctx.ellipse(0, wing * 0.35, 8.6, 5.6, 0, 0, Math.PI * 2);
-    ctx.fillStyle = style.wing;
-    ctx.fill();
-    ctx.strokeStyle = style.wingEdge;
-    ctx.lineWidth = 1.9;
-    ctx.stroke();
-    ctx.beginPath();
-    ctx.moveTo(-3.5, wing * 0.35 + 1.6);
-    ctx.lineTo(3.5, wing * 0.35 + 1.6);
-    ctx.strokeStyle = style.wingEdge;
-    ctx.lineWidth = 1.2;
-    ctx.stroke();
-    ctx.restore();
-
-    // mejilla
-    ctx.beginPath();
-    ctx.arc(2.5, 2.5, 2.5, 0, Math.PI * 2);
-    ctx.fillStyle = style.cheek;
-    ctx.fill();
-
-    // ojo
-    ctx.beginPath();
-    ctx.arc(6, -5.8, 5.1, 0, Math.PI * 2);
-    ctx.fillStyle = '#fff';
-    ctx.fill();
-    ctx.strokeStyle = style.edge;
-    ctx.lineWidth = 1.6;
-    ctx.stroke();
-
-    ctx.beginPath();
-    ctx.arc(7.7, -5.8, 2.3, 0, Math.PI * 2);
-    ctx.fillStyle = '#33251a';
-    ctx.fill();
-
-    ctx.beginPath();
-    ctx.arc(8.6, -6.8, 0.85, 0, Math.PI * 2);
-    ctx.fillStyle = '#fff';
-    ctx.fill();
-
-    // pico
-    ctx.beginPath();
-    ctx.moveTo(11, -1.5);
-    ctx.quadraticCurveTo(20, -1.5, 19.5, 2.5);
-    ctx.quadraticCurveTo(16, 5.5, 10.5, 3);
-    ctx.closePath();
-    ctx.fillStyle = style.beak;
-    ctx.fill();
-    ctx.strokeStyle = style.beakEdge;
-    ctx.lineWidth = 1.7;
-    ctx.stroke();
-
-    // plumas de la cabeza
-    ctx.beginPath();
-    ctx.moveTo(1, -12.5);
-    ctx.quadraticCurveTo(0.5, -16.5, 3.5, -16);
-    ctx.moveTo(5, -12.8);
-    ctx.quadraticCurveTo(6, -16, 9, -15);
-    ctx.strokeStyle = style.edge;
-    ctx.lineWidth = 1.6;
-    ctx.stroke();
-
-    ctx.restore();
-  }
-
-  /* ---------------------------------------------------------------
-     Dibujo: interfaz
-  --------------------------------------------------------------- */
-  function drawBigScore() {
-    const s = 1 + scorePop * 0.16;
-    ctx.save();
-    ctx.translate(W / 2, 86);
-    ctx.scale(s, s);
-    ctx.shadowColor = 'rgba(0, 0, 0, .25)';
-    ctx.shadowBlur = 8;
-    ctx.shadowOffsetY = 4;
-    text(String(score), 0, 0, 54, '#fff0d1', 'rgba(18, 43, 52, .7)', 8);
-    ctx.restore();
-  }
-
-  function drawReady() {
-    // Identidad del minijuego y récord personal.
-    ctx.save();
-    ctx.shadowColor = 'rgba(11, 29, 36, .42)';
-    ctx.shadowBlur = 0;
-    ctx.shadowOffsetY = 3;
-    text('FLAPPY BIRDCEN', W / 2, 158 + Math.sin(t * 2) * 1.5, 30, '#fff0d1', '#284a50', 5);
-    ctx.restore();
-
-    text('ALETEA Y HAZ HISTORIA', W / 2, 190, 12, '#f6c28d');
-
-    ctx.fillStyle = 'rgba(17, 45, 53, .78)';
-    rr(W / 2 - 88, 222, 176, 36, 18);
-    ctx.fill();
-    ctx.strokeStyle = 'rgba(255, 225, 186, .3)';
-    ctx.lineWidth = 1;
-    ctx.stroke();
-    text('RÉCORD  ·  ' + best, W / 2, 240, 13, '#f7d49f');
-
-    const pulse = 0.94 + 0.06 * Math.sin(t * 2.6);
-    ctx.save();
-    ctx.globalAlpha = pulse;
-    ctx.fillStyle = '#f2b86f';
-    rr(W / 2 - 104, 450, 208, 48, 14);
-    ctx.fill();
-    ctx.fillStyle = 'rgba(255, 238, 203, .32)';
-    rr(W / 2 - 96, 455, 192, 2, 1);
-    ctx.fill();
-    ctx.restore();
-
-    text('TOCA PARA JUGAR', W / 2, 474, 15, '#243d43');
-    text('ESPACIO  ·  FLECHA ↑  ·  W', W / 2, 520, 11, '#f6e4c9', 'rgba(26, 53, 59, .45)', 3);
-  }
-
-  function starPath(cx, cy, spikes, outer, inner) {
-    let rot = -Math.PI / 2;
-    const step = Math.PI / spikes;
-    ctx.beginPath();
-    ctx.moveTo(cx + Math.cos(rot) * outer, cy + Math.sin(rot) * outer);
-    for (let i = 0; i < spikes; i++) {
-      rot += step;
-      ctx.lineTo(cx + Math.cos(rot) * inner, cy + Math.sin(rot) * inner);
-      rot += step;
-      ctx.lineTo(cx + Math.cos(rot) * outer, cy + Math.sin(rot) * outer);
-    }
-    ctx.closePath();
-  }
-
-  function medalColors(s) {
-    if (s >= 40) return { top: '#effdff', bottom: '#7fd3e6', edge: '#3f9db3' };
-    if (s >= 20) return { top: '#fff0b3', bottom: '#eeb020', edge: '#a87a0d' };
-    if (s >= 10) return { top: '#ffffff', bottom: '#b6c3cf', edge: '#7d8b99' };
-    if (s >= 5)  return { top: '#f6c995', bottom: '#bf7431', edge: '#84491a' };
-    return null;
-  }
-
-  function drawMedal(cx, cy, r, scoreValue) {
-    const c = medalColors(scoreValue);
-    if (!c) {
-      ctx.beginPath();
-      ctx.arc(cx, cy, r, 0, Math.PI * 2);
-      ctx.fillStyle = 'rgba(140, 115, 70, .12)';
-      ctx.fill();
-      ctx.setLineDash([5, 5]);
-      ctx.strokeStyle = 'rgba(140, 115, 70, .45)';
-      ctx.lineWidth = 2;
-      ctx.stroke();
-      ctx.setLineDash([]);
-      starPath(cx, cy - 5, 5, r * 0.43, r * 0.19);
-      ctx.strokeStyle = 'rgba(230, 196, 137, .72)';
-      ctx.lineWidth = 1.5;
-      ctx.stroke();
-      text('5', cx, cy + 20, 10, 'rgba(255, 225, 176, .84)');
-      return;
-    }
-
-    ctx.save();
-    ctx.shadowColor = 'rgba(0, 0, 0, .22)';
-    ctx.shadowBlur = 9;
-    ctx.shadowOffsetY = 4;
-
-    const g = ctx.createRadialGradient(cx - r * 0.35, cy - r * 0.4, r * 0.15, cx, cy, r);
-    g.addColorStop(0, c.top);
-    g.addColorStop(1, c.bottom);
-    ctx.fillStyle = g;
-    ctx.beginPath();
-    ctx.arc(cx, cy, r, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.restore();
-
-    ctx.strokeStyle = c.edge;
-    ctx.lineWidth = 3;
-    ctx.beginPath();
-    ctx.arc(cx, cy, r - 1.5, 0, Math.PI * 2);
-    ctx.stroke();
-
-    ctx.strokeStyle = 'rgba(255, 255, 255, .55)';
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.arc(cx, cy, r * 0.72, 0, Math.PI * 2);
-    ctx.stroke();
-
-    starPath(cx, cy + 1, 5, r * 0.46, r * 0.2);
-    ctx.fillStyle = 'rgba(255, 255, 255, .9)';
-    ctx.fill();
-    ctx.strokeStyle = 'rgba(0, 0, 0, .12)';
-    ctx.lineWidth = 1;
-    ctx.stroke();
-
-    // brillo
-    ctx.beginPath();
-    ctx.arc(cx - r * 0.3, cy - r * 0.35, r * 0.16, 0, Math.PI * 2);
-    ctx.fillStyle = 'rgba(255, 255, 255, .8)';
-    ctx.fill();
-  }
-
-  function drawGameOver() {
-    const px = 22, py = 154, pw = 316, ph = 324;
-
-    ctx.save();
-    ctx.shadowColor = 'rgba(4, 16, 22, .3)';
-    ctx.shadowBlur = 24;
-    ctx.shadowOffsetY = 8;
-    const glass = ctx.createLinearGradient(px, py, px + pw, py + ph);
-    glass.addColorStop(0, 'rgba(20, 53, 64, .8)');
-    glass.addColorStop(1, 'rgba(10, 31, 40, .76)');
-    ctx.fillStyle = glass;
-    rr(px, py, pw, ph, 24);
-    ctx.fill();
-    ctx.restore();
-
-    ctx.strokeStyle = 'rgba(255, 240, 209, .65)';
-    ctx.lineWidth = 1.5;
-    rr(px, py, pw, ph, 24);
-    ctx.stroke();
-
-    ctx.strokeStyle = 'rgba(255, 255, 255, .13)';
-    ctx.lineWidth = 1;
-    rr(px + 4, py + 4, pw - 8, ph - 8, 21);
-    ctx.stroke();
-
-    text('VUELO TERMINADO', W / 2, 198, 18, '#fff0d1');
-    text(newBest ? '¡RÉCORD PERSONAL!' : score > 0 ? 'SIGUE ALETEANDO' : 'UN ALETEO MÁS', W / 2, 222, 10, '#c1d1c8');
-
-    const statCard = (y, label, value) => {
-      ctx.fillStyle = 'rgba(239, 247, 242, .075)';
-      rr(44, y, 166, 56, 14);
-      ctx.fill();
-      ctx.strokeStyle = 'rgba(239, 247, 242, .2)';
-      ctx.lineWidth = 1;
-      rr(44, y, 166, 56, 14);
-      ctx.stroke();
-      text(label, 58, y + 19, 10, '#c6d4cb', null, 0, 'left');
-      text(String(value), 194, y + 38, 23, '#fff0d1', null, 0, 'right');
-    };
-    statCard(242, 'PUNTOS', score);
-    statCard(305, 'RÉCORD', best);
-
-    ctx.fillStyle = 'rgba(255, 255, 255, .045)';
-    rr(222, 242, 94, 119, 17);
-    ctx.fill();
-    drawMedal(269, 286, 27, score);
-    text(score >= 40 ? 'LEYENDA' : score >= 20 ? 'ORO' : score >= 10 ? 'PLATA' : score >= 5 ? 'BRONCE' : 'META: 5', 269, 343, 8, '#d7c49f');
-
-    const rewardY = 373;
-    ctx.fillStyle = 'rgba(242, 184, 111, .12)';
-    rr(44, rewardY, 272, 30, 12);
-    ctx.fill();
-    ctx.strokeStyle = 'rgba(242, 184, 111, .3)';
-    ctx.lineWidth = 1;
-    rr(44, rewardY, 272, 30, 12);
-    ctx.stroke();
-    text(`¢  +${score} CENT`, W / 2, rewardY + 15, 12, '#ffd38f');
-
-    const bx = W / 2 - 120, by = 418, bw = 240, bh = 46;
-    ctx.fillStyle = '#f2b86f';
-    rr(bx, by, bw, bh, 15);
-    ctx.fill();
-    ctx.strokeStyle = 'rgba(255, 240, 209, .65)';
-    ctx.lineWidth = 1;
-    rr(bx + 1, by + 1, bw - 2, bh - 2, 14);
-    ctx.stroke();
-    text('VOLVER A INTENTARLO', W / 2, by + bh / 2 + 1, 13, '#243d43');
-  }
-
   window.FlappyGame = Object.freeze({
     reset: resetGame,
     getBestScore() { return loadPlayerBest(); }
   });
 
-  /* ---------------------------------------------------------------
-     Render
-  --------------------------------------------------------------- */
   function render() {
     ctx.save();
     if (shake > 0.15) {
-      ctx.translate(
-        (Math.random() - 0.5) * shake,
-        (Math.random() - 0.5) * shake
-      );
+      ctx.translate((Math.random() - 0.5) * shake, (Math.random() - 0.5) * shake);
     }
 
-    drawSky();
-    drawSun();
-    drawClouds();
-    drawSceneAccents();
-    drawHills();
-    drawPipes();
-    drawGround();
-    drawParticles();
-    drawBird();
-
+    window.FlappySceneRenderer.draw(ctx, {
+      skyGrad,
+      scene: activeScene(),
+      clouds,
+      groundOff,
+      pipes,
+      particles
+    });
+    window.FlappyCharacterRenderer.draw(ctx, bird);
     ctx.restore();
 
-    if (state === 'ready') drawReady();
-    if (state === 'playing' || state === 'dying' || state === 'gameover') drawBigScore();
-    if (state === 'gameover') drawGameOver();
-
-    if (flash > 0.01) {
-      ctx.fillStyle = 'rgba(255, 255, 255, ' + (flash * 0.55) + ')';
-      ctx.fillRect(0, 0, W, H);
-    }
+    window.FlappyOverlayRenderer.draw(ctx, {
+      state,
+      score,
+      best,
+      newBest,
+      t,
+      scorePop,
+      flash
+    });
   }
 
-  /* ---------------------------------------------------------------
-     Bucle principal
-  --------------------------------------------------------------- */
   let last = performance.now();
   let frameId = 0;
 

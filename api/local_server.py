@@ -45,6 +45,9 @@ class Handler(BaseHTTPRequestHandler):
         except ValueError:
             self._send(400, {"error": "Tamaño de solicitud no válido."}, self.headers.get("Origin", ""))
             return
+        if content_length < 0:
+            self._send(400, {"error": "Tamaño de solicitud no válido."}, self.headers.get("Origin", ""))
+            return
         if content_length > 16_384:
             self._send(413, {"error": "La solicitud es demasiado grande."}, self.headers.get("Origin", ""))
             return

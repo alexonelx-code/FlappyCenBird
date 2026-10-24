@@ -1,50 +1,38 @@
 # CenGames
 
-**CenGames es un proyecto personal de ocio para jugar entre amigos.** No es un producto comercial ni un servicio profesional o de producción. Se desarrolla por diversión y puede cambiar, tener errores o perder datos; no ofrece cuentas, soporte, disponibilidad ni recuperación de progreso.
-
-No hay pagos reales. **Cent** es una moneda virtual sin valor fuera del juego: cada punto anotado en Flappy BirdCen suma 1 Cent. Los Cent sirven para probar las opciones de personalización.
+CenGames es un proyecto personal de ocio para jugar entre amigos. No es un producto comercial ni un servicio de producción: puede cambiar, tener errores o perder datos, y no ofrece cuentas seguras, soporte ni recuperación de progreso. No hay pagos reales. **Cent** es una moneda virtual sin valor fuera del juego.
 
 ## Qué incluye
 
-- Una portada sencilla para entrar, poner un nombre o apodo y elegir un minijuego.
-- Flappy BirdCen, un juego de navegador dibujado con Canvas, compatible con teléfono y computadora.
-- Cinco personajes gratuitos para Flappy BirdCen: Cen, Canario, Laguna, Mango y Nube.
-- Una tabla con los mejores récords, el perfil del jugador y sus estadísticas.
-- Una billetera común de Cent dentro del perfil.
-- Cinco avatares gratuitos y cinco avatares que se pueden desbloquear con Cent.
-- La tienda está organizada en dos secciones principales: Avatares y Flappy BirdCen. Dentro de Flappy BirdCen se eligen pájaros o fondos; esos fondos cambian el escenario y las tuberías de ese minijuego.
-- Tema claro y oscuro para CenGames y las pantallas de sus minijuegos, guardado en el navegador.
-- Cinco fondos jugables para Flappy BirdCen: Costa dorada y Aurora polar son gratis; Órbita, Último sol y Neón urbano se desbloquean con Cent. Cada fondo cambia el cielo, el paisaje, el suelo y el diseño de las tuberías.
-- Una sección de tienda para futuros pájaros. Está en beta y sus cinco espacios quedan reservados hasta agregar los diseños.
-- Un modo con API Python y base SQLite para jugar y guardar perfiles en la computadora de desarrollo.
+- Un portal web adaptable a teléfonos y computadoras, hecho con HTML, CSS y JavaScript sin dependencias externas.
+- Flappy BirdCen, dibujado en Canvas, con controles táctiles y de teclado, récord, tabla, sonido, cinco personajes gratuitos y velocidad progresiva con tramos aleatorios que se estabiliza cerca de los 50 puntos.
+- Un perfil por nombre en cada navegador, con récords, estadísticas, saldo común de Cent y avatar seleccionado.
+- Una tienda de 15 avatares: los primeros cinco son gratis, los siguientes cinco cuestan 40 Cent cada uno y los últimos cinco cuestan 60 Cent cada uno.
+- Una tienda de Flappy BirdCen con cinco pájaros disponibles y cinco diseños reservados en beta, además de cinco fondos: Costa dorada y Aurora polar gratis; Órbita (60 Cent), Último sol (80 Cent) y Neón urbano (100 Cent).
+- Modos claro y oscuro, guardados en el navegador.
+- Una API Python opcional con SQLite para desarrollo local.
 
-## Cómo se gana y se usa Cent
+Cada punto de una partida suma 1 Cent al terminar. La API local limita una partida a 10,000 puntos y evita volver a sumar un mismo identificador de partida. Las compras validan saldo, propiedad y disponibilidad antes de modificar el perfil.
 
-Cada punto de una partida de Flappy BirdCen otorga 1 Cent al terminarla. La API local evita volver a sumar la misma partida si se repite una solicitud. El saldo se descuenta en el momento de comprar un avatar.
+## Guardado y límites
 
-Los precios actuales de los cinco avatares de tienda son 40, 55, 70, 85 y 100 Cent. Los fondos Órbita, Último sol y Neón urbano cuestan 60, 80 y 100 Cent. Los pájaros que se agregarán después no se pueden comprar todavía: sus diseños están en beta.
+El sitio publicado es estático y usa la capa gratuita de Azure Static Web Apps. No necesita una base de datos en la nube ni servicios de pago.
 
-## Guardado y modo gratis
+En el sitio publicado, el perfil, los Cent, la tienda, las estadísticas y los récords se guardan en el almacenamiento del navegador. Los perfiles no se sincronizan entre amigos, navegadores o dispositivos; borrar los datos del sitio puede borrar el progreso. Elegir el mismo nombre en otro dispositivo crea un perfil separado allí.
 
-El sitio publicado es estático y está pensado para la capa gratuita de Azure Static Web Apps. **No se crea ni se necesita una base de datos en la nube, una cuenta de Azure de pago ni otro servicio que genere cargos.**
+La API SQLite solo funciona en desarrollo local y escucha en `127.0.0.1`. Su archivo `data/cengames.sqlite3` está excluido de Git. No se publica con Azure y no sincroniza los perfiles de los visitantes del sitio. Los nombres son apodos locales, no hay autenticación por contraseña ni protección contra trampas; no uses información privada.
 
-En la versión publicada, el nombre, la billetera, los avatares, personajes, récords y estadísticas se conservan en el almacenamiento del navegador. La tabla es de ese navegador; los datos no se sincronizan entre amigos, navegadores ni dispositivos. Si se borra el almacenamiento del navegador, también se puede borrar el progreso.
+## Desarrollo local
 
-El tema claro u oscuro se elige dentro del juego y se conserva en ese navegador. Si Samsung Internet tiene activado su modo que fuerza colores oscuros en todas las páginas, puede alterar el tema del sitio; hay que elegir el modo del sitio en los ajustes del navegador. Una página web no puede desactivar por su cuenta ese ajuste de Samsung.
+Se necesita Python 3.10 o posterior. No hay dependencias de Python externas ni instalación de paquetes.
 
-La API Python con SQLite es para desarrollo local. La base queda en `data/cengames.sqlite3`, que está excluida de Git. En desarrollo, la API permite usar un mismo almacenamiento local entre los perfiles de esa computadora. No se sube esa base a Azure ni se comparte por internet.
-
-## Ejecutar en la computadora
-
-Necesitas Python 3.10 o posterior. No hay dependencias de Python externas.
-
-1. En una terminal, desde esta carpeta, sirve la web:
+1. Desde la carpeta del repositorio, sirve el sitio:
 
    ```bash
    python3 -m http.server 8000
    ```
 
-2. En otra terminal, inicia la API local:
+2. En otra terminal, inicia la API opcional:
 
    ```bash
    python3 -m api.local_server
@@ -52,40 +40,58 @@ Necesitas Python 3.10 o posterior. No hay dependencias de Python externas.
 
 3. Abre [http://localhost:8000](http://localhost:8000).
 
-Si no inicias la API, el juego sigue funcionando y guarda el progreso en el navegador. La API solo escucha en `127.0.0.1:8001` y acepta solicitudes desde el sitio local.
+Sin iniciar la API, el sitio sigue funcionando con almacenamiento del navegador. La API local escucha en `127.0.0.1:8001`; CORS permite leer sus respuestas desde los orígenes de desarrollo locales indicados en el servidor.
 
-Para borrar la base de desarrollo, detén la API y elimina `data/cengames.sqlite3`. Para limpiar el modo de navegador, borra los datos del sitio desde la configuración del navegador.
+Para limpiar la base local, detén la API y borra `data/cengames.sqlite3` junto con sus archivos `-wal` y `-shm`, si existen. Para limpiar el perfil del navegador, borra los datos del sitio desde el navegador.
 
-## Controles
+## Validación
 
-- Toca o haz clic en el juego para jugar y aletear.
-- Usa **Espacio**, **Flecha arriba** o **W** en el teclado.
-- El botón del trofeo abre la tabla general.
-- El botón de menú permite cambiar de personaje, abrir la tienda, controlar el sonido o volver a los minijuegos.
+Ejecuta las pruebas de la economía y API con la biblioteca estándar de Python:
 
-## Proyecto y estructura
-
-```text
-index.html                  Pantallas y diálogos
-src/css/game.css            Diseño adaptable
-src/js/audio.js             Sonido y preferencia de silencio
-src/js/theme.js             Preferencia global de tema claro u oscuro
-src/js/economy.js           Moneda Cent, tienda de avatares y fondos, guardado del navegador/API
-src/js/ui.js                Navegación, perfil, selector y diálogos
-src/js/game.js              Física y dibujo de Flappy BirdCen en Canvas
-api/economy.py              Reglas y persistencia SQLite de perfiles, partidas y fondos
-api/http_api.py             Rutas de perfil, partida, tabla y tiendas
-api/local_server.py         Servidor Python local para la API
-assets/                     Iconos, avatares y recursos del juego
-.github/dependabot.yml      Actualización periódica de GitHub Actions
+```bash
+python3 -m unittest discover -s tests -v
 ```
 
-El frente se mantiene en HTML, CSS y JavaScript simple. Para este portal de ocio no hace falta Next.js: no hay renderizado en servidor ni navegación compleja. TypeScript puede ayudar más adelante si crecen los minijuegos y los modelos de economía; la migración se puede hacer poco a poco sin reescribir ahora el motor Canvas.
+Comprueba la sintaxis de los módulos de navegador:
 
-## Publicación
+```bash
+for file in src/js/*.js; do node --check "$file"; done
+```
 
-El workflow de GitHub Actions publica los archivos estáticos al cambiar la rama `main`. No publica la API Python ni una base de datos, para mantener la publicación dentro del modo gratuito. El progreso de la página publicada se queda en el navegador que juega.
+Valida la curva de velocidad sin instalar dependencias:
 
-## Mantenimiento
+```bash
+node --test tests/game-pace.test.cjs
+```
 
-Dependabot revisa semanalmente las acciones de GitHub usadas por el workflow y propone actualizaciones. El proyecto evita dependencias externas para que el desarrollo local sea ligero.
+## Estructura
+
+```text
+index.html                  Portal, pantallas y diálogos
+src/css/game.css            Estilos y diseño adaptable
+src/js/audio.js             Sonido y preferencia de silencio
+src/js/economy.js           Perfil, saldo, tienda y guardado de navegador/API
+src/js/store-ui.js          Catálogo y acciones de compra/equipamiento
+src/js/theme.js             Preferencia global de tema
+src/js/ui.js                Navegación, perfil, selector y diálogos
+src/js/game-config.js       Dimensiones, ritmo y perfiles de colisión
+src/js/game-pace.js         Tramos de velocidad aleatorios y suavizados
+src/js/game.js              Estado, controles, física y bucle de animación
+src/js/game-scene.js        Paisaje, tuberías y efectos Canvas
+src/js/game-character.js    Dibujo y animación de personajes
+src/js/game-overlay.js      Marcador, instrucciones y resultado de partida
+api/economy.py              Reglas de economía y persistencia SQLite
+api/http_api.py             Rutas locales de perfil, partidas, tabla y tienda
+api/local_server.py         Servidor Python local para desarrollo
+tests/                      Pruebas de economía y rutas API
+assets/                     Avatares, ilustraciones e iconos del juego
+service-worker.js           Caché sin conexión de archivos estáticos
+.github/workflows/          Publicación en Azure Static Web Apps
+.github/dependabot.yml       Actualizaciones de GitHub Actions
+```
+
+El juego sigue usando JavaScript simple porque el portal es estático, no tiene dependencias y necesita poco proceso de compilación. No hace falta migrarlo a Next.js para este alcance. Si se incorporan más juegos, conviene extraer módulos reutilizables de perfil, economía y navegación antes de añadir un framework.
+
+## Pendientes de diseño
+
+La hitbox del personaje Cen todavía difiere de la de los pájaros ilustrados. Se debe ajustar cuando estén listos los nuevos modelos y se puedan definir zonas de colisión que correspondan a cada ilustración. La API y la economía no dependen de ese trabajo visual.
