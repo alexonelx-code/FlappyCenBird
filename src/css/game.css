@@ -1,5 +1,6 @@
 :root {
-  color-scheme: dark;
+  /* Fallback claro hasta que el script aplique el tema propio de CenGames. */
+  color-scheme: only light;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   background: #091820;
   color: #fff0d1;
@@ -526,13 +527,30 @@ input:focus-visible { outline: 3px solid var(--gold); outline-offset: 3px; }
   backdrop-filter: blur(28px) saturate(145%);
 }
 
+.leaderboard-dialog[open],
+.game-menu-dialog[open],
+.profile-dialog[open],
+.store-dialog[open] { animation: dialog-drop-in .32s cubic-bezier(.2, .75, .25, 1) both; }
+
+.leaderboard-dialog[open]::backdrop,
+.game-menu-dialog[open]::backdrop,
+.profile-dialog[open]::backdrop,
+.store-dialog[open]::backdrop { animation: backdrop-fade-in .28s ease-out both; }
+
+.leaderboard-dialog[open].is-closing,
+.game-menu-dialog[open].is-closing,
+.profile-dialog[open].is-closing,
+.store-dialog[open].is-closing { animation: dialog-dismiss .2s ease-in both; pointer-events: none; }
+
+.leaderboard-dialog[open].is-closing::backdrop,
+.game-menu-dialog[open].is-closing::backdrop,
+.profile-dialog[open].is-closing::backdrop,
+.store-dialog[open].is-closing::backdrop { animation: backdrop-fade-out .2s ease-in both; }
+
 .leaderboard-dialog,
 .game-menu-dialog {
   background: linear-gradient(145deg, rgba(28, 62, 73, .76), rgba(11, 32, 41, .72));
 }
-
-.leaderboard-dialog[open],
-.game-menu-dialog[open] { animation: dialog-drop-in .28s cubic-bezier(.2, .75, .25, 1) both; }
 
 .leaderboard-dialog::backdrop,
 .game-menu-dialog::backdrop,
@@ -677,6 +695,15 @@ input:focus-visible { outline: 3px solid var(--gold); outline-offset: 3px; }
   to { opacity: 1; transform: translateY(0) scale(1); }
 }
 
+@keyframes sheet-rise-in {
+  from { opacity: 0; transform: translateY(28px) scale(.99); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes sheet-dismiss {
+  to { opacity: 0; transform: translateY(32px) scale(.99); filter: blur(3px); }
+}
+
 @keyframes console-float {
   0%, 100% { transform: translateY(0) rotate(-8deg); }
   50% { transform: translateY(-11px) rotate(-4deg); }
@@ -757,6 +784,12 @@ input:focus-visible { outline: 3px solid var(--gold); outline-offset: 3px; }
 }
 
 @media (max-width: 600px) {
+  .profile-dialog[open],
+  .store-dialog[open] { animation-name: sheet-rise-in; }
+
+  .profile-dialog[open].is-closing,
+  .store-dialog[open].is-closing { animation-name: sheet-dismiss; }
+
   .profile-dialog,
   .store-dialog {
     inset: auto 0 0;
@@ -806,11 +839,6 @@ input:focus-visible { outline: 3px solid var(--gold); outline-offset: 3px; }
   .store-beta-banner { margin-top: 12px; padding: 11px; font-size: 11px; }
   .game-menu-heading { margin-bottom: 16px; }
   .game-menu-action { min-height: 54px; }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .leaderboard-dialog[open],
-  .game-menu-dialog[open] { animation: none; }
 }
 
 @media (max-width: 430px) {
@@ -892,7 +920,6 @@ input:focus-visible { outline: 3px solid var(--gold); outline-offset: 3px; }
 /* Tema claro global de CenGames; las escenas del Canvas conservan su paleta propia. */
 .theme-moon-icon { display: none; }
 :root[data-theme="light"] {
-  color-scheme: light;
   background: #f3f7f5;
   color: #18343d;
   --ink: #18343d;
@@ -998,3 +1025,67 @@ input:focus-visible { outline: 3px solid var(--gold); outline-offset: 3px; }
 :root[data-theme="light"] .game-shell .overlay-button:hover { background: rgba(255, 255, 255, .96); }
 @media (max-width: 600px) { .store-tab { min-height: 40px; padding-inline: 3px; font-size: 11px; } }
 @media (max-width: 370px) { .store-tab { font-size: 10px; } }
+
+/* Los temas son propios de CenGames; el navegador solo aporta su UI nativa en claro. */
+:root.theme-transitioning,
+:root.theme-transitioning *,
+:root.theme-transitioning *::before,
+:root.theme-transitioning *::after {
+  transition-property: color, background-color, background-image, border-color, box-shadow, fill, stroke;
+  transition-duration: .42s;
+  transition-timing-function: cubic-bezier(.2, .7, .2, 1);
+}
+
+:root.theme-transitioning .leaderboard-dialog::backdrop,
+:root.theme-transitioning .game-menu-dialog::backdrop,
+:root.theme-transitioning .profile-dialog::backdrop,
+:root.theme-transitioning .store-dialog::backdrop {
+  transition: background-color .42s cubic-bezier(.2, .7, .2, 1), backdrop-filter .42s cubic-bezier(.2, .7, .2, 1);
+}
+
+:root.theme-transitioning[data-theme="light"] .theme-moon-icon,
+:root.theme-transitioning:not([data-theme="light"]) .theme-sun-icon { animation: theme-icon-arrive .42s cubic-bezier(.2, .8, .2, 1) both; }
+
+@keyframes theme-icon-arrive {
+  from { opacity: 0; transform: rotate(-45deg) scale(.65); }
+  68% { opacity: 1; transform: rotate(7deg) scale(1.12); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes backdrop-fade-in {
+  from {
+    background-color: rgba(2, 9, 13, 0);
+    -webkit-backdrop-filter: blur(0);
+    backdrop-filter: blur(0);
+  }
+}
+
+@keyframes backdrop-fade-out {
+  to {
+    background-color: rgba(2, 9, 13, 0);
+    -webkit-backdrop-filter: blur(0);
+    backdrop-filter: blur(0);
+  }
+}
+
+@keyframes dialog-dismiss {
+  to { opacity: 0; transform: translateY(-8px) scale(.985); filter: blur(3px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root.theme-transitioning *,
+  :root.theme-transitioning *::before,
+  :root.theme-transitioning *::after { transition-duration: .01ms !important; }
+
+  :root.theme-transitioning[data-theme="light"] .theme-moon-icon,
+  :root.theme-transitioning:not([data-theme="light"]) .theme-sun-icon { animation: none; }
+
+  .leaderboard-dialog[open],
+  .game-menu-dialog[open],
+  .profile-dialog[open],
+  .store-dialog[open] { animation: none; }
+  .leaderboard-dialog[open]::backdrop,
+  .game-menu-dialog[open]::backdrop,
+  .profile-dialog[open]::backdrop,
+  .store-dialog[open]::backdrop { animation: none; }
+}
