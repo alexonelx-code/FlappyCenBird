@@ -142,10 +142,12 @@
   }
 
   function buildDuel(match) {
+    const center = match.config.arena.width / 2;
+    const openingGap = Math.min(270, match.config.arena.width * 0.3);
     return engine.createDuel({
       config: match.config,
-      left: duelFighter(match.combatants[match.active.player]),
-      right: duelFighter(match.combatants[match.active.cpu])
+      left: { ...duelFighter(match.combatants[match.active.player]), x: center - openingGap / 2 },
+      right: { ...duelFighter(match.combatants[match.active.cpu]), x: center + openingGap / 2 }
     });
   }
 

@@ -1551,3 +1551,79 @@ input:focus-visible { outline: 3px solid var(--gold); outline-offset: 3px; }
 .fighter-select-avatar { position: relative; overflow: hidden; border-radius: 2px; font-size: 0; box-shadow: 2px 2px #10101c; }
 .fighter-select-avatar::before { position: absolute; inset: 9% 17% 3%; background: linear-gradient(180deg, #f2c18d 0 18%, var(--fighter-accent) 18% 57%, #f5e5c7 57% 63%, var(--fighter-shadow) 63% 100%); clip-path: polygon(32% 0, 68% 0, 76% 5%, 76% 16%, 67% 21%, 80% 25%, 100% 36%, 97% 45%, 87% 48%, 76% 39%, 73% 58%, 87% 63%, 84% 100%, 58% 100%, 52% 73%, 45% 73%, 40% 100%, 15% 100%, 18% 65%, 30% 58%, 27% 39%, 12% 47%, 2% 43%, 6% 32%, 25% 25%, 33% 21%, 24% 16%, 24% 5%); content: ""; image-rendering: pixelated; }
 .fighter-select-avatar::after { position: absolute; top: 15%; left: 47%; width: 17%; height: 3px; background: #251d2a; box-shadow: -3px 5px #f0c393, 2px 26px #f5e5c7; content: ""; }
+
+.fighter-game-screen { position: fixed; z-index: 30; inset: 0; display: flex; width: auto; height: 100dvh; min-height: 0; flex-direction: column; overflow: hidden; margin: 0; padding: max(5px, env(safe-area-inset-top)) max(7px, env(safe-area-inset-right)) max(5px, env(safe-area-inset-bottom)) max(7px, env(safe-area-inset-left)); background: #101521; }
+.fighter-match-header { width: 100%; min-height: 40px; flex: 0 0 40px; }
+.fighter-arena-shell { position: relative; width: 100%; min-height: 0; max-height: none; flex: 1 1 auto; overflow: hidden; border: 2px solid #c5a35d; border-radius: 4px; background: #152b3b; box-shadow: 0 0 0 3px #242036, 0 8px 28px rgba(0, 0, 0, .5); }
+#fighterCanvas { width: 100%; height: 100%; aspect-ratio: auto; image-rendering: pixelated; }
+.fighter-match-hud { position: absolute; z-index: 2; top: max(8px, env(safe-area-inset-top)); left: 50%; width: min(calc(100% - 24px), 720px); grid-template-columns: minmax(0, 1fr) 58px minmax(0, 1fr); gap: 12px; margin: 0; transform: translateX(-50%); pointer-events: none; }
+.fighter-hud-heading { margin-bottom: 4px; color: #fff0c5; font-size: 10px; text-shadow: 2px 2px #172030; }
+.fighter-hud-heading span { color: #d4e2db; font-size: 9px; }
+.fighter-health-track { height: 13px; border: 2px solid #efe2be; border-radius: 1px; background: #5b2737; box-shadow: 2px 2px #1b1b29; }
+.fighter-health-track > span { background: linear-gradient(180deg, #ffe590 0 22%, #f1a33d 24% 100%); }
+.fighter-cpu-hud .fighter-health-track > span { background: linear-gradient(180deg, #ffe590 0 22%, #e86743 24% 100%); }
+.fighter-reserves { min-height: 16px; gap: 4px; margin-top: 4px; }
+.fighter-reserve { width: 15px; height: 15px; border: 1px solid #dbbd74; border-radius: 1px; background: rgba(20, 28, 42, .75); color: #fff0c5; font-size: 7px; }
+.fighter-reserve.is-active { background: #bd7543; }
+.fighter-hud-center { align-self: center; color: #fff0c5; font-size: 7px; text-shadow: 1px 1px #172030; }
+.fighter-hud-center strong { color: #fbd777; font-size: 14px; text-shadow: 2px 2px #623942; }
+.fighter-controls-row { position: absolute; z-index: 4; inset: 0; display: block; padding: 0; pointer-events: none; }
+.fighter-controls-row > p { position: absolute; bottom: 7px; left: 50%; margin: 0; padding: 4px 8px; border: 1px solid rgba(243, 219, 163, .7); background: rgba(18, 25, 39, .78); color: #fff1ce; font-size: 9px; text-shadow: 1px 1px #111; transform: translateX(-50%); white-space: nowrap; }
+.fighter-touch-controls { display: none; }
+.fighter-face-pad { position: absolute; bottom: max(13px, env(safe-area-inset-bottom)); left: max(12px, env(safe-area-inset-left)); grid-template: repeat(3, 46px) / repeat(3, 46px); gap: 0; pointer-events: auto; }
+.fighter-face-pad button { width: 42px; height: 42px; min-width: 42px; min-height: 42px; border: 2px solid rgba(246, 240, 222, .6); border-radius: 50%; color: #fff8e8; font-family: "Courier New", Courier, monospace; font-size: 15px; font-weight: 900; box-shadow: inset 0 2px rgba(255, 255, 255, .42), 0 2px 0 rgba(7, 11, 20, .7); touch-action: none; }
+.fighter-face-pad .face-c { grid-area: 1 / 2; background: rgba(192, 132, 49, .72); }
+.fighter-face-pad .face-x { grid-area: 2 / 3; background: rgba(60, 115, 180, .72); }
+.fighter-face-pad .face-v { grid-area: 3 / 2; background: rgba(190, 75, 66, .72); }
+.fighter-face-pad .face-z { grid-area: 2 / 1; background: rgba(55, 150, 110, .72); }
+.fighter-analog-control { position: absolute; right: max(14px, env(safe-area-inset-right)); bottom: max(14px, env(safe-area-inset-bottom)); justify-items: center; gap: 0; pointer-events: auto; }
+.fighter-analog-stick { width: 108px; height: 108px; min-width: 108px !important; min-height: 108px !important; border-color: rgba(244, 238, 218, .52) !important; background: radial-gradient(circle, rgba(226, 230, 228, .17) 0 34%, rgba(16, 24, 34, .44) 36% 67%, rgba(226, 230, 228, .15) 69%) !important; touch-action: none; }
+.fighter-analog-thumb { width: 43%; height: 43%; background: radial-gradient(circle at 36% 30%, rgba(255, 255, 255, .39), rgba(176, 185, 190, .24) 48%, rgba(20, 27, 38, .74) 100%); }
+.fighter-analog-caption { display: none; }
+.fighter-select-avatar { border: 1px solid rgba(239, 222, 183, .7); background-color: #18202b; background-repeat: no-repeat; image-rendering: pixelated; }
+.fighter-select-avatar::before,
+.fighter-select-avatar::after { display: none; }
+
+@media (pointer: coarse) {
+  .fighter-touch-controls { display: contents; }
+  .fighter-controls-row > p { display: none; }
+}
+@media (pointer: fine) {
+  .fighter-touch-controls { display: none !important; }
+}
+@media (orientation: portrait) and (pointer: coarse) {
+  .fighter-match-header { min-height: 38px; flex-basis: 38px; }
+  .fighter-match-title > span:last-child { font-size: 8px; }
+  .fighter-match-clock { min-width: 44px; padding: 2px 5px; font-size: 14px; }
+  .fighter-arena-shell { border-radius: 2px; }
+  .fighter-match-hud { top: 7px; width: calc(100% - 14px); grid-template-columns: minmax(0, 1fr) 38px minmax(0, 1fr); gap: 5px; }
+  .fighter-hud-heading { gap: 3px; margin-bottom: 3px; font-size: 8px; }
+  .fighter-hud-heading span { font-size: 7px; }
+  .fighter-health-track { height: 10px; }
+  .fighter-reserves { min-height: 12px; gap: 3px; margin-top: 3px; }
+  .fighter-reserve { width: 12px; height: 12px; font-size: 6px; }
+  .fighter-hud-center { font-size: 5px; }
+  .fighter-hud-center strong { font-size: 11px; }
+  .fighter-face-pad { bottom: max(12px, env(safe-area-inset-bottom)); left: max(9px, env(safe-area-inset-left)); grid-template: repeat(3, 41px) / repeat(3, 41px); }
+  .fighter-face-pad button { width: 38px; height: 38px; min-width: 38px; min-height: 38px; }
+  .fighter-analog-control { right: max(10px, env(safe-area-inset-right)); bottom: max(12px, env(safe-area-inset-bottom)); }
+  .fighter-analog-stick { width: 96px; height: 96px; min-width: 96px !important; min-height: 96px !important; }
+}
+@media (orientation: landscape) and (max-height: 500px) {
+  .fighter-game-screen { padding: max(3px, env(safe-area-inset-top)) max(6px, env(safe-area-inset-right)) max(3px, env(safe-area-inset-bottom)) max(6px, env(safe-area-inset-left)); }
+  .fighter-match-header { min-height: 30px; flex-basis: 30px; }
+  .fighter-back-button { min-height: 27px; padding-inline: 7px; font-size: 9px; }
+  .fighter-brand { font-size: 9px; }
+  .fighter-match-clock { min-width: 39px; padding: 1px 4px; font-size: 12px; }
+  .fighter-match-hud { top: 5px; width: min(calc(100% - 20px), 570px); grid-template-columns: minmax(0, 1fr) 44px minmax(0, 1fr); gap: 7px; }
+  .fighter-hud-heading { margin-bottom: 2px; font-size: 8px; }
+  .fighter-hud-heading span { font-size: 7px; }
+  .fighter-health-track { height: 9px; }
+  .fighter-reserves { min-height: 10px; margin-top: 2px; }
+  .fighter-reserve { width: 10px; height: 10px; font-size: 5px; }
+  .fighter-hud-center strong { font-size: 10px; }
+  .fighter-face-pad { bottom: max(7px, env(safe-area-inset-bottom)); left: max(8px, env(safe-area-inset-left)); grid-template: repeat(3, 36px) / repeat(3, 36px); }
+  .fighter-face-pad button { width: 33px; height: 33px; min-width: 33px; min-height: 33px; font-size: 12px; }
+  .fighter-analog-control { right: max(9px, env(safe-area-inset-right)); bottom: max(8px, env(safe-area-inset-bottom)); }
+  .fighter-analog-stick { width: 80px; height: 80px; min-width: 80px !important; min-height: 80px !important; }
+}

@@ -13,6 +13,13 @@
   const motionQuery = typeof window !== 'undefined' && typeof window.matchMedia === 'function'
     ? window.matchMedia('(prefers-reduced-motion: reduce)')
     : null;
+  const STAGE_ASSETS = [
+    '01-biblioteca.png',
+    '02-campus-nocturno.png',
+    '03-jardin.png',
+    '04-fachada.png',
+    '05-monumento.png'
+  ];
   let backgroundCanvas = null;
 
   function paletteFor(fighter) {
@@ -30,6 +37,62 @@
     }
     const image = spriteImages.get(src);
     return image.complete && image.naturalWidth ? image : null;
+  }
+
+  function pixelStage(boutNumber) {
+    const index = ((Math.max(1, Number(boutNumber) || 1) - 1) % STAGE_ASSETS.length);
+    return spriteImage(`assets/fighters/stages/${STAGE_ASSETS[index]}`);
+  }
+
+  function drawRosterSprite(ctx, fighter, frame, reducedMotion, portrait) {
+    const image = spriteImage('assets/fighters/roster-atlas.png');
+    if (!image) return false;
+    const match = /fighter-(\d+)/.exec(fighter.characterId || fighter.id || '');
+    const index = Math.max(0, Math.min(9, Number(match && match[1]) - 1 || 0));
+    const cellWidth = image.naturalWidth / 5;
+    const cellHeight = image.naturalHeight / 2;
+    const sourceX = (index % 5) * cellWidth;
+    const sourceY = Math.floor(index / 5) * cellHeight;
+    const bodyHeight = fighter.crouching && fighter.grounded ? fighter.crouchHeight : fighter.height;
+    const artHeight = portrait
+      ? Math.min(bodyHeight * (fighter.crouching && fighter.grounded ? 0.78 : 1.15), 140)
+      : bodyHeight * (fighter.crouching && fighter.grounded ? 0.98 : 1.38);
+    const artWidth = artHeight * (portrait ? 1.35 : 1);
+    const moving = Math.abs(fighter.vx) > 30 && fighter.grounded;
+    const attack = fighter.attackId && fighter.moves && fighter.moves[fighter.attackId];
+    const strikeStart = attack ? attack.startupFrames : 0;
+    const strikeEnd = attack ? strikeStart + attack.activeFrames : 0;
+    const striking = Boolean(attack && fighter.attackFrame >= strikeStart && fighter.attackFrame < strikeEnd);
+    const advancing = Boolean(attack && fighter.attackFrame >= Math.floor(strikeStart * 0.55));
+    const bob = reducedMotion ? 0 : moving ? Math.abs(Math.sin(frame * 0.42)) * 3 : Math.sin(frame * 0.13) * 1.2;
+    const lunge = advancing ? (striking ? 13 : 5) : 0;
+    const recoil = fighter.hitstunFrames > 0 ? fighter.facing * -4 : 0;
+
+    ctx.save();
+    ctx.globalAlpha = fighter.knockedOut ? 0.55 : 1;
+    pixel(ctx, fighter.x - artWidth * 0.31, fighter.y + 5, artWidth * 0.62, 6, 'rgba(6, 11, 20, .55)');
+    ctx.translate(fighter.x + recoil + fighter.facing * lunge, fighter.y - bob);
+    ctx.scale(fighter.facing, 1);
+    ctx.imageSmoothingEnabled = false;
+    ctx.drawImage(image, sourceX, sourceY, cellWidth, cellHeight,
+      -artWidth / 2, -artHeight, artWidth, artHeight);
+    if (striking) {
+      const tint = fighter.attackId === 'special' ? '#b7f5ff'
+        : fighter.attackId === 'heavy' ? '#ffe28a'
+          : fighter.attackId === 'medium' ? '#ffbc7b' : '#fff4ce';
+      const reach = fighter.attackId === 'special' ? 50 : fighter.attackId === 'heavy' ? 38 : 28;
+      ctx.globalAlpha = 0.85;
+      pixel(ctx, artWidth * 0.19, -artHeight * 0.65, reach, 5, tint);
+      pixel(ctx, artWidth * 0.27, -artHeight * 0.58, reach * 0.68, 3, '#fff9de');
+      pixel(ctx, artWidth * 0.19 + reach, -artHeight * 0.7, 7, 7, tint);
+    }
+    if (fighter.hitstunFrames > 0 && !reducedMotion) {
+      ctx.globalAlpha = 0.78;
+      pixel(ctx, -artWidth * 0.18, -artHeight * 0.72, 6, 6, '#fff3c0');
+      pixel(ctx, artWidth * 0.13, -artHeight * 0.8, 4, 5, '#ffb16d');
+    }
+    ctx.restore();
+    return true;
   }
 
   function drawSprite(ctx, fighter, frame, bodyHeight, reducedMotion) {
@@ -69,7 +132,7 @@
     ctx.fillRect(Math.round(x), Math.round(y), Math.round(width), Math.round(height));
   }
 
-  function drawFighter(ctx, fighter, side, frame, reducedMotion) {
+  function drawFighter(ctx, fighter, side, frame, reducedMotion, portrait) {
     const [accent, shadow, skin] = paletteFor(fighter);
     const bodyHeight = fighter.crouching && fighter.grounded ? fighter.crouchHeight : fighter.height;
     const scaleX = bodyHeight / 116 * 1.24;
@@ -93,7 +156,8 @@
     const rect = (cx, bottom, width, height, color) => pixel(ctx, cx - width / 2, -bottom - height, width, height, color);
 
     ctx.save();
-    if (drawSprite(ctx, fighter, frame, bodyHeight, reducedMotion)) {
+    if (drawSprite(ctx, fighter, frame, bodyHeight, reducedMotion)
+        || drawRosterSprite(ctx, fighter, frame, reducedMotion, portrait)) {
       ctx.restore();
       return;
     }
@@ -314,7 +378,7 @@
     return backgroundCanvas;
   }
 
-  function drawBackground(ctx, frame, reducedMotion) {
+  function drawBackground(ctx, frame, reducedMotion, boutNumber) {
     [
       [-540, 105, '#171b39'], [-435, 100, '#202344'], [-335, 91, '#302947'],
       [-244, 85, '#4c3450'], [-159, 80, '#70415b']
@@ -330,6 +394,14 @@
       pixel(ctx, x + 14, y - 7, 33, 7, index % 2 ? '#72718d' : '#85819a');
       pixel(ctx, x + 8, y + 8, 29, 5, '#4c496c');
     });
+    const stage = pixelStage(boutNumber);
+    if (stage) {
+      const smoothing = ctx.imageSmoothingEnabled;
+      ctx.imageSmoothingEnabled = false;
+      ctx.drawImage(stage, 0, 0, 960, 540);
+      ctx.imageSmoothingEnabled = smoothing;
+      return;
+    }
     const background = staticBackground();
     if (background) {
       const smoothing = ctx.imageSmoothingEnabled;
@@ -367,13 +439,13 @@
     ctx.restore();
   }
 
-  function draw(context, match, frame = 0, effects = []) {
+  function draw(context, match, frame = 0, effects = [], options = {}) {
     if (!context || !match || !match.duel) return;
     const reducedMotion = Boolean(motionQuery && motionQuery.matches);
     context.imageSmoothingEnabled = false;
-    drawBackground(context, frame, reducedMotion);
-    drawFighter(context, match.duel.left, 'left', frame, reducedMotion);
-    drawFighter(context, match.duel.right, 'right', frame, reducedMotion);
+    drawBackground(context, frame, reducedMotion, match.boutNumber);
+    drawFighter(context, match.duel.left, 'left', frame, reducedMotion, Boolean(options.portrait));
+    drawFighter(context, match.duel.right, 'right', frame, reducedMotion, Boolean(options.portrait));
     effects.forEach((effect) => drawImpact(context, effect, frame, reducedMotion));
   }
 

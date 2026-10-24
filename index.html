@@ -15,7 +15,7 @@
   <link rel="icon" href="assets/icons/cengames-mark.svg" type="image/svg+xml">
   <link rel="manifest" href="manifest.webmanifest">
   <script src="src/js/theme.js?v=23"></script>
-  <link rel="stylesheet" href="src/css/game.css?v=41">
+  <link rel="stylesheet" href="src/css/game.css?v=42">
   <title>CenGames</title>
 </head>
 <body>
@@ -216,8 +216,6 @@
           <label><input type="radio" name="fighterDifficulty" value="normal" checked><span><strong>Normal</strong><small>Un reto equilibrado</small></span></label>
           <label><input type="radio" name="fighterDifficulty" value="dificil"><span><strong>Difícil</strong><small>Reacciona y castiga mejor</small></span></label>
         </fieldset>
-        <div class="fighter-learning-note"><span aria-hidden="true">✦</span><span>La CPU ajusta su estrategia con las partidas completas de este perfil. Ese aprendizaje se guarda en este dispositivo.</span></div>
-        <p class="fighter-reward-note">5 Cent por completar el combate · +2 Cent por ganar · abandonar no paga.</p>
         <div class="fighter-setup-actions">
           <button class="fighter-secondary-button" id="resetFighterLearningButton" type="button">Reiniciar aprendizaje</button>
           <button class="fighter-primary-button" id="startFighterMatchButton" type="button" disabled>Empezar combate <span aria-hidden="true">→</span></button>
@@ -232,13 +230,15 @@
         <button class="fighter-back-button fighter-sound-button" id="fighterSoundButton" type="button" aria-label="Silenciar sonido" aria-pressed="false"><span aria-hidden="true">♪</span></button>
         <div class="fighter-match-clock" id="fighterClock" aria-label="Tiempo restante">40</div>
       </header>
-      <div class="fighter-match-hud" aria-label="Estado de los equipos">
-        <div class="fighter-team-hud fighter-player-hud"><div class="fighter-hud-heading"><strong id="fighterPlayerName">Jugador</strong><span id="fighterPlayerActive">Peleador 01</span></div><div class="fighter-health-track"><span id="fighterPlayerHealth"></span></div><div class="fighter-reserves" id="fighterPlayerReserves" aria-label="Reservas del jugador"></div></div>
-        <div class="fighter-hud-center"><span>EQUIPOS</span><strong>3v3</strong></div>
-        <div class="fighter-team-hud fighter-cpu-hud"><div class="fighter-hud-heading"><strong>CPU</strong><span id="fighterCpuActive">Peleador 04</span></div><div class="fighter-health-track"><span id="fighterCpuHealth"></span></div><div class="fighter-reserves" id="fighterCpuReserves" aria-label="Reservas de la CPU"></div></div>
-      </div>
-      <div class="fighter-arena-shell"><canvas id="fighterCanvas" width="960" height="540" tabindex="0" role="img" aria-label="Arena de Cen Fighters. Muévete con las flechas, salta con arriba, bloquea con J y ataca con Z, X, C o V.">Este navegador no soporta Canvas.</canvas><p class="sr-only" id="fighterStatus" role="status" aria-live="polite" aria-atomic="true">El combate está listo.</p></div>
-      <div class="fighter-controls-row"><p>← → mover · ↑ saltar · ↓ agacharse · J bloquear · Z jab · X patada · C fuerte · V especial</p><div class="fighter-touch-controls" aria-label="Controles táctiles estilo mando">
+      <div class="fighter-arena-shell">
+        <canvas id="fighterCanvas" width="960" height="540" tabindex="0" role="img" aria-label="Arena de Cen Fighters. Muévete con las flechas, salta con arriba, bloquea con J y ataca con Z, X, C o V.">Este navegador no soporta Canvas.</canvas>
+        <div class="fighter-match-hud" aria-label="Estado de los equipos">
+          <div class="fighter-team-hud fighter-player-hud"><div class="fighter-hud-heading"><strong id="fighterPlayerName">Jugador</strong><span id="fighterPlayerActive">Peleador 01</span></div><div class="fighter-health-track"><span id="fighterPlayerHealth"></span></div><div class="fighter-reserves" id="fighterPlayerReserves" aria-label="Reservas del jugador"></div></div>
+          <div class="fighter-hud-center"><span>EQUIPOS</span><strong>3v3</strong></div>
+          <div class="fighter-team-hud fighter-cpu-hud"><div class="fighter-hud-heading"><strong>CPU</strong><span id="fighterCpuActive">Peleador 04</span></div><div class="fighter-health-track"><span id="fighterCpuHealth"></span></div><div class="fighter-reserves" id="fighterCpuReserves" aria-label="Reservas de la CPU"></div></div>
+        </div>
+        <p class="sr-only" id="fighterStatus" role="status" aria-live="polite" aria-atomic="true">El combate está listo.</p>
+        <div class="fighter-controls-row"><p>← → mover · ↑ saltar · Z/X/C/V atacar · J cubrir</p><div class="fighter-touch-controls" aria-label="Controles táctiles estilo mando">
         <div class="fighter-face-pad" aria-label="Ataques Z X C V">
           <button class="face-c" type="button" data-fighter-attack="heavy" aria-label="Golpe fuerte · tecla C"><span>C</span></button>
           <button class="face-x" type="button" data-fighter-attack="medium" aria-label="Patada · tecla X"><span>X</span></button>
@@ -249,7 +249,8 @@
           <button class="fighter-analog-stick" type="button" data-fighter-analog aria-label="Control analógico. Arrastra para moverte; arriba salta y abajo se agacha."><span class="fighter-analog-thumb" aria-hidden="true"></span></button>
           <span class="fighter-analog-caption" aria-hidden="true">MOVER</span>
         </div>
-      </div></div>
+        </div></div>
+      </div>
       <div class="fighter-modal-overlay" id="fighterPauseOverlay" hidden><section class="fighter-modal-card" role="dialog" aria-modal="true" aria-labelledby="fighterPauseTitle"><p class="screen-kicker">COMBATE EN PAUSA</p><h2 id="fighterPauseTitle">Tómate un respiro</h2><p>Si abandonas, este combate no entrega Cent.</p><button class="fighter-primary-button" id="resumeFighterButton" type="button">Seguir jugando</button><button class="fighter-secondary-button" id="abandonFighterButton" type="button">Rendirse y volver</button></section></div>
       <div class="fighter-modal-overlay" id="fighterResultOverlay" hidden><section class="fighter-modal-card" role="dialog" aria-modal="true" aria-labelledby="fighterResultTitle"><p class="screen-kicker">FIN DEL COMBATE</p><h2 id="fighterResultTitle">Resultado</h2><p id="fighterResultCopy"></p><div class="fighter-result-reward" id="fighterResultReward"></div><button class="fighter-primary-button" id="fighterResultContinueButton" type="button">Volver a minijuegos</button></section></div>
     </section>
@@ -366,7 +367,7 @@
   <script src="src/js/fighter/team-match.js" defer></script>
   <script src="src/js/fighter/cpu.js" defer></script>
   <script src="src/js/fighter/learning.js" defer></script>
-  <script src="src/js/fighter/renderer.js?v=39" defer></script>
-  <script src="src/js/fighter/game.js?v=39" defer></script>
+  <script src="src/js/fighter/renderer.js?v=42" defer></script>
+  <script src="src/js/fighter/game.js?v=42" defer></script>
 </body>
 </html>

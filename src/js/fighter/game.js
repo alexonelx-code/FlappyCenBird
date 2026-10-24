@@ -75,6 +75,9 @@
       const avatar = document.createElement('span');
       avatar.className = 'fighter-select-avatar';
       avatar.dataset.palette = String(index % 10);
+      avatar.style.backgroundImage = 'url("assets/fighters/roster-atlas.png")';
+      avatar.style.backgroundSize = '500% 200%';
+      avatar.style.backgroundPosition = `${(index % 5) * 25}% ${Math.floor(index / 5) * 100}%`;
       if (fighter.palette) {
         avatar.style.setProperty('--fighter-accent', fighter.palette.accent);
         avatar.style.setProperty('--fighter-shadow', fighter.palette.shadow);
@@ -183,20 +186,22 @@
       return;
     }
     const { left, right } = match.duel;
-    const worldWidth = Math.min(960, Math.max(620, Math.abs(right.x - left.x) + 240));
+    const scale = canvas.height / globalThis.CenFighterConfig.arena.height;
+    const artHeight = Math.min(left.height * 1.15, 140);
+    const worldWidth = Math.min(960, Math.max(canvas.width / scale,
+      Math.abs(right.x - left.x) + artHeight * 1.35 * 1.4 + 36));
+    const scaleX = canvas.width / worldWidth;
     const targetX = Math.max(worldWidth / 2, Math.min(960 - worldWidth / 2, (left.x + right.x) / 2));
     portraitCameraX += (targetX - portraitCameraX) * 0.18;
-    const scale = Math.min(canvas.width / worldWidth, canvas.height / globalThis.CenFighterConfig.arena.height);
-    const floorMargin = 18 * canvasPixelRatio;
-    context.setTransform(scale, 0, 0, scale,
-      canvas.width / 2 - portraitCameraX * scale,
-      canvas.height - floorMargin - globalThis.CenFighterConfig.arena.floorY * scale);
+    context.setTransform(scaleX, 0, 0, scale,
+      canvas.width / 2 - portraitCameraX * scaleX,
+      0);
   }
 
   function draw() {
     impactEffects = impactEffects.filter((effect) => renderFrame - effect.frame <= 10);
     applyCanvasTransform();
-    globalThis.CenFighterRenderer.draw(context, match, renderFrame, impactEffects);
+    globalThis.CenFighterRenderer.draw(context, match, renderFrame, impactEffects, { portrait: canvasPortrait });
   }
 
   function processEvents(events) {
