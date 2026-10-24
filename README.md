@@ -6,25 +6,26 @@ CenGames es un proyecto personal de ocio para jugar entre amigos. No es un produ
 
 - Un portal web adaptable a teléfonos y computadoras, hecho con HTML, CSS y JavaScript sin dependencias externas.
 - Flappy BirdCen, dibujado en Canvas, con controles táctiles y de teclado, récord, tabla, sonido, cinco personajes gratuitos y velocidad progresiva con tramos aleatorios que se estabiliza cerca de los 50 puntos.
+- Cen Fighters, un juego local contra la computadora con equipos de tres, roster provisional de diez, tres dificultades, controles de teclado y touch y aprendizaje Q-learning guardado por perfil.
 - Un perfil por nombre en cada navegador, con récords, estadísticas, saldo común de Cent y avatar seleccionado.
 - Una tienda de 15 avatares: los primeros cinco son gratis, los siguientes cinco cuestan 40 Cent cada uno y los últimos cinco cuestan 60 Cent cada uno.
 - Una tienda de Flappy BirdCen con cinco pájaros disponibles y cinco diseños reservados en beta, además de cinco fondos: Costa dorada y Aurora polar gratis; Órbita (60 Cent), Último sol (80 Cent) y Neón urbano (100 Cent).
 - Modos claro y oscuro, guardados en el navegador.
 - Una API Python opcional con SQLite para desarrollo local.
 
-Cada punto de una partida suma 1 Cent al terminar. La API local limita una partida a 10,000 puntos y evita volver a sumar un mismo identificador de partida. Las compras validan saldo, propiedad y disponibilidad antes de modificar el perfil.
+Cada punto de Flappy suma 1 Cent al terminar. Cen Fighters otorga 5 Cent por completar un combate y 2 Cent adicionales por ganar; un empate completo paga 5 Cent y abandonar no paga. El perfil registra estadísticas y evita volver a acreditar un mismo ID de partida. La API local limita una partida de Flappy a 10,000 puntos. Las compras validan saldo, propiedad y disponibilidad antes de modificar el perfil.
 
 ## Prototipo del juego de peleas
 
-El motor vive en `src/js/fighter/`, separado del portal y de Flappy. Ya simula duelos, administra equipos de tres con reservas, sustituciones y vida persistente, y cuenta con una CPU heurística local en tres dificultades. La CPU no cambia estadísticas ni consulta entradas futuras. Todavía no hay pantalla de selección o combate, sprites, aprendizaje local ni recompensas. La ruta de desarrollo está en [`docs/fighter-game-roadmap.md`](docs/fighter-game-roadmap.md); el juego completo seguirá siendo local y contra la computadora.
+El motor vive en `src/js/fighter/`, separado de la simulación de Flappy. Ya incluye la pantalla de selección y combate, equipos de tres con reservas y sustituciones, tres dificultades de CPU, una política Q-learning local y recompensas idempotentes. El renderer usa figuras y colores temporales: el contrato y los sprites definitivos del roster se incorporarán después. La ruta de desarrollo y las reglas están en [`docs/fighter-game-roadmap.md`](docs/fighter-game-roadmap.md); el juego seguirá siendo local y contra la computadora.
 
 ## Guardado y límites
 
 El sitio publicado es estático y usa la capa gratuita de Azure Static Web Apps. No necesita una base de datos en la nube ni servicios de pago.
 
-En el sitio publicado, el perfil, los Cent, la tienda, las estadísticas y los récords se guardan en el almacenamiento del navegador. Los perfiles no se sincronizan entre amigos, navegadores o dispositivos; borrar los datos del sitio puede borrar el progreso. Elegir el mismo nombre en otro dispositivo crea un perfil separado allí.
+En el sitio publicado, el perfil, los Cent, la tienda, las estadísticas, los récords, los recibos de combates y la política aprendida de la CPU se guardan en el almacenamiento del navegador. Los perfiles no se sincronizan entre amigos, navegadores o dispositivos; borrar los datos del sitio puede borrar el progreso y el aprendizaje. Elegir el mismo nombre en otro dispositivo crea un perfil separado allí.
 
-La API SQLite solo funciona en desarrollo local y escucha en `127.0.0.1`. Su archivo `data/cengames.sqlite3` está excluido de Git. No se publica con Azure y no sincroniza los perfiles de los visitantes del sitio. Los nombres son apodos locales, no hay autenticación por contraseña ni protección contra trampas; no uses información privada.
+La API SQLite solo funciona en desarrollo local y escucha en `127.0.0.1`. Registra perfiles, partidas de Flappy y resultados/recompensas de Cen Fighters con SQLite. Su archivo `data/cengames.sqlite3` está excluido de Git. No se publica con Azure y no sincroniza los perfiles de los visitantes del sitio. Los nombres son apodos locales, no hay autenticación por contraseña ni protección contra trampas; no uses información privada.
 
 ## Desarrollo local
 
@@ -68,6 +69,12 @@ Incluye también los módulos nuevos del motor de peleas:
 for file in src/js/fighter/*.js; do node --check "$file"; done
 ```
 
+Valida la política reproducible de CPU con Node.js:
+
+```bash
+node --test tests/fighter-learning.test.cjs
+```
+
 Valida la curva de velocidad sin instalar dependencias:
 
 ```bash
@@ -94,10 +101,13 @@ src/js/fighter/config.js    Parámetros provisionales del combate
 src/js/fighter/engine.js    Simulación pura de un duelo, independiente de la interfaz
 src/js/fighter/random.js    Semillas y números pseudoaleatorios reproducibles
 src/js/fighter/team-match.js Equipos 3 contra 3, reservas, transiciones y resultado
-src/js/fighter/cpu.js       Controlador heurístico CPU y dificultades
+src/js/fighter/cpu.js       Controlador heurístico base para tres dificultades
+src/js/fighter/learning.js  Q-learning por perfil y simulaciones deterministas de entrenamiento
+src/js/fighter/renderer.js  Arena Canvas con figuras provisionales sustituibles por sprites
+src/js/fighter/game.js      Selección, controles, HUD, pausas y flujo del combate
 docs/fighter-game-roadmap.md Fases y decisiones del juego de peleas
 api/economy.py              Reglas de economía y persistencia SQLite
-api/http_api.py             Rutas locales de perfil, partidas, tabla y tienda
+api/http_api.py             Rutas locales de perfil, partidas, peleas, tabla y tienda
 api/local_server.py         Servidor Python local para desarrollo
 tests/                      Pruebas de economía y rutas API
 assets/                     Avatares, ilustraciones e iconos del juego

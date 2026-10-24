@@ -4,6 +4,8 @@
   const PLAYER_IDS_KEY = 'cengames_player_ids_v2';
   const PROFILE_PREFIX = 'cengames_economy_v2:';
   const MAX_RUN_SCORE = 10_000;
+  const FIGHTER_MATCH_REWARD = 5;
+  const FIGHTER_WIN_BONUS = 2;
   const FREE_AVATARS = ['sol', 'luna', 'pixel', 'rayo', 'ola'];
   const BACKGROUNDS = [
     { id: 'costa', name: 'Costa dorada', price: 0, free: true, scene: 'coast', sky: ['#1b394b', '#4f7880', '#efa47e'], hills: ['#426a68', '#244b50'], floor: ['#3e5751', '#213a3a'], groundEdge: '#e27b5e', stripes: 'rgba(237, 190, 132, .10)', pipes: ['#8f454c', '#f28c68', '#d9655c', '#b44f52', '#783b49'], pipeEdge: '#523641', pipeHighlight: 'rgba(255, 216, 164, .72)' },
@@ -90,6 +92,8 @@
         saved.name = name;
         if (!BACKGROUNDS.some((item) => item.id === saved.backgroundId)) saved.backgroundId = 'costa';
         if (!Array.isArray(saved.ownedBackgrounds)) saved.ownedBackgrounds = FREE_BACKGROUNDS.slice();
+        if (!saved.fighter || typeof saved.fighter !== 'object') saved.fighter = { plays: 0, wins: 0, draws: 0, earned: 0 };
+        if (!Array.isArray(saved.processedFighterMatches)) saved.processedFighterMatches = [];
         return saved;
       }
     } catch (error) {}
@@ -104,7 +108,9 @@
       ownedBackgrounds: FREE_BACKGROUNDS.slice(),
       ownedBirds: ['friend', 'classic', 'laguna', 'mango', 'nube'],
       flappy: { plays: 0, points: 0, best: Math.max(0, Number(legacyBest) || 0) },
-      processedRuns: []
+      processedRuns: [],
+      fighter: { plays: 0, wins: 0, draws: 0, earned: 0 },
+      processedFighterMatches: []
     };
   }
 
@@ -212,6 +218,36 @@
     });
   }
 
+  async function completeFighterMatch(matchId, winnerSide) {
+    if (!profile || !active) return null;
+    const matchKey = String(matchId || '');
+    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(matchKey)) {
+      throw new Error('El combate no tiene un identificador válido.');
+    }
+    const outcome = winnerSide === null ? 'draw' : winnerSide;
+    if (!['player', 'cpu', 'draw'].includes(outcome)) throw new Error('El resultado del combate no es válido.');
+    const award = FIGHTER_MATCH_REWARD + (outcome === 'player' ? FIGHTER_WIN_BONUS : 0);
+    return actionOrLocal('/fighter/matches', { name: active.name, matchId: matchKey, result: outcome }, (next) => {
+      const matches = Array.isArray(next.processedFighterMatches) ? next.processedFighterMatches : [];
+      if (matches.includes(matchKey)) {
+        next.duplicateFighterMatch = true;
+        next.earnedCents = 0;
+        return next;
+      }
+      matches.push(matchKey);
+      next.processedFighterMatches = matches.slice(-2000);
+      next.fighter = next.fighter || { plays: 0, wins: 0, draws: 0, earned: 0 };
+      next.fighter.plays = (Number(next.fighter.plays) || 0) + 1;
+      next.fighter.wins = (Number(next.fighter.wins) || 0) + (outcome === 'player' ? 1 : 0);
+      next.fighter.draws = (Number(next.fighter.draws) || 0) + (outcome === 'draw' ? 1 : 0);
+      next.fighter.earned = (Number(next.fighter.earned) || 0) + award;
+      next.cents = Math.max(0, Number(next.cents) || 0) + award;
+      next.duplicateFighterMatch = false;
+      next.earnedCents = award;
+      return next;
+    });
+  }
+
   async function buyAvatar(avatarId) {
     const avatar = avatarById(avatarId);
     if (!profile || !active || !avatar.price) throw new Error('Ese artículo no se puede comprar.');
@@ -305,6 +341,7 @@
     backgroundById,
     avatarById,
     completeRun,
+    completeFighterMatch,
     buyAvatar,
     chooseAvatar,
     chooseBird,

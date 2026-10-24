@@ -32,6 +32,7 @@ class EconomyTests(unittest.TestCase):
         self.assertEqual(profile["ownedAvatars"], list(FREE_AVATARS))
         self.assertEqual(profile["ownedBirds"], ["friend", "classic", "laguna", "mango", "nube"])
         self.assertEqual(profile["ownedBackgrounds"], ["costa", "aurora"])
+        self.assertEqual(profile["fighter"], {"plays": 0, "wins": 0, "draws": 0, "earned": 0})
 
     def test_avatar_prices_are_split_into_the_three_intended_tiers(self):
         prices = list(AVATAR_PRICES.values())
@@ -51,6 +52,32 @@ class EconomyTests(unittest.TestCase):
         self.assertTrue(duplicate["duplicateRun"])
         self.assertEqual(duplicate["earnedCents"], 0)
         self.assertEqual(duplicate["cents"], 501)
+
+    def test_fighter_match_pays_five_cent_plus_win_bonus_once(self):
+        match_id = "74d7fcaf-d43f-4bb7-ad94-2b4de1193fb2"
+
+        first = self.store.record_fighter_match(PLAYER_ID, "Alex", match_id, "player")
+        duplicate = self.store.record_fighter_match(PLAYER_ID, "Alex", match_id, "player")
+
+        self.assertEqual(first["cents"], 7)
+        self.assertEqual(first["fighter"], {"plays": 1, "wins": 1, "draws": 0, "earned": 7})
+        self.assertFalse(first["duplicateFighterMatch"])
+        self.assertTrue(duplicate["duplicateFighterMatch"])
+        self.assertEqual(duplicate["earnedCents"], 0)
+        self.assertEqual(duplicate["cents"], 7)
+
+    def test_fighter_draw_pays_five_cent_and_rejects_incomplete_results(self):
+        profile = self.store.record_fighter_match(
+            PLAYER_ID, "Alex", "6d76cf96-1585-4193-8e16-1b4bed5f60d1", "draw"
+        )
+
+        self.assertEqual(profile["cents"], 5)
+        self.assertEqual(profile["fighter"]["draws"], 1)
+        with self.assertRaises(ApiError) as invalid:
+            self.store.record_fighter_match(
+                PLAYER_ID, "Alex", "d4c9e82a-628a-4a4a-a446-53b096068e29", "abandoned"
+            )
+        self.assertEqual(invalid.exception.status, 400)
 
     def test_run_rejects_fractional_scores(self):
         with self.assertRaises(ApiError) as error:
@@ -159,6 +186,17 @@ class ApiTests(unittest.TestCase):
         self.assertEqual(status, 200)
         self.assertEqual(result["profile"]["cents"], 5)
         self.assertIn("cometa", result["profile"]["ownedAvatars"])
+
+    def test_fighter_match_route_returns_idempotent_receipt(self):
+        headers = {"X-Player-Id": PLAYER_ID, "X-Player-Name": "Alex"}
+        body = {"matchId": "74d7fcaf-d43f-4bb7-ad94-2b4de1193fb2", "result": "player"}
+
+        status, first = self.api.handle("POST", "/api/fighter/matches", headers, json.dumps(body).encode())
+        duplicate_status, duplicate = self.api.handle("POST", "/api/fighter/matches", headers, json.dumps(body).encode())
+
+        self.assertEqual((status, duplicate_status), (200, 200))
+        self.assertEqual(first["profile"]["earnedCents"], 7)
+        self.assertEqual(duplicate["profile"]["earnedCents"], 0)
 
 
 if __name__ == "__main__":
