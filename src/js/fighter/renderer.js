@@ -8,6 +8,7 @@
     ['#91d487', '#386b54', '#f7d69e'], ['#f28f9e', '#843f58', '#ffdaa9'],
     ['#8fdae5', '#356377', '#f4c89f'], ['#efa95d', '#8c4d32', '#ffe0aa']
   ];
+  const HAIR_COLORS = ['#251d2a', '#4a2928', '#1d293e', '#5a382c', '#272437', '#56334a', '#2b3327', '#492936', '#1e3035', '#5c342b'];
   const spriteImages = new Map();
   const motionQuery = typeof window !== 'undefined' && typeof window.matchMedia === 'function'
     ? window.matchMedia('(prefers-reduced-motion: reduce)')
@@ -71,22 +72,25 @@
   function drawFighter(ctx, fighter, side, frame, reducedMotion) {
     const [accent, shadow, skin] = paletteFor(fighter);
     const bodyHeight = fighter.crouching && fighter.grounded ? fighter.crouchHeight : fighter.height;
-    const scale = bodyHeight / 116;
-    const x = fighter.x;
-    const top = fighter.y - bodyHeight;
-    const width = fighter.width;
-    const facing = fighter.facing;
+    const scaleX = bodyHeight / 116 * 1.24;
+    const scaleY = bodyHeight / 116 * 1.24;
+    const number = Math.max(0, Number((/-(\d+)$/.exec(fighter.characterId || fighter.id || '') || [])[1] || 1) - 1);
     const moving = Math.abs(fighter.vx) > 18;
-    const stride = moving && fighter.grounded && !reducedMotion ? Math.sin(frame * 0.28) * 4 : 0;
+    const stride = moving && fighter.grounded && !reducedMotion ? Math.sin(frame * 0.28) * 5 : 0;
     const flash = !reducedMotion && fighter.hitstunFrames > 0 && Math.floor(frame / 3) % 2 === 0;
-    const main = flash ? '#fff2c5' : accent;
-    const outline = flash ? '#ffffff' : '#101e2e';
-    const rect = (offsetX, offsetY, rectWidth, rectHeight, color) => pixel(ctx,
-      x + offsetX * scale - rectWidth * scale / 2,
-      top + offsetY * scale,
-      rectWidth * scale,
-      rectHeight * scale,
-      color);
+    const cloth = flash ? '#fff4ce' : accent;
+    const shade = flash ? '#fff4ce' : shadow;
+    const ink = '#211d2a';
+    const hair = flash ? '#fff4ce' : HAIR_COLORS[number % HAIR_COLORS.length];
+    const lightSkin = flash ? '#fff4ce' : '#fff0c2';
+    const attack = fighter.attackId && fighter.moves && fighter.moves[fighter.attackId];
+    const startup = attack ? attack.startupFrames : 0;
+    const active = Boolean(attack && fighter.attackFrame >= startup
+      && fighter.attackFrame < startup + attack.activeFrames);
+    const attackPose = Boolean(attack && fighter.attackFrame >= Math.floor(startup * 0.55));
+    const handX = attackPose ? 49 + (fighter.attackId === 'special' ? 9 : 0) : 24;
+    const armY = attackPose ? -99 : -83;
+    const rect = (cx, bottom, width, height, color) => pixel(ctx, cx - width / 2, -bottom - height, width, height, color);
 
     ctx.save();
     if (drawSprite(ctx, fighter, frame, bodyHeight, reducedMotion)) {
@@ -94,86 +98,206 @@
       return;
     }
     ctx.globalAlpha = fighter.knockedOut ? 0.48 : 1;
-    pixel(ctx, x - width * 0.62, fighter.y + 5, width * 1.24, 6, 'rgba(5, 12, 23, .38)');
-    rect(0, 16, 42, 34, outline);
-    rect(0, 17, 36, 28, shadow);
-    rect(0, 20, 28, 21, main);
-    rect(0, 60, 42, 38, outline);
-    rect(0, 61, 36, 32, main);
-    rect(-15, 65, 9, 26, shadow);
-    rect(15, 65, 9, 26, shadow);
-    rect(-11, 94 + stride, 13, 22, outline);
-    rect(11, 94 - stride, 13, 22, outline);
-    rect(-11, 94 + stride, 7, 16, shadow);
-    rect(11, 94 - stride, 7, 16, shadow);
-    rect(0, 97, 14, 5, skin);
-    rect(facing * 12, 29, 4, 4, '#18202c');
+    pixel(ctx, fighter.x - fighter.width * 0.78, fighter.y + 5, fighter.width * 1.56, 7, 'rgba(9, 10, 24, .55)');
+    ctx.translate(fighter.x + (fighter.hitstunFrames > 0 ? -fighter.facing * 3 : 0), fighter.y);
+    ctx.scale(fighter.facing * scaleX, scaleY);
 
-    const attacking = fighter.attackId && fighter.attackFrame >= 2;
-    const armX = attacking ? facing * 24 : facing * 19;
-    const armY = attacking ? 65 : 57;
-    rect(armX, armY, attacking ? 27 : 15, 11, outline);
-    rect(armX, armY + 1, attacking ? 23 : 11, 7, main);
-    rect(attacking ? facing * 37 : -facing * 19, 61, 12, 11, outline);
-    rect(attacking ? facing * 37 : -facing * 19, 62, 7, 7, skin);
+    rect(-12, 15 + stride, 22, 53, ink);
+    rect(-12, 15 + stride, 16, 48, shade);
+    rect(-12, 37 + stride, 9, 4, cloth);
+    rect(12, 14 - stride, 22, 54, ink);
+    rect(12, 14 - stride, 16, 49, shade);
+    rect(12, 39 - stride, 8, 4, cloth);
+    rect(-13, 2 + stride, 27, 15, ink);
+    rect(-15, 3 + stride, 24, 11, '#302c3b');
+    rect(13, 2 - stride, 27, 15, ink);
+    rect(15, 3 - stride, 24, 11, '#302c3b');
+    rect(-15, 3 + stride, 10, 2, '#f0bd6f');
+    rect(14, 3 - stride, 10, 2, '#f0bd6f');
+
+    rect(-24, 80, 13, 31, ink);
+    rect(-24, 82, 8, 24, skin);
+    rect(-20, 102, 12, 13, ink);
+    rect(-20, 104, 8, 7, lightSkin);
+    rect(24, 80, 14, 31, ink);
+    rect(24, 82, 9, 24, skin);
+    rect(24, 104, 13, 13, ink);
+    rect(24, 106, 8, 7, lightSkin);
+
+    rect(0, 67, 43, 10, ink);
+    rect(0, 69, 35, 5, '#342739');
+    rect(0, 71, 8, 6, '#e7b467');
+    rect(0, 75, 49, 57, ink);
+    rect(0, 77, 41, 49, shade);
+    rect(0, 80, 33, 42, cloth);
+    rect(-17, 78, 7, 40, shade);
+    rect(16, 78, 7, 40, shade);
+    rect(-3, 82, 6, 26, '#f4e7cf');
+    rect(0, 87, 13, 3, '#f4e7cf');
+    rect(0, 102, 18, 4, '#342739');
+    rect(0, 111, 22, 3, '#f0bd6f');
+    rect(-7, 117, 10, 11, skin);
+    rect(7, 117, 10, 11, skin);
 
     if (fighter.guarding) {
-      ctx.globalAlpha = 0.7;
-      ctx.strokeStyle = '#b8eced';
-      ctx.lineWidth = 4;
-      ctx.beginPath();
-      ctx.arc(x + facing * 23, fighter.y - bodyHeight * 0.57, 26 * scale, -1.15, 1.15);
-      ctx.stroke();
-    }
-    if (attacking) {
-      const move = fighter.attackId;
-      const moveData = fighter.moves && fighter.moves[move];
-      const moveWidth = Math.max(36, Math.min(88, moveData ? moveData.reach * 0.68 : move === 'heavy' ? 66 : 47));
-      const startup = moveData ? moveData.startupFrames : move === 'heavy' ? 11 : 5;
-      const active = fighter.attackFrame >= startup
-        && fighter.attackFrame < startup + (moveData ? moveData.activeFrames : move === 'heavy' ? 4 : 3);
-      if (active) {
-        ctx.globalAlpha = 0.82;
-        ctx.fillStyle = move === 'heavy' ? '#ffd58a' : '#93e9db';
-        ctx.beginPath();
-        ctx.moveTo(x + facing * 28, fighter.y - bodyHeight * 0.54);
-        ctx.lineTo(x + facing * (28 + moveWidth), fighter.y - bodyHeight * 0.67);
-        ctx.lineTo(x + facing * (22 + moveWidth), fighter.y - bodyHeight * 0.43);
-        ctx.closePath();
-        ctx.fill();
+      rect(-3, 92, 15, 15, ink);
+      rect(12, 99, 15, 14, ink);
+      rect(-3, 94, 9, 10, cloth);
+      rect(12, 101, 9, 9, shade);
+    } else {
+      rect(-20, 86, 15, 13, ink);
+      rect(-20, 88, 10, 8, cloth);
+      rect(-24, 98, 13, 17, ink);
+      rect(-24, 100, 8, 11, skin);
+      rect(handX, armY + 3, attackPose ? 23 : 14, 16, ink);
+      rect(handX + (attackPose ? 0 : -2), armY + 5, attackPose ? 17 : 9, 10, cloth);
+      rect(handX + (attackPose ? 17 : -1), armY + 5, 14, 14, ink);
+      rect(handX + (attackPose ? 17 : -1), armY + 7, 8, 8, lightSkin);
+      if (attackPose && fighter.attackId !== 'special') {
+        rect(37, armY + 7, 13, 12, skin);
+        rect(47, armY + 6, 17, 15, ink);
+        rect(47, armY + 8, 10, 9, lightSkin);
       }
+    }
+
+    rect(0, 126, 14, 10, skin);
+    rect(0, 124, 22, 26, ink);
+    rect(0, 126, 17, 20, skin);
+    rect(-12, 146, 30, 11, ink);
+    rect(-11, 147, 24, 7, hair);
+    rect(-15, 146, 7, 9, hair);
+    rect(13, 146, 24, 11, ink);
+    rect(13, 147, 18, 7, hair);
+    rect(20, 144, 8, 7, hair);
+    rect(8, 135, 6, 3, ink);
+    rect(11, 130, 3, 5, '#b77b57');
+    rect(8, 125, 7, 2, '#8f4548');
+    rect(0, 142, 21, 4, number % 3 === 0 ? '#f0bd6f' : cloth);
+    rect(0, 150, 28, 10, hair);
+    rect(-12, 144, 8, 12, hair);
+    rect(-6, 150, 9, 7, hair);
+    rect(2, 151, 8, 7, hair);
+    rect(10, 144, 8, 12, hair);
+    if (number % 3 === 1) {
+      rect(0, 144, 22, 4, '#f4e7cf');
+      rect(10, 143, 7, 4, '#f4e7cf');
+    } else if (number % 3 === 2) {
+      rect(-16, 132, 8, 19, hair);
+      rect(-21, 128, 10, 6, hair);
+    }
+
+    if (fighter.guarding) {
+      ctx.globalAlpha = 0.86;
+      [[30, -74], [36, -82], [40, -91], [37, -101], [30, -108]].forEach(([px, py]) => {
+        pixel(ctx, px, py, 4, 6, '#92eeff');
+        pixel(ctx, px + 4, py + 2, 2, 3, '#fff2bd');
+      });
+      ctx.globalAlpha = fighter.knockedOut ? 0.48 : 1;
+    }
+
+    if (active) {
+      const color = fighter.attackId === 'special' ? '#ff8176'
+        : fighter.attackId === 'heavy' ? '#ffd36c'
+          : fighter.attackId === 'medium' ? '#8ce8ff' : '#fff0a6';
+      const length = fighter.attackId === 'special' ? 56 : fighter.attackId === 'heavy' ? 45 : 31;
+      ctx.globalAlpha = 0.9;
+      pixel(ctx, 45, -105, length, 5, color);
+      pixel(ctx, 51, -96, length - 12, 4, '#fff2c0');
+      pixel(ctx, 57 + length, -111, 7, 7, color);
+      pixel(ctx, 60 + length, -104, 4, 4, '#fff7d5');
     }
     ctx.restore();
   }
 
   function drawBackgroundBase(ctx) {
-    const sky = ctx.createLinearGradient(0, 0, 0, 540);
-    sky.addColorStop(0, '#20385c');
-    sky.addColorStop(0.58, '#596a84');
-    sky.addColorStop(1, '#e89d75');
-    ctx.fillStyle = sky;
-    ctx.fillRect(0, 0, 960, 540);
-    ctx.fillStyle = 'rgba(255, 218, 157, .78)';
-    ctx.beginPath();
-    ctx.arc(730, 133, 52, 0, Math.PI * 2);
-    ctx.fill();
-    for (let index = 0; index < 9; index += 1) {
-      const x = index * 116 - 12;
-      const height = 90 + (index * 37 % 90);
-      pixel(ctx, x, 348 - height, 84, height, index % 2 ? '#293854' : '#32425e');
-      for (let row = 0; row < 4; row += 1) {
-        for (let column = 0; column < 3; column += 1) {
-          pixel(ctx, x + 12 + column * 23, 365 - height + row * 31, 7, 11,
-            (row + column + index) % 3 ? 'rgba(255, 208, 140, .44)' : 'rgba(20, 35, 58, .5)');
+    pixel(ctx, 0, 0, 960, 540, '#171b39');
+    pixel(ctx, 0, -540, 960, 105, '#171b39');
+    pixel(ctx, 0, -435, 960, 100, '#202344');
+    pixel(ctx, 0, -335, 960, 91, '#302947');
+    pixel(ctx, 0, -244, 960, 85, '#4c3450');
+    pixel(ctx, 0, -159, 960, 80, '#70415b');
+    pixel(ctx, 0, 0, 960, 78, '#20264a');
+    pixel(ctx, 0, 78, 960, 72, '#373253');
+    pixel(ctx, 0, 150, 960, 70, '#70415b');
+    pixel(ctx, 0, 220, 960, 73, '#b65460');
+    pixel(ctx, 0, 293, 960, 62, '#e88c68');
+
+    [[90, 74], [223, 133], [830, 91]].forEach(([x, y]) => {
+      pixel(ctx, x, y, 62, 12, '#71728a');
+      pixel(ctx, x + 17, y - 9, 40, 10, '#71728a');
+      pixel(ctx, x + 10, y + 12, 35, 8, '#555572');
+    });
+
+    for (let index = 0; index < 30; index += 1) {
+      const x = (index * 97 + (index * 31 % 43)) % 940;
+      const y = -510 + (index * 67 % 410);
+      pixel(ctx, x, y, index % 5 === 0 ? 4 : 2, index % 4 === 0 ? 4 : 2,
+        index % 3 === 0 ? '#e8a771' : '#a98caa');
+    }
+    [[115, -390], [438, -295], [724, -455]].forEach(([x, y], index) => {
+      pixel(ctx, x, y, 52, 8, index % 2 ? '#72718d' : '#85819a');
+      pixel(ctx, x + 14, y - 7, 33, 7, index % 2 ? '#72718d' : '#85819a');
+      pixel(ctx, x + 8, y + 8, 29, 5, '#4c496c');
+    });
+
+    pixel(ctx, 661, 89, 132, 18, '#ffbf73');
+    pixel(ctx, 646, 106, 162, 16, '#ffd684');
+    pixel(ctx, 661, 122, 132, 34, '#f4a666');
+    pixel(ctx, 676, 156, 102, 11, '#df7764');
+    pixel(ctx, 692, 167, 70, 7, '#b65a67');
+
+    const skyline = [105, 147, 94, 184, 127, 212, 143, 176, 108, 192, 128, 158, 116, 203, 139];
+    skyline.forEach((height, index) => {
+      const x = index * 67 - 8;
+      const top = 354 - height;
+      const color = index % 3 === 0 ? '#252541' : index % 3 === 1 ? '#302945' : '#392b49';
+      pixel(ctx, x, top, 59, height, color);
+      pixel(ctx, x + 5, top - 8, 24, 8, color);
+      for (let row = 0; row < Math.floor((height - 22) / 22); row += 1) {
+        for (let col = 0; col < 3; col += 1) {
+          const lit = (row * 3 + col + index) % 4 !== 0;
+          pixel(ctx, x + 9 + col * 16, top + 17 + row * 22, 7, 10,
+            lit ? (index % 2 ? '#f0ad72' : '#e58b73') : '#39324c');
         }
       }
+    });
+
+    pixel(ctx, 0, 348, 960, 14, '#a34a5e');
+    pixel(ctx, 0, 359, 960, 14, '#eb916d');
+    pixel(ctx, 0, 373, 960, 112, '#4b3a55');
+    pixel(ctx, 0, 373, 960, 7, '#f1b379');
+    pixel(ctx, 0, 480, 960, 16, '#372d4b');
+    pixel(ctx, 0, 496, 960, 44, '#25263d');
+    pixel(ctx, 0, 496, 960, 5, '#cf735f');
+
+    for (let row = 0; row < 6; row += 1) {
+      const y = 388 + row * 16;
+      const inset = row * 10;
+      for (let column = -1; column < 14; column += 1) {
+        const x = column * 78 + (row % 2) * 39 + inset;
+        pixel(ctx, x, y, 2, 14, row % 2 ? '#695064' : '#685064');
+      }
+      pixel(ctx, 0, y + 14, 960, 2, '#40344e');
     }
-    pixel(ctx, 0, 365, 960, 175, '#1e3145');
-    pixel(ctx, 0, 369, 960, 12, '#f3b776');
-    pixel(ctx, 0, 381, 960, 159, '#21364a');
-    pixel(ctx, 0, 508, 960, 32, '#15263a');
-    for (let index = 0; index < 60; index += 1) {
-      pixel(ctx, index * 17, 510, 8, 3, index % 2 ? '#8c7a72' : '#b38875');
+    for (let index = 0; index < 38; index += 1) {
+      const x = index * 27;
+      pixel(ctx, x, 503, 14, 3, index % 2 ? '#f2b66f' : '#d47a65');
+      pixel(ctx, x + 4, 514, 7, 2, '#827083');
+    }
+
+    pixel(ctx, 42, 259, 8, 104, '#542e4a');
+    pixel(ctx, 29, 246, 36, 12, '#d96863');
+    pixel(ctx, 20, 239, 54, 8, '#f3b56f');
+    pixel(ctx, 909, 259, 8, 104, '#542e4a');
+    pixel(ctx, 896, 246, 36, 12, '#d96863');
+    pixel(ctx, 887, 239, 54, 8, '#f3b56f');
+
+    for (let index = 0; index < 16; index += 1) {
+      const x = index * 61 + 8;
+      const width = index % 3 === 0 ? 16 : 12;
+      pixel(ctx, x, 347, width, 15, '#181b31');
+      pixel(ctx, x + 2, 340, width - 4, 9, '#181b31');
+      pixel(ctx, x + 4, 343, 2, 3, '#e6a176');
     }
   }
 
@@ -191,6 +315,21 @@
   }
 
   function drawBackground(ctx, frame, reducedMotion) {
+    [
+      [-540, 105, '#171b39'], [-435, 100, '#202344'], [-335, 91, '#302947'],
+      [-244, 85, '#4c3450'], [-159, 80, '#70415b']
+    ].forEach(([y, height, color]) => pixel(ctx, 0, y, 960, height, color));
+    for (let index = 0; index < 30; index += 1) {
+      const x = (index * 97 + (index * 31 % 43)) % 940;
+      const y = -510 + (index * 67 % 410);
+      pixel(ctx, x, y, index % 5 === 0 ? 4 : 2, index % 4 === 0 ? 4 : 2,
+        index % 3 === 0 ? '#e8a771' : '#a98caa');
+    }
+    [[115, -390], [438, -295], [724, -455]].forEach(([x, y], index) => {
+      pixel(ctx, x, y, 52, 8, index % 2 ? '#72718d' : '#85819a');
+      pixel(ctx, x + 14, y - 7, 33, 7, index % 2 ? '#72718d' : '#85819a');
+      pixel(ctx, x + 8, y + 8, 29, 5, '#4c496c');
+    });
     const background = staticBackground();
     if (background) {
       const smoothing = ctx.imageSmoothingEnabled;
@@ -231,6 +370,7 @@
   function draw(context, match, frame = 0, effects = []) {
     if (!context || !match || !match.duel) return;
     const reducedMotion = Boolean(motionQuery && motionQuery.matches);
+    context.imageSmoothingEnabled = false;
     drawBackground(context, frame, reducedMotion);
     drawFighter(context, match.duel.left, 'left', frame, reducedMotion);
     drawFighter(context, match.duel.right, 'right', frame, reducedMotion);

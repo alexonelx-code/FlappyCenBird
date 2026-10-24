@@ -14,6 +14,7 @@
   const resultOverlay = document.getElementById('fighterResultOverlay');
   const sound = window.FlappyAudio;
   const pressed = new Set();
+  const touchAnalog = { x: 0, y: 0 };
   let chosen = [];
   let roster = globalThis.CenFighterRoster?.entries || globalThis.CenFighterTeams.DEFAULT_ROSTER;
   let match = null;
@@ -25,6 +26,9 @@
   let lastFrameTime = 0;
   let accumulator = 0;
   let renderFrame = 0;
+  let canvasPortrait = false;
+  let portraitCameraX = 480;
+  let canvasPixelRatio = 1;
   let pendingAttack = null;
   let impactEffects = [];
   let lastHudSignature = '';
@@ -39,6 +43,11 @@
   function clearInputs() {
     pressed.clear();
     pendingAttack = null;
+    touchAnalog.x = 0;
+    touchAnalog.y = 0;
+    const thumb = document.querySelector('.fighter-analog-thumb');
+    if (thumb) thumb.style.transform = '';
+    document.querySelector('[data-fighter-analog]')?.classList.remove('is-active');
     document.querySelectorAll('.fighter-touch-controls .is-pressed').forEach((button) => button.classList.remove('is-pressed'));
   }
 
@@ -71,7 +80,6 @@
         avatar.style.setProperty('--fighter-shadow', fighter.palette.shadow);
       }
       avatar.setAttribute('aria-hidden', 'true');
-      avatar.textContent = '✦';
       const name = document.createElement('strong');
       name.textContent = fighter.name;
       const archetype = document.createElement('small');
@@ -156,18 +164,38 @@
   function resizeCanvas() {
     const rect = canvas.getBoundingClientRect();
     if (!rect.width || !rect.height) return;
-    const ratio = Math.min(2, window.devicePixelRatio || 1);
-    const width = Math.round(rect.width * ratio);
-    const height = Math.round(rect.height * ratio);
+    canvasPixelRatio = Math.min(2, window.devicePixelRatio || 1);
+    const width = Math.round(rect.width * canvasPixelRatio);
+    const height = Math.round(rect.height * canvasPixelRatio);
     if (canvas.width !== width || canvas.height !== height) {
       canvas.width = width;
       canvas.height = height;
     }
-    context.setTransform(canvas.width / 960, 0, 0, canvas.height / 540, 0, 0);
+    const nextPortrait = rect.height > rect.width * 1.25;
+    if (nextPortrait !== canvasPortrait) portraitCameraX = 480;
+    canvasPortrait = nextPortrait;
+    applyCanvasTransform();
+  }
+
+  function applyCanvasTransform() {
+    if (!canvasPortrait || !match?.duel) {
+      context.setTransform(canvas.width / 960, 0, 0, canvas.height / 540, 0, 0);
+      return;
+    }
+    const { left, right } = match.duel;
+    const worldWidth = Math.min(960, Math.max(620, Math.abs(right.x - left.x) + 240));
+    const targetX = Math.max(worldWidth / 2, Math.min(960 - worldWidth / 2, (left.x + right.x) / 2));
+    portraitCameraX += (targetX - portraitCameraX) * 0.18;
+    const scale = Math.min(canvas.width / worldWidth, canvas.height / globalThis.CenFighterConfig.arena.height);
+    const floorMargin = 18 * canvasPixelRatio;
+    context.setTransform(scale, 0, 0, scale,
+      canvas.width / 2 - portraitCameraX * scale,
+      canvas.height - floorMargin - globalThis.CenFighterConfig.arena.floorY * scale);
   }
 
   function draw() {
     impactEffects = impactEffects.filter((effect) => renderFrame - effect.frame <= 10);
+    applyCanvasTransform();
     globalThis.CenFighterRenderer.draw(context, match, renderFrame, impactEffects);
   }
 
@@ -203,10 +231,14 @@
   function inputForPlayer() {
     const left = pressed.has('left');
     const right = pressed.has('right');
+    const digitalX = left === right ? 0 : left ? -1 : 1;
+    const analogX = Math.abs(touchAnalog.x) < 0.14
+      ? 0
+      : Math.sign(touchAnalog.x) * (Math.abs(touchAnalog.x) - 0.14) / 0.86;
     return {
-      moveX: left === right ? 0 : left ? -1 : 1,
-      jump: pressed.has('jump'),
-      crouch: pressed.has('crouch'),
+      moveX: digitalX || analogX,
+      jump: pressed.has('jump') || touchAnalog.y < -0.6,
+      crouch: pressed.has('crouch') || touchAnalog.y > 0.6,
       block: pressed.has('block'),
       attack: pendingAttack
     };
@@ -389,15 +421,13 @@
       ArrowDown: 'crouch', KeyS: 'crouch',
       KeyJ: 'block', ShiftLeft: 'block', ShiftRight: 'block'
     };
+    const attack = globalThis.CenFighterConfig.controls.attacks[event.code];
     if (controls[event.code]) {
       event.preventDefault();
       pressed.add(controls[event.code]);
-    } else if (event.code === 'KeyU') {
+    } else if (attack) {
       event.preventDefault();
-      pendingAttack = 'light';
-    } else if (event.code === 'KeyI') {
-      event.preventDefault();
-      pendingAttack = 'heavy';
+      pendingAttack = attack;
     }
   }
 
@@ -433,11 +463,52 @@
       button.addEventListener('pointerdown', (event) => {
         if (!sessionActive || paused) return;
         event.preventDefault();
+        button.setPointerCapture(event.pointerId);
         pendingAttack = button.dataset.fighterAttack;
         button.classList.add('is-pressed');
       });
       button.addEventListener('pointerup', () => button.classList.remove('is-pressed'));
       button.addEventListener('pointercancel', () => button.classList.remove('is-pressed'));
+    });
+    document.querySelectorAll('[data-fighter-analog]').forEach((stick) => {
+      const thumb = stick.querySelector('.fighter-analog-thumb');
+      let pointerId = null;
+      const updateStick = (event) => {
+        const rect = stick.getBoundingClientRect();
+        const radius = Math.max(1, Math.min(rect.width, rect.height) * 0.34);
+        let dx = event.clientX - (rect.left + rect.width / 2);
+        let dy = event.clientY - (rect.top + rect.height / 2);
+        const distance = Math.hypot(dx, dy);
+        if (distance > radius) {
+          dx *= radius / distance;
+          dy *= radius / distance;
+        }
+        touchAnalog.x = dx / radius;
+        touchAnalog.y = dy / radius;
+        thumb.style.transform = `translate(${Math.round(dx)}px, ${Math.round(dy)}px)`;
+      };
+      const releaseStick = (event) => {
+        if (pointerId !== event.pointerId) return;
+        pointerId = null;
+        touchAnalog.x = 0;
+        touchAnalog.y = 0;
+        thumb.style.transform = '';
+        stick.classList.remove('is-active');
+      };
+      stick.addEventListener('pointerdown', (event) => {
+        if (!sessionActive || paused) return;
+        event.preventDefault();
+        pointerId = event.pointerId;
+        stick.setPointerCapture(pointerId);
+        stick.classList.add('is-active');
+        updateStick(event);
+      });
+      stick.addEventListener('pointermove', (event) => {
+        if (pointerId === event.pointerId) updateStick(event);
+      });
+      stick.addEventListener('pointerup', releaseStick);
+      stick.addEventListener('pointercancel', releaseStick);
+      stick.addEventListener('lostpointercapture', releaseStick);
     });
   }
 

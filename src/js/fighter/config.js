@@ -33,6 +33,14 @@
       hitstunFrames: 12,
       inputBufferFrames: 6
     },
+    controls: {
+      attacks: {
+        KeyZ: 'light',
+        KeyX: 'medium',
+        KeyC: 'heavy',
+        KeyV: 'special'
+      }
+    },
     moves: {
       light: {
         startupFrames: 5,
@@ -45,6 +53,17 @@
         hitstunFrames: 12,
         knockback: 180
       },
+      medium: {
+        startupFrames: 7,
+        activeFrames: 3,
+        recoveryFrames: 13,
+        damage: 10,
+        reach: 88,
+        hitboxTop: 0.19,
+        hitboxBottom: 0.78,
+        hitstunFrames: 15,
+        knockback: 220
+      },
       heavy: {
         startupFrames: 11,
         activeFrames: 4,
@@ -55,6 +74,17 @@
         hitboxBottom: 0.76,
         hitstunFrames: 20,
         knockback: 280
+      },
+      special: {
+        startupFrames: 16,
+        activeFrames: 4,
+        recoveryFrames: 25,
+        damage: 21,
+        reach: 126,
+        hitboxTop: 0.2,
+        hitboxBottom: 0.76,
+        hitstunFrames: 25,
+        knockback: 340
       }
     }
   };

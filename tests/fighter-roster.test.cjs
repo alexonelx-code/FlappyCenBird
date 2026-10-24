@@ -10,6 +10,7 @@ const teams = require('../src/js/fighter/team-match.js');
 const engine = globalThis.CenFighterEngine;
 const roster = globalThis.CenFighterRoster;
 const art = globalThis.CenFighterArtContract;
+const config = globalThis.CenFighterConfig;
 
 function spriteDefinition() {
   const animations = Object.fromEntries(art.ANIMATIONS.map((name) => [name, {
@@ -30,6 +31,9 @@ function spriteDefinition() {
 }
 
 test('el catálogo tiene diez luchadores distintos con arquetipos y estadísticas propias', () => {
+  assert.deepEqual(config.controls.attacks, {
+    KeyZ: 'light', KeyX: 'medium', KeyC: 'heavy', KeyV: 'special'
+  });
   assert.equal(roster.entries.length, 10);
   assert.equal(new Set(roster.entries.map((fighter) => fighter.id)).size, 10);
   assert.ok(new Set(roster.entries.map((fighter) => fighter.archetype)).size >= 6);
@@ -44,6 +48,9 @@ test('el catálogo tiene diez luchadores distintos con arquetipos y estadística
   assert.equal(match.duel.left.stats.health, 100);
   assert.equal(match.duel.right.stats.guardDamageScale, 0.22);
   assert.equal(match.duel.left.moves.light.damage, 8);
+  assert.equal(match.duel.left.moves.medium.damage, 10);
+  assert.equal(match.duel.left.moves.heavy.damage, 14);
+  assert.equal(match.duel.left.moves.special.damage, 21);
   assert.equal(match.duel.right.moves.light.reach, 82);
   assert.notEqual(match.duel.left.stats.groundSpeed, match.duel.right.stats.groundSpeed);
 
