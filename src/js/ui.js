@@ -45,10 +45,16 @@
   const gameMenuDialog = document.getElementById('gameMenuDialog');
   const shopButton = document.getElementById('shopButton');
   const gameShopButton = document.getElementById('gameShopButton');
+  const themeToggleButton = document.getElementById('themeToggleButton');
+  const screenThemeToggleButton = document.getElementById('screenThemeToggleButton');
+  const menuThemeButton = document.getElementById('menuThemeButton');
+  const menuThemeLabel = document.getElementById('menuThemeLabel');
   const storeDialog = document.getElementById('storeDialog');
   const storeCatalog = document.getElementById('storeCatalog');
   const storeFeedback = document.getElementById('storeFeedback');
   const storeTabs = [...document.querySelectorAll('[data-store-tab]')];
+  const flappyStoreTabs = document.getElementById('flappyStoreTabs');
+  const flappyStoreSubtabs = [...document.querySelectorAll('[data-store-subtab]')];
   const backToGamesButton = document.getElementById('backToGamesButton');
   const changeCharacterButton = document.getElementById('changeCharacterButton');
   const continueGameButton = document.getElementById('continueGameButton');
@@ -61,6 +67,28 @@
   const muteLabel = document.getElementById('muteLabel');
   const retryButton = document.getElementById('retryButton');
   const gameStatus = document.getElementById('gameStatus');
+
+  function syncThemeControls() {
+    if (!window.CenTheme) return;
+    const isLight = window.CenTheme.getTheme() === 'light';
+    const label = isLight ? 'Cambiar a modo oscuro' : 'Cambiar a modo claro';
+    const title = isLight ? 'Modo oscuro' : 'Modo claro';
+    [themeToggleButton, screenThemeToggleButton, menuThemeButton].forEach((button) => {
+      if (!button) return;
+      button.setAttribute('aria-label', label);
+      button.setAttribute('title', title);
+    });
+    if (menuThemeLabel) menuThemeLabel.textContent = title;
+  }
+
+  function toggleTheme() {
+    if (window.CenTheme) window.CenTheme.toggle();
+  }
+  themeToggleButton.addEventListener('click', toggleTheme);
+  screenThemeToggleButton.addEventListener('click', toggleTheme);
+  menuThemeButton.addEventListener('click', toggleTheme);
+  window.addEventListener('cengames:theme', syncThemeControls);
+  syncThemeControls();
 
   function readPlayerName() {
     try {
@@ -147,6 +175,7 @@
     Object.entries(screens).forEach(([screenName, element]) => {
       element.hidden = screenName !== name;
     });
+    screenThemeToggleButton.hidden = name === 'games' || name === 'game';
     document.title = name === 'game' ? 'Flappy BirdCen | CenGames' : 'CenGames';
     window.scrollTo(0, 0);
     const focusTarget = name === 'welcome'
@@ -215,6 +244,21 @@
     else dialog.removeAttribute('open');
   }
 
+  function signOut() {
+    [profileDialog, gameMenuDialog, leaderboardDialog, storeDialog].forEach(closeDialog);
+    updatePlayerName('');
+    character = 'friend';
+    hasChosenCharacter = false;
+    pendingCharacter = '';
+    try {
+      localStorage.removeItem(CHARACTER_KEY);
+      localStorage.removeItem(CHARACTER_SELECTED_KEY);
+    } catch (error) {
+      // La sesión se cierra también si el navegador bloquea el almacenamiento.
+    }
+    setScreen('welcome');
+  }
+
   function stopGamePointer(event) {
     event.stopPropagation();
   }
@@ -237,7 +281,7 @@
     closeDialog(profileDialog);
     openRegistration('games', true);
   });
-  exitGamesButton.addEventListener('click', () => setScreen('welcome'));
+  exitGamesButton.addEventListener('click', signOut);
 
   registrationForm.addEventListener('submit', (event) => {
     event.preventDefault();
@@ -304,10 +348,12 @@
   continueGameButton.addEventListener('click', () => closeDialog(gameMenuDialog));
 
   let activeStoreTab = 'avatars';
+  let activeFlappyStoreTab = 'birds';
 
-  function openStore(tab = 'avatars') {
+  function openStore(tab = 'avatars', flappyTab = activeFlappyStoreTab) {
     if (gameMenuDialog.open) closeDialog(gameMenuDialog);
     activeStoreTab = tab;
+    activeFlappyStoreTab = flappyTab;
     storeFeedback.textContent = '';
     renderStore();
     if (typeof storeDialog.showModal === 'function') storeDialog.showModal();
@@ -331,11 +377,11 @@
     return section;
   }
 
-  function makeStoreCard({ name, image, owned, selected, price, locked, previewNode, actionLabel, onAction }) {
+  function makeStoreCard({ name, image, owned, selected, price, locked, previewNode, previewClass, actionLabel, onAction }) {
     const card = document.createElement('article');
     card.className = `store-item${selected ? ' is-selected' : ''}${locked ? ' is-locked' : ''}`;
     const preview = document.createElement('span');
-    preview.className = locked ? 'store-item-preview' : image ? 'store-item-preview' : 'store-bird-preview';
+    preview.className = previewClass || (locked ? 'store-item-preview' : image ? 'store-item-preview' : 'store-bird-preview');
     if (locked) {
       preview.textContent = '✦';
       preview.setAttribute('aria-hidden', 'true');
@@ -371,6 +417,8 @@
       return;
     }
     storeTabs.forEach((button) => button.setAttribute('aria-selected', String(button.dataset.storeTab === activeStoreTab)));
+    flappyStoreTabs.hidden = activeStoreTab !== 'flappy';
+    flappyStoreSubtabs.forEach((button) => button.setAttribute('aria-selected', String(button.dataset.storeSubtab === activeFlappyStoreTab)));
     storeCentBalance.textContent = String(Math.max(0, Number(current.cents) || 0));
     storeCatalog.replaceChildren();
 
@@ -400,7 +448,7 @@
         makeStoreSection('Avatares gratis', '5 para empezar', freeCards),
         makeStoreSection('Para desbloquear', 'se compran con Cent', paidCards)
       );
-    } else {
+    } else if (activeStoreTab === 'flappy' && activeFlappyStoreTab === 'birds') {
       const freeBirds = window.CenEconomy.getFreeBirds();
       const betaBirds = window.CenEconomy.getBetaBirds();
       const birdCards = freeBirds.map((bird) => {
@@ -422,6 +470,29 @@
         makeStoreSection('Pájaros incluidos', '5 disponibles', birdCards),
         makeStoreSection('Próximos pájaros', '5 espacios reservados', futureCards),
         betaNotice
+      );
+    } else {
+      const catalog = window.CenEconomy.getBackgroundCatalog();
+      const owned = new Set(current.ownedBackgrounds || ['costa', 'aurora']);
+      const makeBackgroundCard = (item) => {
+        const preview = document.createElement('span');
+        preview.className = 'store-background-art';
+        preview.dataset.scene = item.scene;
+        preview.setAttribute('aria-hidden', 'true');
+        return makeStoreCard({
+          name: item.name,
+          owned: owned.has(item.id),
+          selected: current.backgroundId === item.id,
+          price: item.price,
+          previewClass: 'store-background-preview',
+          previewNode: preview,
+          actionLabel: 'Elegir',
+          onAction: () => owned.has(item.id) ? equipBackground(item) : purchaseBackground(item)
+        });
+      };
+      storeCatalog.append(
+        makeStoreSection('Fondos gratis', '2 para empezar', catalog.filter((item) => item.free).map(makeBackgroundCard)),
+        makeStoreSection('Nuevos paisajes', 'se compran con Cent', catalog.filter((item) => !item.free).map(makeBackgroundCard))
       );
     }
   }
@@ -464,10 +535,38 @@
     }
   }
 
+  async function equipBackground(item) {
+    try {
+      await window.CenEconomy.chooseBackground(item.id);
+      storeFeedback.textContent = `${item.name} equipado.`;
+      updateEconomyUI();
+      announce(`Fondo ${item.name} equipado.`);
+    } catch (error) {
+      storeFeedback.textContent = error.message;
+    }
+  }
+
+  async function purchaseBackground(item) {
+    try {
+      await window.CenEconomy.buyBackground(item.id);
+      await window.CenEconomy.chooseBackground(item.id);
+      storeFeedback.textContent = `${item.name} desbloqueado y equipado.`;
+      updateEconomyUI();
+      announce(`Compraste el fondo ${item.name}.`);
+    } catch (error) {
+      storeFeedback.textContent = error.message;
+    }
+  }
+
   shopButton.addEventListener('click', () => openStore('avatars'));
-  gameShopButton.addEventListener('click', () => openStore('birds'));
+  gameShopButton.addEventListener('click', () => openStore('flappy', 'backgrounds'));
   storeTabs.forEach((button) => button.addEventListener('click', () => {
     activeStoreTab = button.dataset.storeTab;
+    storeFeedback.textContent = '';
+    renderStore();
+  }));
+  flappyStoreSubtabs.forEach((button) => button.addEventListener('click', () => {
+    activeFlappyStoreTab = button.dataset.storeSubtab;
     storeFeedback.textContent = '';
     renderStore();
   }));
@@ -532,20 +631,7 @@
     else profileDialog.setAttribute('open', '');
   });
 
-  logoutButton.addEventListener('click', () => {
-    closeDialog(profileDialog);
-    updatePlayerName('');
-    character = 'friend';
-    hasChosenCharacter = false;
-    pendingCharacter = '';
-    try {
-      localStorage.removeItem(CHARACTER_KEY);
-      localStorage.removeItem(CHARACTER_SELECTED_KEY);
-    } catch (error) {
-      // El cierre de perfil sigue activo durante esta sesión.
-    }
-    setScreen('welcome');
-  });
+  logoutButton.addEventListener('click', signOut);
 
   function readLeaderboard() {
     try {

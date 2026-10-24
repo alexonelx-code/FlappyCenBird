@@ -20,6 +20,8 @@ AVATAR_PRICES = {
     "neon": 100,
 }
 FREE_BIRDS = ("friend", "classic", "laguna", "mango", "nube")
+FREE_BACKGROUNDS = ("costa", "aurora")
+BACKGROUND_PRICES = {"cosmos": 60, "atardecer": 80, "neon": 100}
 MAX_RUN_SCORE = 500
 MAX_RUN_IDS = 2000
 PLAYER_ID_PATTERN = re.compile(r"^[a-f0-9-]{36}$")
@@ -60,6 +62,8 @@ class Economy:
                     cents INTEGER NOT NULL DEFAULT 0 CHECK(cents >= 0),
                     owned_avatars TEXT NOT NULL,
                     owned_birds TEXT NOT NULL,
+                    background_id TEXT NOT NULL DEFAULT 'costa',
+                    owned_backgrounds TEXT NOT NULL DEFAULT '["costa", "aurora"]',
                     flappy_plays INTEGER NOT NULL DEFAULT 0,
                     flappy_points INTEGER NOT NULL DEFAULT 0,
                     flappy_best INTEGER NOT NULL DEFAULT 0,
@@ -67,6 +71,11 @@ class Economy:
                     updated_at INTEGER NOT NULL
                 )"""
             )
+            columns = {row["name"] for row in db.execute("PRAGMA table_info(players)").fetchall()}
+            if "background_id" not in columns:
+                db.execute("ALTER TABLE players ADD COLUMN background_id TEXT NOT NULL DEFAULT 'costa'")
+            if "owned_backgrounds" not in columns:
+                db.execute("ALTER TABLE players ADD COLUMN owned_backgrounds TEXT NOT NULL DEFAULT '[\"costa\", \"aurora\"]'")
 
     @staticmethod
     def _identity(player_id: Any, name: Any) -> tuple[str, str]:
@@ -91,9 +100,11 @@ class Economy:
             "name": name,
             "avatarId": FREE_AVATARS[0],
             "characterId": FREE_BIRDS[0],
+            "backgroundId": FREE_BACKGROUNDS[0],
             "cents": 0,
             "ownedAvatars": list(FREE_AVATARS),
             "ownedBirds": list(FREE_BIRDS),
+            "ownedBackgrounds": list(FREE_BACKGROUNDS),
             "flappyPlays": 0,
             "flappyPoints": 0,
             "flappyBest": best,
@@ -108,9 +119,11 @@ class Economy:
             "name": row["name"],
             "avatarId": row["avatar_id"],
             "characterId": row["character_id"],
+            "backgroundId": row["background_id"],
             "cents": row["cents"],
             "ownedAvatars": json.loads(row["owned_avatars"]),
             "ownedBirds": json.loads(row["owned_birds"]),
+            "ownedBackgrounds": json.loads(row["owned_backgrounds"]),
             "flappy": {
                 "plays": row["flappy_plays"],
                 "points": row["flappy_points"],
@@ -126,12 +139,14 @@ class Economy:
             db.execute(
                 """INSERT INTO players (
                     id, name, avatar_id, character_id, cents, owned_avatars, owned_birds,
+                    background_id, owned_backgrounds,
                     flappy_best, updated_at
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
                 (
                     player["id"], player["name"], player["avatarId"], player["characterId"],
                     player["cents"], json.dumps(player["ownedAvatars"]),
-                    json.dumps(player["ownedBirds"]), player["flappyBest"], player["updatedAt"],
+                    json.dumps(player["ownedBirds"]), player["backgroundId"],
+                    json.dumps(player["ownedBackgrounds"]), player["flappyBest"], player["updatedAt"],
                 ),
             )
             row = db.execute("SELECT * FROM players WHERE id = ?", (player_id,)).fetchone()
@@ -247,6 +262,49 @@ class Economy:
             updated = db.execute("SELECT * FROM players WHERE id = ?", (identity,)).fetchone()
             db.commit()
             return self._to_profile(updated)
+
+    def choose_background(self, player_id: Any, name: Any, background_id: Any) -> dict[str, Any]:
+        identity, player_name = self._identity(player_id, name)
+        item_id = str(background_id or "")
+        with self._connect() as db:
+            db.execute("BEGIN IMMEDIATE")
+            row = self._ensure(db, identity, player_name)
+            owned = json.loads(row["owned_backgrounds"])
+            if item_id not in owned or item_id not in (*FREE_BACKGROUNDS, *BACKGROUND_PRICES):
+                raise ApiError(403, "Primero desbloquea este fondo en la tienda.")
+            db.execute("UPDATE players SET background_id = ?, updated_at = ? WHERE id = ?", (item_id, int(time.time() * 1000), identity))
+            updated = db.execute("SELECT * FROM players WHERE id = ?", (identity,)).fetchone()
+            db.commit()
+            return self._to_profile(updated)
+
+    def purchase_background(self, player_id: Any, name: Any, background_id: Any) -> dict[str, Any]:
+        identity, player_name = self._identity(player_id, name)
+        item_id = str(background_id or "")
+        if item_id not in BACKGROUND_PRICES:
+            raise ApiError(404, "Ese fondo no está disponible en la tienda.")
+        price = BACKGROUND_PRICES[item_id]
+        with self._connect() as db:
+            db.execute("BEGIN IMMEDIATE")
+            row = self._ensure(db, identity, player_name)
+            owned = json.loads(row["owned_backgrounds"])
+            if item_id in owned:
+                db.commit()
+                profile = self._to_profile(row)
+                profile["purchaseStatus"] = "already-owned"
+                return profile
+            if row["cents"] < price:
+                raise ApiError(409, "Aún no tienes suficientes Cent para este fondo.")
+            owned.append(item_id)
+            db.execute(
+                "UPDATE players SET cents = cents - ?, owned_backgrounds = ?, updated_at = ? WHERE id = ?",
+                (price, json.dumps(owned), int(time.time() * 1000), identity),
+            )
+            updated = db.execute("SELECT * FROM players WHERE id = ?", (identity,)).fetchone()
+            db.commit()
+            profile = self._to_profile(updated)
+            profile["purchaseStatus"] = "purchased"
+            profile["spentCents"] = price
+            return profile
 
     def leaderboard(self, game_id: Any = "flappy") -> list[dict[str, Any]]:
         if str(game_id or "flappy") != "flappy":
