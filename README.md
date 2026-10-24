@@ -6,7 +6,7 @@ CenGames es un proyecto personal de ocio para jugar entre amigos. No es un produ
 
 - Un portal web adaptable a teléfonos y computadoras, hecho con HTML, CSS y JavaScript sin dependencias externas.
 - Flappy BirdCen, dibujado en Canvas, con controles táctiles y de teclado, récord, tabla, sonido, cinco personajes gratuitos y velocidad progresiva con tramos aleatorios que se estabiliza cerca de los 50 puntos.
-- Cen Fighters, un juego local contra la computadora con equipos de tres, roster provisional de diez, tres dificultades, controles de teclado y touch, aprendizaje Q-learning guardado por perfil, sonidos retro, efectos de impacto y pausa accesible.
+- Cen Fighters, un juego local contra la computadora con equipos de tres, roster provisional de diez, tres dificultades, estética de pelea arcade de 16 bits, cuatro ataques Z/X/C/V y controles táctiles tipo mando, aprendizaje Q-learning guardado por perfil, sonidos retro, efectos de impacto y pausa accesible.
 - Un perfil por nombre en cada navegador, con récords, estadísticas, saldo común de Cent y avatar seleccionado.
 - Una tienda de 15 avatares: los primeros cinco son gratis, los siguientes cinco cuestan 40 Cent cada uno y los últimos cinco cuestan 60 Cent cada uno.
 - Una tienda de Flappy BirdCen con cinco pájaros disponibles y cinco diseños reservados en beta, además de cinco fondos: Costa dorada y Aurora polar gratis; Órbita (60 Cent), Último sol (80 Cent) y Neón urbano (100 Cent).
@@ -17,7 +17,7 @@ Cada punto de Flappy suma 1 Cent al terminar. Cen Fighters otorga 5 Cent por com
 
 ## Prototipo del juego de peleas
 
-El motor vive en `src/js/fighter/`, separado de la simulación de Flappy. Ya incluye la pantalla de selección y combate, equipos de tres con reservas y sustituciones, tres dificultades de CPU, una política Q-learning local y recompensas idempotentes. Tiene diez personajes provisionales con arquetipos, colores y atributos propios. El contrato de atlas y el renderer aceptan sprites futuros; mientras no estén esos archivos se dibujan figuras temporales. Los nombres, sprites y el balance final se pueden cambiar cuando llegue el arte. La ruta de desarrollo y las reglas están en [`docs/fighter-game-roadmap.md`](docs/fighter-game-roadmap.md); el juego seguirá siendo local y contra la computadora.
+El motor vive en `src/js/fighter/`, separado de la simulación de Flappy. Ya incluye la pantalla de selección y combate, equipos de tres con reservas y sustituciones, tres dificultades de CPU, una política Q-learning local y recompensas idempotentes. Tiene diez personajes provisionales con arquetipos, colores y atributos propios. La pelea usa figuras humanas provisionales de artes marciales con proporciones largas y una arena urbana de píxeles. En computadoras usa flechas, J y Z/X/C/V; en teléfonos coloca los cuatro botones de ataque a la izquierda y un stick analógico a la derecha, adaptable a pantalla vertical y horizontal. El contrato de atlas y el renderer aceptan sprites futuros; mientras no estén esos archivos se dibujan figuras temporales. Los nombres, sprites y el balance final se pueden cambiar cuando llegue el arte. La ruta de desarrollo y las reglas están en [`docs/fighter-game-roadmap.md`](docs/fighter-game-roadmap.md); el juego seguirá siendo local y contra la computadora.
 
 ## Guardado y límites
 

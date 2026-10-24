@@ -15,7 +15,7 @@
   <link rel="icon" href="assets/icons/cengames-mark.svg" type="image/svg+xml">
   <link rel="manifest" href="manifest.webmanifest">
   <script src="src/js/theme.js?v=23"></script>
-  <link rel="stylesheet" href="src/css/game.css?v=34">
+  <link rel="stylesheet" href="src/css/game.css?v=41">
   <title>CenGames</title>
 </head>
 <body>
@@ -158,7 +158,7 @@
         </button>
 
         <button class="game-card fighter-card" id="fighterCard" type="button" aria-label="Jugar a Cen Fighters">
-          <div class="fighter-card-art" aria-hidden="true"><span class="fighter-card-orbit"></span><span class="fighter-card-silhouette fighter-card-left">✦</span><span class="fighter-card-silhouette fighter-card-right">✦</span><span class="fighter-card-vs">VS</span></div>
+          <div class="fighter-card-art" aria-hidden="true"><span class="fighter-card-silhouette fighter-card-left"></span><span class="fighter-card-silhouette fighter-card-right"></span><span class="fighter-card-vs">VS</span></div>
           <div class="card-copy">
             <h2>Cen Fighters</h2>
             <span class="card-action">Jugar <span aria-hidden="true">→</span></span>
@@ -237,10 +237,18 @@
         <div class="fighter-hud-center"><span>EQUIPOS</span><strong>3v3</strong></div>
         <div class="fighter-team-hud fighter-cpu-hud"><div class="fighter-hud-heading"><strong>CPU</strong><span id="fighterCpuActive">Peleador 04</span></div><div class="fighter-health-track"><span id="fighterCpuHealth"></span></div><div class="fighter-reserves" id="fighterCpuReserves" aria-label="Reservas de la CPU"></div></div>
       </div>
-      <div class="fighter-arena-shell"><canvas id="fighterCanvas" width="960" height="540" tabindex="0" role="img" aria-label="Arena de combate. Usa A y D o las flechas para moverte, W o Espacio para saltar, J para bloquear, U para golpe ligero e I para golpe fuerte.">Este navegador no soporta Canvas.</canvas><p class="sr-only" id="fighterStatus" role="status" aria-live="polite" aria-atomic="true">El combate está listo.</p></div>
-      <div class="fighter-controls-row"><p>← → mover · ↑ saltar · ↓ agacharse · J bloquear · U ligero · I fuerte</p><div class="fighter-touch-controls" aria-label="Controles táctiles">
-        <div class="fighter-direction-pad"><button type="button" data-fighter-hold="left" aria-label="Mover a la izquierda">←</button><button type="button" data-fighter-hold="jump" aria-label="Saltar">↑</button><button type="button" data-fighter-hold="right" aria-label="Mover a la derecha">→</button></div>
-        <div class="fighter-attack-pad"><button type="button" data-fighter-hold="crouch" aria-label="Agacharse">AGA</button><button type="button" data-fighter-hold="block" aria-label="Bloquear">DEF</button><button type="button" data-fighter-attack="light" aria-label="Golpe ligero">LIG</button><button type="button" data-fighter-attack="heavy" aria-label="Golpe fuerte">FUE</button></div>
+      <div class="fighter-arena-shell"><canvas id="fighterCanvas" width="960" height="540" tabindex="0" role="img" aria-label="Arena de Cen Fighters. Muévete con las flechas, salta con arriba, bloquea con J y ataca con Z, X, C o V.">Este navegador no soporta Canvas.</canvas><p class="sr-only" id="fighterStatus" role="status" aria-live="polite" aria-atomic="true">El combate está listo.</p></div>
+      <div class="fighter-controls-row"><p>← → mover · ↑ saltar · ↓ agacharse · J bloquear · Z jab · X patada · C fuerte · V especial</p><div class="fighter-touch-controls" aria-label="Controles táctiles estilo mando">
+        <div class="fighter-face-pad" aria-label="Ataques Z X C V">
+          <button class="face-c" type="button" data-fighter-attack="heavy" aria-label="Golpe fuerte · tecla C"><span>C</span></button>
+          <button class="face-x" type="button" data-fighter-attack="medium" aria-label="Patada · tecla X"><span>X</span></button>
+          <button class="face-v" type="button" data-fighter-attack="special" aria-label="Especial · tecla V"><span>V</span></button>
+          <button class="face-z" type="button" data-fighter-attack="light" aria-label="Jab · tecla Z"><span>Z</span></button>
+        </div>
+        <div class="fighter-analog-control">
+          <button class="fighter-analog-stick" type="button" data-fighter-analog aria-label="Control analógico. Arrastra para moverte; arriba salta y abajo se agacha."><span class="fighter-analog-thumb" aria-hidden="true"></span></button>
+          <span class="fighter-analog-caption" aria-hidden="true">MOVER</span>
+        </div>
       </div></div>
       <div class="fighter-modal-overlay" id="fighterPauseOverlay" hidden><section class="fighter-modal-card" role="dialog" aria-modal="true" aria-labelledby="fighterPauseTitle"><p class="screen-kicker">COMBATE EN PAUSA</p><h2 id="fighterPauseTitle">Tómate un respiro</h2><p>Si abandonas, este combate no entrega Cent.</p><button class="fighter-primary-button" id="resumeFighterButton" type="button">Seguir jugando</button><button class="fighter-secondary-button" id="abandonFighterButton" type="button">Rendirse y volver</button></section></div>
       <div class="fighter-modal-overlay" id="fighterResultOverlay" hidden><section class="fighter-modal-card" role="dialog" aria-modal="true" aria-labelledby="fighterResultTitle"><p class="screen-kicker">FIN DEL COMBATE</p><h2 id="fighterResultTitle">Resultado</h2><p id="fighterResultCopy"></p><div class="fighter-result-reward" id="fighterResultReward"></div><button class="fighter-primary-button" id="fighterResultContinueButton" type="button">Volver a minijuegos</button></section></div>
@@ -358,7 +366,7 @@
   <script src="src/js/fighter/team-match.js" defer></script>
   <script src="src/js/fighter/cpu.js" defer></script>
   <script src="src/js/fighter/learning.js" defer></script>
-  <script src="src/js/fighter/renderer.js?v=35" defer></script>
-  <script src="src/js/fighter/game.js?v=35" defer></script>
+  <script src="src/js/fighter/renderer.js?v=39" defer></script>
+  <script src="src/js/fighter/game.js?v=39" defer></script>
 </body>
 </html>
