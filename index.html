@@ -4,64 +4,230 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#0b1b22">
-  <meta name="description" content="Cen Crew: el vuelo de la pandilla. Elige personaje, vuela y reta a tus amigos.">
+  <meta name="description" content="CenGames: entra, elige un minijuego y juega.">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="Cen Crew">
+  <meta name="apple-mobile-web-app-title" content="CenGames">
   <meta property="og:type" content="website">
-  <meta property="og:title" content="Cen Crew — La pandilla vuela">
-  <meta property="og:description" content="¿Quién de la pandilla aguanta más en el aire? Juega desde tu teléfono.">
+  <meta property="og:title" content="CenGames">
+  <meta property="og:description" content="Entra, elige un minijuego y juega.">
   <link rel="icon" href="assets/icons/flappy-cen.svg" type="image/svg+xml">
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="stylesheet" href="src/css/game.css">
-  <title>Cen Crew — La pandilla vuela</title>
+  <title>CenGames</title>
 </head>
 <body>
-  <main class="game-shell" id="gameShell">
-    <canvas id="game" tabindex="0" role="img" aria-label="Cen Crew. Toca el juego para volar; también puedes usar Espacio, flecha arriba o W.">
-      Este navegador no soporta Canvas. Prueba con una versión reciente de Chrome, Safari, Edge o Firefox.
-    </canvas>
+  <main class="app-shell" id="appShell">
+    <section class="portal-screen welcome-screen" id="welcomeScreen" aria-labelledby="welcomeTitle">
+      <div class="welcome-panel">
+        <div class="welcome-copy">
+          <h1 class="welcome-logo" id="welcomeTitle" tabindex="-1">
+            <svg class="welcome-logo-mark" viewBox="0 0 64 64" aria-hidden="true">
+              <rect x="2" y="2" width="60" height="60" rx="19" fill="#f2b86f" />
+              <path d="M20 25h24c5 0 8 3 9 8l2 9c1 5-4 8-8 5l-6-5H23l-6 5c-4 3-9 0-8-5l2-9c1-5 4-8 9-8Z" fill="#17343c" />
+              <path d="M21 32v8m-4-4h8" stroke="#fff0d1" stroke-width="3" stroke-linecap="round" />
+              <circle cx="42" cy="34" r="2.3" fill="#e4775f" />
+              <circle cx="47" cy="39" r="2.3" fill="#e4775f" />
+            </svg>
+            <span>Cen<span class="logo-accent">Games</span></span>
+          </h1>
+          <button class="primary-button start-button" id="startButton" type="button">
+            Iniciar
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h13m-5-5 5 5-5 5" /></svg>
+          </button>
+        </div>
+        <div class="welcome-art" aria-hidden="true">
+          <div class="arcade-stage">
+            <div class="arcade-orbit arcade-orbit-one"></div>
+            <div class="arcade-orbit arcade-orbit-two"></div>
+            <div class="arcade-token token-spark">✦</div>
+            <div class="arcade-token token-blocks"><i></i><i></i><i></i><i></i></div>
+            <div class="arcade-token token-dice">
+              <svg viewBox="0 0 48 48"><rect x="5" y="5" width="38" height="38" rx="11"/><circle cx="17" cy="17" r="2.5"/><circle cx="31" cy="31" r="2.5"/><circle cx="24" cy="24" r="2.5"/></svg>
+            </div>
+            <div class="arcade-token token-bolt">↗</div>
+            <div class="arcade-console">
+              <svg viewBox="0 0 180 120" aria-hidden="true">
+                <path class="controller-body" d="M42 28h96c14 0 24 10 28 25l10 37c4 16-13 27-25 16l-21-19H50L29 106C17 117 0 106 4 90l10-37c4-15 14-25 28-25Z" />
+                <path class="controller-cross" d="M48 49v30M33 64h30" />
+                <circle class="controller-button" cx="130" cy="56" r="6" />
+                <circle class="controller-button controller-button-alt" cx="146" cy="73" r="6" />
+                <circle class="controller-light" cx="78" cy="65" r="3" />
+                <circle class="controller-light" cx="101" cy="65" r="3" />
+              </svg>
+            </div>
+            <span class="arcade-ground"></span>
+          </div>
+        </div>
+      </div>
+    </section>
 
-    <nav class="top-controls" aria-label="Opciones del juego">
-      <button class="overlay-button player-button" id="playerButton" type="button" aria-haspopup="dialog" aria-controls="playerDialog">
-        <span class="avatar-mark" aria-hidden="true">C</span>
-        <span class="player-name" id="playerNameLabel">Jugador</span>
-      </button>
-      <button class="overlay-button mute-button" id="muteButton" type="button" aria-label="Silenciar sonido" aria-pressed="false">
-        <svg class="sound-icon" id="muteIcon" viewBox="0 0 24 24" aria-hidden="true">
-          <path d="M4 10v4h4l5 4V6l-5 4H4Z" />
-          <path id="muteWaves" d="M16 9a5 5 0 0 1 0 6m2-9a9 9 0 0 1 0 12" />
-          <path id="muteSlash" d="m16 9 5 6m0-6-5 6" hidden />
-        </svg>
-      </button>
-    </nav>
+    <section class="portal-screen registration-screen" id="registrationScreen" aria-labelledby="registrationTitle" hidden>
+      <div class="registration-panel">
+        <button class="text-button back-button" id="registrationBackButton" type="button">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H6m5 5-5-5 5-5" /></svg>
+          Volver
+        </button>
+        <h1 id="registrationTitle">Tu nombre</h1>
+        <p class="registration-description" id="registrationDescription">Después eliges un juego.</p>
+        <form id="registrationForm" class="registration-form">
+          <label for="nicknameInput">Nombre o apodo</label>
+          <input id="nicknameInput" name="nickname" type="text" maxlength="18" autocomplete="nickname" autocapitalize="words" placeholder="Ej. Alex" required>
+          <button class="primary-button" id="registrationSubmit" type="submit">
+            Elegir juego
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h13m-5-5 5 5-5 5" /></svg>
+          </button>
+        </form>
+      </div>
+    </section>
 
-    <div class="game-actions" aria-label="Acciones de la partida">
-      <button class="action-button retry-button" id="retryButton" type="button" hidden>Revancha</button>
-      <button class="action-button share-button" id="shareButton" type="button" hidden>Compartir reto</button>
-    </div>
+    <section class="portal-screen character-screen" id="characterScreen" aria-labelledby="characterTitle" hidden>
+      <div class="character-panel">
+        <button class="text-button back-button" id="characterBackButton" type="button">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H6m5 5-5-5 5-5" /></svg>
+          Volver
+        </button>
+        <div class="character-heading">
+          <span class="character-game-label">FLAPPY BIRDCEN</span>
+          <h1 id="characterTitle" tabindex="-1">Elige tu personaje</h1>
+          <p id="characterDescription">Escoge uno para empezar a volar.</p>
+        </div>
+        <div class="character-options" role="group" aria-label="Personajes disponibles">
+          <button class="character-option" type="button" data-character="friend" aria-pressed="false">
+            <span class="character-avatar avatar-friend"><img src="assets/images/personaje/cuerpo.png" alt=""></span>
+            <span class="character-name">Cen</span>
+          </button>
+          <button class="character-option" type="button" data-character="classic" aria-pressed="false">
+            <span class="character-avatar avatar-canary"><svg viewBox="0 0 100 80" aria-hidden="true"><path d="M23 43 8 34l5 20 16-4Z" fill="var(--bird-tail)"/><ellipse cx="49" cy="43" rx="34" ry="25" fill="var(--bird-mid)" stroke="var(--bird-edge)" stroke-width="4"/><path d="M32 51c8-13 24-14 33-3-7 10-21 14-33 3Z" fill="var(--bird-wing)" stroke="var(--bird-edge)" stroke-width="3"/><circle cx="63" cy="34" r="10" fill="#fff0d1"/><circle cx="66" cy="35" r="4" fill="#20353c"/><path d="m72 44 20 5-19 8Z" fill="var(--bird-beak)" stroke="var(--bird-edge)" stroke-width="3"/><path d="M40 19c-1-9 3-14 9-14 5 0 7 5 6 12 6-7 11-8 15-5 3 3 1 8-5 13" fill="var(--bird-tail)" stroke="var(--bird-edge)" stroke-width="3" stroke-linecap="round"/></svg></span>
+            <span class="character-name">Canario</span>
+          </button>
+          <button class="character-option" type="button" data-character="laguna" aria-pressed="false">
+            <span class="character-avatar avatar-laguna"><svg viewBox="0 0 100 80" aria-hidden="true"><path d="M23 43 8 34l5 20 16-4Z" fill="var(--bird-tail)"/><ellipse cx="49" cy="43" rx="34" ry="25" fill="var(--bird-mid)" stroke="var(--bird-edge)" stroke-width="4"/><path d="M32 51c8-13 24-14 33-3-7 10-21 14-33 3Z" fill="var(--bird-wing)" stroke="var(--bird-edge)" stroke-width="3"/><circle cx="63" cy="34" r="10" fill="#fff0d1"/><circle cx="66" cy="35" r="4" fill="#20353c"/><path d="m72 44 20 5-19 8Z" fill="var(--bird-beak)" stroke="var(--bird-edge)" stroke-width="3"/><path d="M40 19c-1-9 3-14 9-14 5 0 7 5 6 12 6-7 11-8 15-5 3 3 1 8-5 13" fill="var(--bird-tail)" stroke="var(--bird-edge)" stroke-width="3" stroke-linecap="round"/></svg></span>
+            <span class="character-name">Laguna</span>
+          </button>
+          <button class="character-option" type="button" data-character="mango" aria-pressed="false">
+            <span class="character-avatar avatar-mango"><svg viewBox="0 0 100 80" aria-hidden="true"><path d="M23 43 8 34l5 20 16-4Z" fill="var(--bird-tail)"/><ellipse cx="49" cy="43" rx="34" ry="25" fill="var(--bird-mid)" stroke="var(--bird-edge)" stroke-width="4"/><path d="M32 51c8-13 24-14 33-3-7 10-21 14-33 3Z" fill="var(--bird-wing)" stroke="var(--bird-edge)" stroke-width="3"/><circle cx="63" cy="34" r="10" fill="#fff0d1"/><circle cx="66" cy="35" r="4" fill="#20353c"/><path d="m72 44 20 5-19 8Z" fill="var(--bird-beak)" stroke="var(--bird-edge)" stroke-width="3"/><path d="M40 19c-1-9 3-14 9-14 5 0 7 5 6 12 6-7 11-8 15-5 3 3 1 8-5 13" fill="var(--bird-tail)" stroke="var(--bird-edge)" stroke-width="3" stroke-linecap="round"/></svg></span>
+            <span class="character-name">Mango</span>
+          </button>
+        </div>
+        <button class="primary-button character-confirm-button" id="characterConfirmButton" type="button" disabled>Jugar <span aria-hidden="true">→</span></button>
+      </div>
+    </section>
 
-    <p class="sr-only" id="gameStatus" role="status" aria-live="polite" aria-atomic="true">Toca el juego para empezar. También puedes usar Espacio, flecha arriba o W.</p>
+    <section class="portal-screen games-screen" id="gamesScreen" aria-labelledby="gamesTitle" hidden>
+      <header class="lobby-header">
+        <div class="brand-lockup" aria-label="CenGames">
+          <span class="brand-mark">C</span>
+          <span>Cen<b>Games</b></span>
+        </div>
+        <div class="lobby-profile">
+          <b id="lobbyName">Jugador</b>
+          <button class="text-button edit-name-button" id="editNameButton" type="button">Cambiar</button>
+          <button class="text-button exit-games-button" id="exitGamesButton" type="button" aria-label="Volver al inicio">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H6m5 5-5-5 5-5" /></svg>
+            Volver
+          </button>
+        </div>
+      </header>
+
+      <div class="games-intro">
+        <h1 id="gamesTitle" tabindex="-1">Elige un juego</h1>
+      </div>
+
+      <div class="game-grid" aria-label="Minijuegos disponibles">
+        <button class="game-card flappy-card" id="flappyCard" type="button">
+          <div class="card-art">
+            <span class="card-sun" aria-hidden="true"></span>
+            <img src="assets/icons/flappy-cen.svg" alt="" class="card-bird">
+            <span class="card-pipe card-pipe-top" aria-hidden="true"></span>
+            <span class="card-pipe card-pipe-bottom" aria-hidden="true"></span>
+          </div>
+          <div class="card-copy">
+            <h2>Flappy BirdCen</h2>
+            <span class="card-action">Jugar <span aria-hidden="true">→</span></span>
+          </div>
+        </button>
+
+        <article class="game-card coming-card" aria-label="Próximamente">
+          <div class="coming-art" aria-hidden="true"><span>+</span></div>
+          <div class="card-copy">
+            <h2>Próximamente</h2>
+          </div>
+        </article>
+
+        <article class="game-card coming-card" aria-label="Próximamente">
+          <div class="coming-art coming-art-alt" aria-hidden="true"><span>✦</span></div>
+          <div class="card-copy">
+            <h2>Próximamente</h2>
+          </div>
+        </article>
+      </div>
+
+    </section>
+
+    <section class="game-screen" id="gameScreen" aria-label="Flappy BirdCen" hidden>
+      <main class="game-shell" id="gameShell">
+        <canvas id="game" tabindex="0" role="img" aria-label="Flappy BirdCen. Toca el juego para volar; también puedes usar Espacio, flecha arriba o W.">
+          Este navegador no soporta Canvas. Prueba con una versión reciente de Chrome, Safari, Edge o Firefox.
+        </canvas>
+
+        <nav class="top-controls" aria-label="Opciones de Flappy BirdCen">
+          <button class="overlay-button leaderboard-button" id="leaderboardButton" type="button" aria-haspopup="dialog" aria-controls="leaderboardDialog" aria-label="Ver tabla general">
+            <svg class="control-icon trophy-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 21h8m-4-4v4M7 4h10v5a5 5 0 0 1-10 0V4Zm0 2H4v2a4 4 0 0 0 4 4m9-6h3v2a4 4 0 0 1-4 4" /></svg>
+            <span>Tabla</span>
+          </button>
+          <button class="overlay-button mute-button" id="muteButton" type="button" aria-label="Silenciar sonido" aria-pressed="false">
+            <svg class="control-icon sound-icon" id="muteIcon" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M4 10v4h4l5 4V6l-5 4H4Z" />
+              <path id="muteWaves" d="M16 9a5 5 0 0 1 0 6m2-9a9 9 0 0 1 0 12" />
+              <path id="muteSlash" d="m16 9 5 6m0-6-5 6" hidden />
+            </svg>
+          </button>
+          <button class="overlay-button menu-button" id="gameMenuButton" type="button" aria-haspopup="dialog" aria-controls="gameMenuDialog" aria-label="Abrir menú del juego">
+            <svg class="control-icon menu-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16" /></svg>
+            <span>Menú</span>
+          </button>
+        </nav>
+
+        <div class="game-actions" aria-label="Acciones de la partida">
+          <button class="action-button retry-button" id="retryButton" type="button" hidden>Revancha</button>
+          <button class="action-button share-button" id="shareButton" type="button" hidden>Compartir reto</button>
+        </div>
+
+        <p class="sr-only" id="gameStatus" role="status" aria-live="polite" aria-atomic="true">Toca el juego para empezar. También puedes usar Espacio, flecha arriba o W.</p>
+      </main>
+    </section>
   </main>
 
-  <dialog class="player-dialog" id="playerDialog" aria-labelledby="playerDialogTitle">
-    <form id="playerForm">
-      <h1 id="playerDialogTitle">Arma tu personaje</h1>
-      <label for="playerNameInput">Tu nombre o apodo</label>
-      <input id="playerNameInput" name="nickname" type="text" maxlength="18" autocomplete="nickname" autocapitalize="words" placeholder="Por ejemplo, Alex" required>
-      <label for="characterInput">Elige tu personaje</label>
-      <select id="characterInput" name="character">
-        <option value="friend">Personaje de la casa</option>
-        <option value="classic">Canario</option>
-        <option value="laguna">Laguna</option>
-        <option value="mango">Mango</option>
-      </select>
-      <p>Tu apodo y personaje se guardan en este teléfono. Elige a quién le toca volar.</p>
-      <div class="dialog-actions">
-        <button class="dialog-secondary" id="cancelPlayerButton" type="button">Cancelar</button>
-        <button class="dialog-primary" type="submit">Guardar</button>
+  <dialog class="leaderboard-dialog" id="leaderboardDialog" aria-labelledby="leaderboardTitle">
+    <div class="leaderboard-heading">
+      <div>
+        <p class="screen-kicker">FLAPPY BIRDCEN</p>
+        <h2 id="leaderboardTitle">Tabla general</h2>
       </div>
-    </form>
+      <form method="dialog"><button class="dialog-close" type="submit" aria-label="Cerrar tabla">×</button></form>
+    </div>
+    <p class="leaderboard-note" id="leaderboardNote">Mejores récords guardados en este dispositivo.</p>
+    <ol class="leaderboard-list" id="leaderboardList"></ol>
+    <form method="dialog" class="leaderboard-actions"><button class="dialog-primary" type="submit">Volver al juego</button></form>
+  </dialog>
+
+  <dialog class="game-menu-dialog" id="gameMenuDialog" aria-labelledby="gameMenuTitle">
+    <div class="game-menu-heading">
+      <span class="character-game-label">FLAPPY BIRDCEN</span>
+      <h2 id="gameMenuTitle">Menú del juego</h2>
+    </div>
+    <div class="game-menu-actions">
+      <button class="game-menu-action" id="changeCharacterButton" type="button">
+        <span class="game-menu-action-icon" aria-hidden="true">✦</span>
+        Elegir personaje
+      </button>
+      <button class="game-menu-action" id="backToGamesButton" type="button">
+        <span class="game-menu-action-icon" aria-hidden="true">⌂</span>
+        Volver a minijuegos
+      </button>
+      <button class="game-menu-continue" id="continueGameButton" type="button">Seguir jugando</button>
+    </div>
   </dialog>
 
   <script src="src/js/audio.js" defer></script>

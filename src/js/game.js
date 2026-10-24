@@ -13,6 +13,34 @@
   const FLAP_V = -430;
   const SPAWN_DIST = 210;      // separación entre tuberías (px)
   const STORAGE_KEY = 'flappy_best_v1';
+  const BEST_MIGRATION_KEY = 'flappy_best_migrated_v2';
+  const gameScreen = document.getElementById('gameScreen');
+
+  function playerBestKey() {
+    const name = window.FlappyUI.getPlayerName().normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .trim()
+      .toLocaleLowerCase()
+      .replace(/[^a-z0-9]+/g, '-');
+    return `${STORAGE_KEY}:player:${encodeURIComponent(name || 'jugador')}`;
+  }
+
+  function loadPlayerBest() {
+    if (!window.FlappyUI.hasPlayerName()) return 0;
+    try {
+      const saved = localStorage.getItem(playerBestKey());
+      if (saved !== null) return Math.max(0, parseInt(saved, 10) || 0);
+
+      // Conserva el récord anterior en la primera cuenta que entre al portal.
+      if (localStorage.getItem(BEST_MIGRATION_KEY) !== 'true') {
+        const legacy = Math.max(0, parseInt(localStorage.getItem(STORAGE_KEY) || '0', 10) || 0);
+        if (legacy > 0) localStorage.setItem(playerBestKey(), String(legacy));
+        localStorage.setItem(BEST_MIGRATION_KEY, 'true');
+        return legacy;
+      }
+    } catch (e) {}
+    return 0;
+  }
 
   const canvas = document.getElementById('game');
   const ctx = canvas.getContext('2d');
@@ -42,8 +70,7 @@
   /* ---------------------------------------------------------------
      Estado
   --------------------------------------------------------------- */
-  let best = 0;
-  try { best = Math.max(0, parseInt(localStorage.getItem(STORAGE_KEY) || '0', 10) || 0); } catch (e) {}
+  let best = loadPlayerBest();
 
   let state = 'ready';        // ready | playing | dying | gameover
   let score = 0;
@@ -129,6 +156,7 @@
   function resetGame() {
     state = 'ready';
     score = 0;
+    best = loadPlayerBest();
     newBest = false;
     pipes = [];
     particles = [];
@@ -144,11 +172,14 @@
     bird.wingSpeed = 9;
     gameOverAt = -99;
     emitState();
+    render();
+    scheduleFrame();
   }
 
   function startGame() {
     state = 'playing';
     score = 0;
+    best = loadPlayerBest();
     newBest = false;
     pipes = [];
     particles = [];
@@ -185,7 +216,7 @@
     if (score > best) {
       best = score;
       newBest = true;
-      try { localStorage.setItem(STORAGE_KEY, String(best)); } catch (e) {}
+      try { localStorage.setItem(playerBestKey(), String(best)); } catch (e) {}
     }
     emitState();
   }
@@ -353,7 +384,8 @@
 
   window.addEventListener('keydown', (e) => {
     if (e.repeat) return;
-    if (document.getElementById('playerDialog').open) return;
+    if (gameScreen.hidden) return;
+    if (document.getElementById('leaderboardDialog').open) return;
     const target = e.target;
     if (target instanceof HTMLElement && (target.isContentEditable || /^(INPUT|TEXTAREA|SELECT|BUTTON)$/.test(target.tagName))) return;
     if (e.code === 'Space' || e.code === 'ArrowUp' || e.code === 'KeyW') {
@@ -804,12 +836,12 @@
   }
 
   function drawReady() {
-    // Identidad de la pandilla y su récord local.
+    // Identidad del minijuego y récord personal.
     ctx.save();
     ctx.shadowColor = 'rgba(11, 29, 36, .42)';
     ctx.shadowBlur = 0;
     ctx.shadowOffsetY = 3;
-    text('CEN CREW', W / 2, 158 + Math.sin(t * 2) * 1.5, 36, '#fff0d1', '#284a50', 5);
+    text('FLAPPY BIRDCEN', W / 2, 158 + Math.sin(t * 2) * 1.5, 30, '#fff0d1', '#284a50', 5);
     ctx.restore();
 
     text('LA PANDILLA VUELA', W / 2, 190, 12, '#f6c28d');
@@ -916,7 +948,7 @@
   }
 
   function drawGameOver() {
-    const px = 34, py = 171, pw = 292, ph = 292;
+    const px = 34, py = 171, pw = 292, ph = 326;
 
     ctx.save();
     ctx.shadowColor = 'rgba(8, 23, 30, .36)';
@@ -962,20 +994,22 @@
 
     const buttons = window.matchMedia('(orientation: landscape) and (max-height: 520px)').matches ? [] : [
       { y: 360, fill: '#f2b86f', label: 'REVANCHA', color: '#243d43' },
-      { y: 414, fill: '#23434a', label: 'COMPARTIR RETO', color: '#fff0d1' }
+      { y: 428, fill: '#23434a', label: 'COMPARTIR RETO', color: '#fff0d1' }
     ];
     for (const button of buttons) {
-      const bx = W / 2 - 96, bw = 192, bh = 44;
+      const bx = W / 2 - 120, bw = 240, bh = 56;
       ctx.fillStyle = button.fill;
-      rr(bx, button.y, bw, bh, 12);
+      rr(bx, button.y, bw, bh, 15);
       ctx.fill();
       ctx.strokeStyle = button.fill === '#f2b86f' ? 'rgba(255, 240, 209, .58)' : 'rgba(255, 240, 209, .3)';
       ctx.lineWidth = 1;
-      rr(bx + 1, button.y + 1, bw - 2, bh - 2, 11);
+      rr(bx + 1, button.y + 1, bw - 2, bh - 2, 14);
       ctx.stroke();
-      text(button.label, W / 2, button.y + bh / 2 + 1, 13, button.color);
+      text(button.label, W / 2, button.y + bh / 2 + 1, 15, button.color);
     }
   }
+
+  window.FlappyGame = Object.freeze({ reset: resetGame });
 
   /* ---------------------------------------------------------------
      Render
@@ -1017,18 +1051,20 @@
   let frameId = 0;
 
   function scheduleFrame() {
-    if (!frameId && !document.hidden) frameId = requestAnimationFrame(frame);
+    if (!frameId && !document.hidden && !gameScreen.hidden) frameId = requestAnimationFrame(frame);
   }
 
   function frame(now) {
     frameId = 0;
-    if (document.hidden) return;
+    if (document.hidden || gameScreen.hidden) return;
     let dt = (now - last) / 1000;
     last = now;
     if (dt > 0.05) dt = 0.05;
     if (dt < 0) dt = 0;
 
-    if (!document.getElementById('playerDialog').open) update(dt);
+    const gamePaused = document.getElementById('leaderboardDialog').open
+      || document.getElementById('gameMenuDialog').open;
+    if (!gamePaused) update(dt);
     render();
 
     scheduleFrame();

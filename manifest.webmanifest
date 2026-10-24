@@ -1,7 +1,7 @@
 {
-  "name": "Cen Crew — La pandilla vuela",
-  "short_name": "Cen Crew",
-  "description": "El vuelo de la pandilla. Elige personaje y reta a tus amigos.",
+  "name": "CenGames",
+  "short_name": "CenGames",
+  "description": "Entra, elige un minijuego y juega.",
   "lang": "es-MX",
   "start_url": "./",
   "scope": "./",

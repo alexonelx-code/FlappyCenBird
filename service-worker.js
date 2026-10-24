@@ -1,4 +1,4 @@
-const CACHE_NAME = 'cen-crew-v4';
+const CACHE_NAME = 'minijuegos-cen-v9';
 const APP_FILES = [
   './',
   './index.html',
@@ -25,7 +25,7 @@ self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys()
       .then((keys) => Promise.all(keys
-        .filter((key) => (key.startsWith('flappy-cen-pro-') || key.startsWith('cen-crew-')) && key !== CACHE_NAME)
+        .filter((key) => (key.startsWith('flappy-cen-pro-') || key.startsWith('cen-crew-') || key.startsWith('minijuegos-cen-')) && key !== CACHE_NAME)
         .map((key) => caches.delete(key))))
       .then(() => self.clients.claim())
   );
