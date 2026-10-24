@@ -103,6 +103,11 @@
     flap: effects.flap,
     score: effects.score,
     hit: effects.hit,
+    fighterHit: effects.fighterHit,
+    fighterBlock: effects.fighterBlock,
+    fighterKo: effects.fighterKo,
+    fighterEnter: effects.fighterEnter,
+    fighterResult: effects.fighterResult,
     die: effects.die,
     toggleMute,
     isMuted() { return muted; }
