@@ -1,0 +1,6 @@
+# Datos locales: perfiles, monedas y estadísticas de desarrollo.
+/data/
+
+# Archivos temporales de Python.
+__pycache__/
+*.py[cod]

@@ -82,9 +82,8 @@
           Volver
         </button>
         <div class="character-heading">
-          <span class="character-game-label">FLAPPY BIRDCEN</span>
           <h1 id="characterTitle" tabindex="-1">Elige tu personaje</h1>
-          <p id="characterDescription">Escoge uno para empezar a volar.</p>
+          <p id="characterDescription" hidden></p>
         </div>
         <div class="character-options" role="group" aria-label="Personajes disponibles">
           <button class="character-option" type="button" data-character="friend" aria-pressed="false">
@@ -103,6 +102,10 @@
             <span class="character-avatar avatar-mango"><svg viewBox="0 0 100 80" aria-hidden="true"><path d="M23 43 8 34l5 20 16-4Z" fill="var(--bird-tail)"/><ellipse cx="49" cy="43" rx="34" ry="25" fill="var(--bird-mid)" stroke="var(--bird-edge)" stroke-width="4"/><path d="M32 51c8-13 24-14 33-3-7 10-21 14-33 3Z" fill="var(--bird-wing)" stroke="var(--bird-edge)" stroke-width="3"/><circle cx="63" cy="34" r="10" fill="#fff0d1"/><circle cx="66" cy="35" r="4" fill="#20353c"/><path d="m72 44 20 5-19 8Z" fill="var(--bird-beak)" stroke="var(--bird-edge)" stroke-width="3"/><path d="M40 19c-1-9 3-14 9-14 5 0 7 5 6 12 6-7 11-8 15-5 3 3 1 8-5 13" fill="var(--bird-tail)" stroke="var(--bird-edge)" stroke-width="3" stroke-linecap="round"/></svg></span>
             <span class="character-name">Mango</span>
           </button>
+          <button class="character-option" type="button" data-character="nube" aria-pressed="false">
+            <span class="character-avatar avatar-nube"><svg viewBox="0 0 100 80" aria-hidden="true"><path d="M23 43 8 34l5 20 16-4Z" fill="var(--bird-tail)"/><ellipse cx="49" cy="43" rx="34" ry="25" fill="var(--bird-mid)" stroke="var(--bird-edge)" stroke-width="4"/><path d="M32 51c8-13 24-14 33-3-7 10-21 14-33 3Z" fill="var(--bird-wing)" stroke="var(--bird-edge)" stroke-width="3"/><circle cx="63" cy="34" r="10" fill="#fff0d1"/><circle cx="66" cy="35" r="4" fill="#20353c"/><path d="m72 44 20 5-19 8Z" fill="var(--bird-beak)" stroke="var(--bird-edge)" stroke-width="3"/><path d="M40 19c-1-9 3-14 9-14 5 0 7 5 6 12 6-7 11-8 15-5 3 3 1 8-5 13" fill="var(--bird-tail)" stroke="var(--bird-edge)" stroke-width="3" stroke-linecap="round"/></svg></span>
+            <span class="character-name">Nube</span>
+          </button>
         </div>
         <button class="primary-button character-confirm-button" id="characterConfirmButton" type="button" disabled>Jugar <span aria-hidden="true">→</span></button>
       </div>
@@ -115,8 +118,16 @@
           <span>Cen<span class="logo-accent">Games</span></span>
         </div>
         <nav class="lobby-actions" aria-label="Perfil y navegación">
+          <div class="cent-balance" aria-label="Saldo de Cent">
+            <span class="cent-coin" aria-hidden="true">¢</span>
+            <span id="lobbyCentBalance">0</span>
+            <span class="cent-label">Cent</span>
+          </div>
+          <button class="lobby-icon-button shop-icon-button" id="shopButton" type="button" aria-label="Abrir tienda" title="Tienda" aria-haspopup="dialog" aria-controls="storeDialog">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h16l-1.2 11H5.2L4 9Z"/><path d="M8 9V6a4 4 0 0 1 8 0v3"/><path d="M9 13v.5m6-.5v.5"/></svg>
+          </button>
           <button class="profile-button" id="profileButton" type="button" aria-haspopup="dialog" aria-controls="profileDialog">
-            <svg class="profile-button-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.4"/><path d="M5.5 20c.5-3.7 2.6-5.7 6.5-5.7s6 2 6.5 5.7"/></svg>
+            <img class="profile-button-avatar" id="lobbyAvatar" src="assets/avatars/sol.svg" alt="">
             <span id="lobbyName">Jugador</span>
           </button>
           <button class="lobby-icon-button" id="editNameButton" type="button" aria-label="Cambiar jugador" title="Cambiar jugador">
@@ -161,25 +172,16 @@
 
     <section class="game-screen" id="gameScreen" aria-label="Flappy BirdCen" hidden>
       <main class="game-shell" id="gameShell">
-        <canvas id="game" tabindex="0" role="img" aria-label="Flappy BirdCen. Toca el juego para volar; también puedes usar Espacio, flecha arriba o W.">
+        <canvas id="game" tabindex="0" role="img" aria-label="Flappy BirdCen. Toca para jugar; también puedes usar Espacio, flecha arriba o W.">
           Este navegador no soporta Canvas. Prueba con una versión reciente de Chrome, Safari, Edge o Firefox.
         </canvas>
 
         <nav class="top-controls" aria-label="Opciones de Flappy BirdCen">
           <button class="overlay-button leaderboard-button" id="leaderboardButton" type="button" aria-haspopup="dialog" aria-controls="leaderboardDialog" aria-label="Ver tabla general">
             <svg class="control-icon trophy-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 21h8m-4-4v4M7 4h10v5a5 5 0 0 1-10 0V4Zm0 2H4v2a4 4 0 0 0 4 4m9-6h3v2a4 4 0 0 1-4 4" /></svg>
-            <span>Tabla</span>
-          </button>
-          <button class="overlay-button mute-button" id="muteButton" type="button" aria-label="Silenciar sonido" aria-pressed="false">
-            <svg class="control-icon sound-icon" id="muteIcon" viewBox="0 0 24 24" aria-hidden="true">
-              <path d="M4 10v4h4l5 4V6l-5 4H4Z" />
-              <path id="muteWaves" d="M16 9a5 5 0 0 1 0 6m2-9a9 9 0 0 1 0 12" />
-              <path id="muteSlash" d="m16 9 5 6m0-6-5 6" hidden />
-            </svg>
           </button>
           <button class="overlay-button menu-button" id="gameMenuButton" type="button" aria-haspopup="dialog" aria-controls="gameMenuDialog" aria-label="Abrir menú del juego">
             <svg class="control-icon menu-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16" /></svg>
-            <span>Menú</span>
           </button>
         </nav>
 
@@ -187,7 +189,7 @@
           <button class="action-button retry-button" id="retryButton" type="button" hidden>Revancha</button>
         </div>
 
-        <p class="sr-only" id="gameStatus" role="status" aria-live="polite" aria-atomic="true">Toca el juego para empezar. También puedes usar Espacio, flecha arriba o W.</p>
+        <p class="sr-only" id="gameStatus" role="status" aria-live="polite" aria-atomic="true">Toca para jugar. También puedes usar Espacio, flecha arriba o W.</p>
       </main>
     </section>
   </main>
@@ -195,7 +197,6 @@
   <dialog class="leaderboard-dialog" id="leaderboardDialog" aria-labelledby="leaderboardTitle">
     <div class="leaderboard-heading">
       <div>
-        <p class="screen-kicker">FLAPPY BIRDCEN</p>
         <h2 id="leaderboardTitle">Tabla general</h2>
       </div>
       <form method="dialog"><button class="dialog-close" type="submit" aria-label="Cerrar tabla">×</button></form>
@@ -208,12 +209,12 @@
   <dialog class="profile-dialog" id="profileDialog" aria-labelledby="profileTitle">
     <div class="profile-dialog-heading">
       <div class="profile-heading-identity">
-        <span class="profile-avatar" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.4"/><path d="M5.5 20c.5-3.7 2.6-5.7 6.5-5.7s6 2 6.5 5.7"/></svg></span>
+        <span class="profile-avatar" aria-hidden="true"><img id="profileAvatar" src="assets/avatars/sol.svg" alt=""></span>
         <div><p class="screen-kicker">CENGAMES</p><h2 id="profileTitle">Mi perfil</h2></div>
       </div>
       <form method="dialog"><button class="dialog-close" type="submit" aria-label="Cerrar perfil">×</button></form>
     </div>
-    <p class="profile-name-line">Jugando como <strong id="profileName">Jugador</strong></p>
+    <p class="profile-name-line">Jugando como <strong id="profileName">Jugador</strong><span class="profile-cent-balance"><span aria-hidden="true">¢</span><strong id="profileCentBalance">0</strong> Cent</span></p>
     <section class="profile-stats-section" aria-labelledby="profileStatsTitle">
       <h3 id="profileStatsTitle">Estadísticas por juego</h3>
       <article class="profile-game-stats">
@@ -221,9 +222,9 @@
         <dl class="profile-stat-grid">
           <div><dt>Partidas nuevas</dt><dd id="profileFlappyPlays">0</dd></div>
           <div><dt>Récord</dt><dd id="profileFlappyBest">0</dd></div>
-          <div><dt>Puntos nuevos</dt><dd id="profileFlappyPoints">0</dd></div>
+          <div><dt>Cent ganados</dt><dd id="profileFlappyPoints">0</dd></div>
         </dl>
-        <p class="profile-medal-note">El conteo empieza ahora; se conserva tu récord anterior. Medallas a los 5, 10, 20 y 40 puntos.</p>
+        <p class="profile-medal-note">Cada punto de Flappy BirdCen suma 1 Cent a tu saldo.</p>
       </article>
       <article class="profile-upcoming-game"><span aria-hidden="true">✦</span><div><h4>Próximos minijuegos</h4><p>Sus estadísticas aparecerán aquí cuando estén disponibles.</p></div></article>
     </section>
@@ -233,18 +234,43 @@
     </div>
   </dialog>
 
+  <dialog class="store-dialog" id="storeDialog" aria-labelledby="storeTitle">
+    <div class="store-heading">
+      <div><p class="screen-kicker">CENGAMES</p><h2 id="storeTitle">Tienda</h2></div>
+      <div class="store-heading-side"><span class="store-wallet"><span class="cent-coin" aria-hidden="true">¢</span><strong id="storeCentBalance">0</strong><span>Cent</span></span><form method="dialog"><button class="dialog-close" type="submit" aria-label="Cerrar tienda">×</button></form></div>
+    </div>
+    <nav class="store-tabs" aria-label="Secciones de la tienda">
+      <button class="store-tab" type="button" data-store-tab="avatars" aria-selected="true">Avatares</button>
+      <button class="store-tab" type="button" data-store-tab="birds" aria-selected="false">Flappy BirdCen</button>
+    </nav>
+    <div class="store-view" id="storeCatalog" aria-live="polite"></div>
+    <p class="store-feedback" id="storeFeedback" role="status" aria-live="polite"></p>
+  </dialog>
+
   <dialog class="game-menu-dialog" id="gameMenuDialog" aria-labelledby="gameMenuTitle">
     <div class="game-menu-heading">
-      <span class="character-game-label">FLAPPY BIRDCEN</span>
       <h2 id="gameMenuTitle">Menú del juego</h2>
     </div>
     <div class="game-menu-actions">
       <button class="game-menu-action" id="changeCharacterButton" type="button">
-        <span class="game-menu-action-icon" aria-hidden="true">✦</span>
+        <svg class="game-menu-action-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M12 8v8m-4-4h8"/></svg>
         Elegir personaje
       </button>
+      <button class="game-menu-action" id="gameShopButton" type="button" aria-haspopup="dialog" aria-controls="storeDialog">
+        <svg class="game-menu-action-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h16l-1.2 11H5.2L4 9Z"/><path d="M8 9V6a4 4 0 0 1 8 0v3"/></svg>
+        Tienda de pájaros
+        <span class="menu-beta-tag">Beta</span>
+      </button>
+      <button class="game-menu-action game-menu-sound" id="menuMuteButton" type="button" aria-label="Silenciar sonido" aria-pressed="false">
+        <svg class="game-menu-action-icon sound-icon" id="muteIcon" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M4 10v4h4l5 4V6l-5 4H4Z" />
+          <path id="muteWaves" d="M16 9a5 5 0 0 1 0 6m2-9a9 9 0 0 1 0 12" />
+          <path id="muteSlash" d="m16 9 5 6m0-6-5 6" hidden />
+        </svg>
+        <span id="muteLabel">Sonido activado</span>
+      </button>
       <button class="game-menu-action" id="backToGamesButton" type="button">
-        <span class="game-menu-action-icon" aria-hidden="true">⌂</span>
+        <svg class="game-menu-action-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-6v-7h-4v7H4a1 1 0 0 1-1-1z"/></svg>
         Volver a minijuegos
       </button>
       <button class="game-menu-continue" id="continueGameButton" type="button">Seguir jugando</button>
@@ -252,6 +278,7 @@
   </dialog>
 
   <script src="src/js/audio.js" defer></script>
+  <script src="src/js/economy.js" defer></script>
   <script src="src/js/ui.js" defer></script>
   <script src="src/js/game.js" defer></script>
 </body>

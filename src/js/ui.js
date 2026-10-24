@@ -33,21 +33,33 @@
   const profileFlappyPlays = document.getElementById('profileFlappyPlays');
   const profileFlappyBest = document.getElementById('profileFlappyBest');
   const profileFlappyPoints = document.getElementById('profileFlappyPoints');
+  const lobbyCentBalance = document.getElementById('lobbyCentBalance');
+  const profileCentBalance = document.getElementById('profileCentBalance');
+  const storeCentBalance = document.getElementById('storeCentBalance');
+  const lobbyAvatar = document.getElementById('lobbyAvatar');
+  const profileAvatar = document.getElementById('profileAvatar');
   const logoutButton = document.getElementById('logoutButton');
   const editNameButton = document.getElementById('editNameButton');
   const exitGamesButton = document.getElementById('exitGamesButton');
   const flappyCard = document.getElementById('flappyCard');
   const gameMenuButton = document.getElementById('gameMenuButton');
   const gameMenuDialog = document.getElementById('gameMenuDialog');
+  const shopButton = document.getElementById('shopButton');
+  const gameShopButton = document.getElementById('gameShopButton');
+  const storeDialog = document.getElementById('storeDialog');
+  const storeCatalog = document.getElementById('storeCatalog');
+  const storeFeedback = document.getElementById('storeFeedback');
+  const storeTabs = [...document.querySelectorAll('[data-store-tab]')];
   const backToGamesButton = document.getElementById('backToGamesButton');
   const changeCharacterButton = document.getElementById('changeCharacterButton');
   const continueGameButton = document.getElementById('continueGameButton');
   const leaderboardButton = document.getElementById('leaderboardButton');
   const leaderboardDialog = document.getElementById('leaderboardDialog');
   const leaderboardList = document.getElementById('leaderboardList');
-  const muteButton = document.getElementById('muteButton');
+  const muteButton = document.getElementById('menuMuteButton');
   const muteWaves = document.getElementById('muteWaves');
   const muteSlash = document.getElementById('muteSlash');
+  const muteLabel = document.getElementById('muteLabel');
   const retryButton = document.getElementById('retryButton');
   const gameStatus = document.getElementById('gameStatus');
 
@@ -62,7 +74,7 @@
   function readCharacter() {
     try {
       const saved = localStorage.getItem(CHARACTER_KEY);
-      if (['friend', 'classic', 'laguna', 'mango'].includes(saved)) return saved;
+      if (['friend', 'classic', 'laguna', 'mango', 'nube'].includes(saved)) return saved;
     } catch (error) {
       // Se conserva el personaje inicial si el navegador bloquea el almacenamiento.
     }
@@ -99,6 +111,36 @@
     } catch (error) {
       // El nombre sigue activo durante esta sesión aunque no se pueda guardar.
     }
+    if (playerName && window.CenEconomy) {
+      window.CenEconomy.connect(playerName, readLegacyBest()).then(updateEconomyUI).catch(() => {});
+    }
+  }
+
+  function readLegacyBest() {
+    if (!playerName) return 0;
+    const safeName = normalizedPlayerName(playerName).replace(/[^a-z0-9]+/g, '-');
+    try {
+      return Math.max(0, Number(localStorage.getItem(`flappy_best_v1:player:${encodeURIComponent(safeName || 'jugador')}`)) || 0);
+    } catch (error) {
+      return 0;
+    }
+  }
+
+  function updateEconomyUI(nextProfile = window.CenEconomy && window.CenEconomy.getProfile()) {
+    if (!nextProfile) return;
+    const cents = Math.max(0, Number(nextProfile.cents) || 0);
+    const avatar = window.CenEconomy.avatarById(nextProfile.avatarId);
+    lobbyCentBalance.textContent = String(cents);
+    profileCentBalance.textContent = String(cents);
+    storeCentBalance.textContent = String(cents);
+    lobbyAvatar.src = avatar.image;
+    profileAvatar.src = avatar.image;
+    profileAvatar.alt = '';
+    lobbyAvatar.alt = '';
+    profileButton.setAttribute('aria-label', `Mi perfil: ${playerName || 'Jugador'}, ${cents} Cent`);
+    if (storeDialog.open) renderStore();
+    if (profileDialog.open) renderProfile();
+    if (leaderboardDialog.open) renderLeaderboard();
   }
 
   function setScreen(name) {
@@ -162,6 +204,7 @@
     } catch (error) {
       // La selección permanece activa durante esta sesión aunque el navegador no la guarde.
     }
+    if (window.CenEconomy) window.CenEconomy.chooseBird(character).then(updateEconomyUI).catch((error) => announce(error.message));
   }
 
   function launchFlappy() {
@@ -260,6 +303,175 @@
 
   continueGameButton.addEventListener('click', () => closeDialog(gameMenuDialog));
 
+  let activeStoreTab = 'avatars';
+
+  function openStore(tab = 'avatars') {
+    if (gameMenuDialog.open) closeDialog(gameMenuDialog);
+    activeStoreTab = tab;
+    storeFeedback.textContent = '';
+    renderStore();
+    if (typeof storeDialog.showModal === 'function') storeDialog.showModal();
+    else storeDialog.setAttribute('open', '');
+  }
+
+  function makeStoreSection(title, detail, items) {
+    const section = document.createElement('section');
+    section.className = 'store-section';
+    const heading = document.createElement('div');
+    heading.className = 'store-section-title';
+    const titleNode = document.createElement('h3');
+    titleNode.textContent = title;
+    const detailNode = document.createElement('span');
+    detailNode.textContent = detail;
+    heading.append(titleNode, detailNode);
+    const grid = document.createElement('div');
+    grid.className = 'store-grid';
+    items.forEach((item) => grid.appendChild(item));
+    section.append(heading, grid);
+    return section;
+  }
+
+  function makeStoreCard({ name, image, owned, selected, price, locked, previewNode, actionLabel, onAction }) {
+    const card = document.createElement('article');
+    card.className = `store-item${selected ? ' is-selected' : ''}${locked ? ' is-locked' : ''}`;
+    const preview = document.createElement('span');
+    preview.className = locked ? 'store-item-preview' : image ? 'store-item-preview' : 'store-bird-preview';
+    if (locked) {
+      preview.textContent = '✦';
+      preview.setAttribute('aria-hidden', 'true');
+    } else if (image) {
+      const img = document.createElement('img');
+      img.src = image;
+      img.alt = '';
+      img.loading = 'lazy';
+      preview.appendChild(img);
+    } else if (previewNode) {
+      preview.appendChild(previewNode.cloneNode(true));
+    }
+    const title = document.createElement('span');
+    title.className = 'store-item-name';
+    title.textContent = name;
+    const status = document.createElement('span');
+    status.className = 'store-item-status';
+    status.textContent = locked ? 'Diseño pendiente' : selected ? 'En uso' : owned ? 'Disponible' : `${price} Cent`;
+    const action = document.createElement('button');
+    action.className = 'store-item-action';
+    action.type = 'button';
+    action.textContent = locked ? 'En beta' : selected ? 'Equipado' : owned ? (actionLabel || 'Elegir') : `¢ ${price}`;
+    action.disabled = Boolean(locked || selected);
+    if (!action.disabled) action.addEventListener('click', onAction);
+    card.append(preview, title, status, action);
+    return card;
+  }
+
+  function renderStore() {
+    const current = window.CenEconomy.getProfile();
+    if (!current) {
+      storeCatalog.replaceChildren();
+      return;
+    }
+    storeTabs.forEach((button) => button.setAttribute('aria-selected', String(button.dataset.storeTab === activeStoreTab)));
+    storeCentBalance.textContent = String(Math.max(0, Number(current.cents) || 0));
+    storeCatalog.replaceChildren();
+
+    if (activeStoreTab === 'avatars') {
+      const catalog = window.CenEconomy.getAvatarCatalog();
+      const owned = new Set(current.ownedAvatars || []);
+      const free = catalog.filter((item) => item.price === 0);
+      const paid = catalog.filter((item) => item.price > 0);
+      const freeCards = free.map((item) => makeStoreCard({
+        name: item.name,
+        image: item.image,
+        owned: owned.has(item.id),
+        selected: current.avatarId === item.id,
+        price: 0,
+        onAction: () => equipAvatar(item.id, item.name)
+      }));
+      const paidCards = paid.map((item) => makeStoreCard({
+        name: item.name,
+        image: item.image,
+        owned: owned.has(item.id),
+        selected: current.avatarId === item.id,
+        price: item.price,
+        actionLabel: 'Elegir',
+        onAction: () => owned.has(item.id) ? equipAvatar(item.id, item.name) : purchaseAvatar(item)
+      }));
+      storeCatalog.append(
+        makeStoreSection('Avatares gratis', '5 para empezar', freeCards),
+        makeStoreSection('Para desbloquear', 'se compran con Cent', paidCards)
+      );
+    } else {
+      const freeBirds = window.CenEconomy.getFreeBirds();
+      const betaBirds = window.CenEconomy.getBetaBirds();
+      const birdCards = freeBirds.map((bird) => {
+        const source = characterOptions.find((button) => button.dataset.character === bird.id);
+        const preview = source && source.querySelector('.character-avatar');
+        return makeStoreCard({
+          name: bird.name,
+          previewNode: preview,
+          owned: true,
+          selected: current.characterId === bird.id || character === bird.id,
+          onAction: () => equipBird(bird.id, bird.name)
+        });
+      });
+      const futureCards = betaBirds.map((bird) => makeStoreCard({ name: bird.name, locked: true }));
+      const betaNotice = document.createElement('div');
+      betaNotice.className = 'store-beta-banner';
+      betaNotice.innerHTML = '<span class="store-beta-icon" aria-hidden="true">✦</span><span><strong>Tienda de pájaros en beta.</strong> Los próximos diseños se agregarán cuando estén listos.</span>';
+      storeCatalog.append(
+        makeStoreSection('Pájaros incluidos', '5 disponibles', birdCards),
+        makeStoreSection('Próximos pájaros', '5 espacios reservados', futureCards),
+        betaNotice
+      );
+    }
+  }
+
+  async function equipAvatar(id, name) {
+    try {
+      await window.CenEconomy.chooseAvatar(id);
+      storeFeedback.textContent = `${name} ahora es tu avatar.`;
+      updateEconomyUI();
+    } catch (error) {
+      storeFeedback.textContent = error.message;
+    }
+  }
+
+  async function purchaseAvatar(item) {
+    try {
+      await window.CenEconomy.buyAvatar(item.id);
+      await window.CenEconomy.chooseAvatar(item.id);
+      storeFeedback.textContent = `${item.name} listo. Se descontaron ${item.price} Cent.`;
+      updateEconomyUI();
+      announce(`Compraste el avatar ${item.name}.`);
+    } catch (error) {
+      storeFeedback.textContent = error.message;
+    }
+  }
+
+  async function equipBird(id, name) {
+    try {
+      character = id;
+      hasChosenCharacter = true;
+      localStorage.setItem(CHARACTER_KEY, id);
+      localStorage.setItem(CHARACTER_SELECTED_KEY, 'true');
+      await window.CenEconomy.chooseBird(id);
+      updateCharacterOptions();
+      storeFeedback.textContent = `${name} seleccionado.`;
+      announce(`Personaje ${name} seleccionado.`);
+      renderStore();
+    } catch (error) {
+      storeFeedback.textContent = error.message;
+    }
+  }
+
+  shopButton.addEventListener('click', () => openStore('avatars'));
+  gameShopButton.addEventListener('click', () => openStore('birds'));
+  storeTabs.forEach((button) => button.addEventListener('click', () => {
+    activeStoreTab = button.dataset.storeTab;
+    storeFeedback.textContent = '';
+    renderStore();
+  }));
+
   function normalizedPlayerName(name) {
     return name.normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().toLocaleLowerCase();
   }
@@ -296,7 +508,14 @@
   }
 
   function renderProfile() {
-    const stats = readProfileStats();
+    const economyProfile = window.CenEconomy && window.CenEconomy.getProfile();
+    const storedStats = readProfileStats();
+    const remoteStats = economyProfile && economyProfile.flappy ? economyProfile.flappy : {};
+    const stats = {
+      plays: Math.max(Number(storedStats.plays) || 0, Number(remoteStats.plays) || 0),
+      points: Math.max(Number(storedStats.points) || 0, Number(remoteStats.points) || 0),
+      best: Math.max(Number(storedStats.best) || 0, Number(remoteStats.best) || 0)
+    };
     const liveBest = window.FlappyGame && typeof window.FlappyGame.getBestScore === 'function'
       ? window.FlappyGame.getBestScore()
       : 0;
@@ -304,6 +523,7 @@
     profileFlappyPlays.textContent = String(stats.plays);
     profileFlappyBest.textContent = String(Math.max(stats.best, liveBest));
     profileFlappyPoints.textContent = String(stats.points);
+    if (economyProfile) profileCentBalance.textContent = String(Math.max(0, Number(economyProfile.cents) || 0));
   }
 
   profileButton.addEventListener('click', () => {
@@ -344,7 +564,14 @@
     const existing = entries.find((entry) => normalizedPlayerName(entry.name) === nameKey);
     const bestScore = Math.max(score, existing ? Number(existing.score) : 0);
     const nextEntries = entries.filter((entry) => normalizedPlayerName(entry.name) !== nameKey);
-    nextEntries.push({ name, score: bestScore, updatedAt: Date.now() });
+    const currentProfile = window.CenEconomy.getProfile();
+    nextEntries.push({
+      name,
+      score: bestScore,
+      avatarId: currentProfile && currentProfile.avatarId || 'sol',
+      characterId: character,
+      updatedAt: Date.now()
+    });
     nextEntries.sort((a, b) => Number(b.score) - Number(a.score) || Number(a.updatedAt || 0) - Number(b.updatedAt || 0));
     try {
       localStorage.setItem(LEADERBOARD_KEY, JSON.stringify(nextEntries.slice(0, 20)));
@@ -353,8 +580,21 @@
     }
   }
 
-  function renderLeaderboard() {
-    const entries = readLeaderboard().sort((a, b) => Number(b.score) - Number(a.score) || Number(a.updatedAt || 0) - Number(b.updatedAt || 0)).slice(0, 10);
+  async function renderLeaderboard() {
+    const result = await window.CenEconomy.leaderboard();
+    let entries = result.entries || [];
+    if (!result.remote) {
+      const legacy = readLeaderboard();
+      legacy.forEach((oldEntry) => {
+        const match = entries.find((entry) => normalizedPlayerName(entry.name) === normalizedPlayerName(oldEntry.name));
+        if (match) match.score = Math.max(Number(match.score) || 0, Number(oldEntry.score) || 0);
+        else entries.push(oldEntry);
+      });
+    }
+    entries = entries.sort((a, b) => Number(b.score) - Number(a.score) || Number(a.updatedAt || 0) - Number(b.updatedAt || 0)).slice(0, 10);
+    document.getElementById('leaderboardNote').textContent = result.remote
+      ? 'Mejores récords guardados en esta instalación local.'
+      : 'Mejores récords guardados en este dispositivo.';
     leaderboardList.replaceChildren();
     if (!entries.length) {
       const empty = document.createElement('li');
@@ -370,6 +610,10 @@
       const rank = document.createElement('span');
       rank.className = 'leaderboard-rank';
       rank.textContent = String(index + 1).padStart(2, '0');
+      const avatar = document.createElement('img');
+      avatar.className = 'leaderboard-avatar';
+      avatar.src = window.CenEconomy.avatarById(entry.avatarId).image;
+      avatar.alt = '';
       const name = document.createElement('span');
       name.className = 'leaderboard-name';
       name.textContent = entry.name;
@@ -384,7 +628,7 @@
       const unit = document.createElement('small');
       unit.textContent = 'PTS';
       score.appendChild(unit);
-      row.append(rank, name, score);
+      row.append(rank, avatar, name, score);
       leaderboardList.appendChild(row);
     });
   }
@@ -400,6 +644,7 @@
     muteSlash.hidden = !muted;
     muteButton.setAttribute('aria-pressed', String(!muted));
     muteButton.setAttribute('aria-label', muted ? 'Sonido silenciado' : 'Silenciar sonido');
+    muteLabel.textContent = muted ? 'Sonido desactivado' : 'Sonido activado';
   }
 
   syncMuteButton(window.FlappyAudio.isMuted());
@@ -414,20 +659,28 @@
     retryButton.hidden = state !== 'gameover';
 
     if (state === 'ready') {
-      announce(`Récord personal: ${best}. Toca el juego para volar.`);
+      announce(`Récord personal: ${best}. Toca para jugar.`);
     } else if (state === 'playing') {
       announce('Partida en curso. Toca para aletear.');
     } else if (state === 'gameover') {
       saveLeaderboardScore(playerName, score);
       recordFlappyResult(score, best);
+      window.CenEconomy.completeRun(score, best).then((nextProfile) => {
+        updateEconomyUI(nextProfile);
+        if (leaderboardDialog.open) renderLeaderboard();
+      }).catch((error) => {
+        announce(`Partida guardada en el dispositivo. ${error.message}`);
+      });
       if (leaderboardDialog.open) renderLeaderboard();
-      announce(`Fin de la partida. ${playerName} hizo ${score} puntos. Récord personal: ${best}. Medallas a los 5, 10, 20 y 40 puntos.`);
+      announce(`Fin de la partida. ${playerName} hizo ${score} puntos y ganó ${score} Cent. Récord personal: ${best}.`);
     }
   });
 
   window.addEventListener('flappy:score', (event) => {
     announce(`¡Punto! Puntuación: ${event.detail.score}.`);
   });
+
+  window.addEventListener('cengames:profile', (event) => updateEconomyUI(event.detail.profile));
 
   window.FlappyUI = Object.freeze({
     getPlayerName() { return playerName || 'Jugador'; },
@@ -438,6 +691,7 @@
   lobbyName.textContent = playerName || 'Jugador';
   updateCharacterOptions();
   setScreen('welcome');
+  if (playerName) window.CenEconomy.connect(playerName, readLegacyBest()).then(updateEconomyUI).catch(() => {});
 
   window.addEventListener('load', () => {
     if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1')) {

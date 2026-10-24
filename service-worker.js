@@ -1,15 +1,26 @@
-const CACHE_NAME = 'minijuegos-cen-v11';
+const CACHE_NAME = 'minijuegos-cen-v12';
 const APP_FILES = [
   './',
   './index.html',
   './manifest.webmanifest',
   './src/css/game.css',
   './src/js/audio.js',
+  './src/js/economy.js',
   './src/js/ui.js',
   './src/js/game.js',
   './assets/icons/flappy-cen.svg',
   './assets/icons/cengames-mark.svg',
   './assets/icons/flappy-birdcen-logo.svg',
+  './assets/avatars/sol.svg',
+  './assets/avatars/luna.svg',
+  './assets/avatars/pixel.svg',
+  './assets/avatars/rayo.svg',
+  './assets/avatars/ola.svg',
+  './assets/avatars/cometa.svg',
+  './assets/avatars/prisma.svg',
+  './assets/avatars/orbita.svg',
+  './assets/avatars/flora.svg',
+  './assets/avatars/neon.svg',
   './assets/images/personaje/cuerpo.png',
   './assets/images/personaje/brazo_i.png',
   './assets/images/personaje/brazo_d.png'

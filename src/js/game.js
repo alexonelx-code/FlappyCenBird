@@ -707,6 +707,11 @@
         light: '#ffe0bd', mid: '#e9825d', dark: '#ad4f54', edge: '#513649',
         wing: '#fff0d8', wingEdge: '#a34e51', beak: '#f5bd72', beakEdge: '#805042',
         tail: '#ec9265', cheek: 'rgba(255, 224, 174, .48)'
+      },
+      nube: {
+        light: '#eef6e8', mid: '#9abbd3', dark: '#597e9a', edge: '#3e5d78',
+        wing: '#f8f4df', wingEdge: '#6f92a3', beak: '#f2b86f', beakEdge: '#805042',
+        tail: '#b8cee0', cheek: 'rgba(255, 220, 177, .45)'
       }
     };
     const style = styles[character] || styles.classic;
@@ -844,7 +849,7 @@
     text('FLAPPY BIRDCEN', W / 2, 158 + Math.sin(t * 2) * 1.5, 30, '#fff0d1', '#284a50', 5);
     ctx.restore();
 
-    text('LA PANDILLA VUELA', W / 2, 190, 12, '#f6c28d');
+    text('ALETEA Y HAZ HISTORIA', W / 2, 190, 12, '#f6c28d');
 
     ctx.fillStyle = 'rgba(17, 45, 53, .78)';
     rr(W / 2 - 88, 222, 176, 36, 18);
@@ -865,7 +870,7 @@
     ctx.fill();
     ctx.restore();
 
-    text('TOCA PARA VOLAR', W / 2, 474, 15, '#243d43');
+    text('TOCA PARA JUGAR', W / 2, 474, 15, '#243d43');
     text('ESPACIO  ·  FLECHA ↑  ·  W', W / 2, 520, 11, '#f6e4c9', 'rgba(26, 53, 59, .45)', 3);
   }
 
@@ -952,7 +957,7 @@
   }
 
   function drawGameOver() {
-    const px = 34, py = 171, pw = 292, ph = 272;
+    const px = 28, py = 145, pw = 304, ph = 315;
 
     ctx.save();
     ctx.shadowColor = 'rgba(8, 23, 30, .36)';
@@ -968,39 +973,56 @@
     rr(px, py, pw, ph, 16);
     ctx.stroke();
 
-    ctx.fillStyle = '#e4775f';
-    rr(px + 12, py + 12, 5, 34, 2);
+    ctx.fillStyle = 'rgba(242, 184, 111, .12)';
+    ctx.beginPath();
+    ctx.arc(W / 2, py + 34, 19, 0, Math.PI * 2);
     ctx.fill();
+    starPath(W / 2, py + 34, 5, 9, 4);
+    ctx.fillStyle = '#f2b86f';
+    ctx.fill();
+    text(score > 0 ? 'VUELO TERMINADO' : 'CASI, CASI', W / 2, py + 68, 20, '#fff0d1');
+    text(newBest ? '¡NUEVO RÉCORD!' : 'VUELVE A INTENTARLO', W / 2, py + 89, 10, '#b8c7bd');
 
-    text(score > 0 ? '¡VUELO TERMINADO!' : 'CASI, CASI', W / 2, py + 36, 22, '#fff0d1');
-
-    // Marcador limpio y legible sobre la tarjeta oscura.
+    // El resultado y la recompensa comparten una tarjeta para que cada vuelo se lea de un vistazo.
     ctx.fillStyle = '#203d43';
-    rr(58, 246, 158, 54, 10);
+    rr(48, 244, 170, 58, 11);
     ctx.fill();
     ctx.strokeStyle = 'rgba(244, 201, 142, .3)';
     ctx.lineWidth = 1;
     ctx.stroke();
-    text('PUNTOS', 72, 273, 11, '#f2c78d', null, 0, 'left');
-    text(String(score), 202, 274, 27, '#fff0d1', null, 0, 'right');
+    text('PUNTOS', 62, 263, 10, '#f2c78d', null, 0, 'left');
+    text(String(score), 202, 276, 29, '#fff0d1', null, 0, 'right');
 
     ctx.fillStyle = '#203d43';
-    rr(58, 308, 158, 42, 10);
+    rr(48, 311, 170, 48, 10);
     ctx.fill();
     ctx.strokeStyle = 'rgba(244, 201, 142, .3)';
     ctx.lineWidth = 1;
     ctx.stroke();
-    text('RÉCORD', 72, 329, 11, newBest ? '#f2b86f' : '#d0b991', null, 0, 'left');
-    if (newBest) text('¡NUEVO!', 148, 329, 11, '#f2b86f');
-    text(String(best), 202, 329, 18, '#fff0d1', null, 0, 'right');
+    text('RÉCORD', 62, 340, 10, newBest ? '#f2b86f' : '#d0b991', null, 0, 'left');
+    text(String(best), 202, 343, 20, '#fff0d1', null, 0, 'right');
 
-    drawMedal(267, 303, 31, score);
+    ctx.fillStyle = 'rgba(242, 184, 111, .075)';
+    rr(232, 244, 80, 115, 14);
+    ctx.fill();
+    drawMedal(272, 294, 34, score);
+    text(score >= 40 ? 'LEYENDA' : score >= 20 ? 'ORO' : score >= 10 ? 'PLATA' : score >= 5 ? 'BRONCE' : 'META: 5', 272, 347, 9, '#d7c49f');
+
+    const rewardY = 372;
+    ctx.fillStyle = 'rgba(242, 184, 111, .15)';
+    rr(48, rewardY, 264, 32, 10);
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(242, 184, 111, .28)';
+    ctx.lineWidth = 1;
+    rr(48, rewardY, 264, 32, 10);
+    ctx.stroke();
+    text(`¢  +${score} CENT`, W / 2, rewardY + 16, 12, '#ffd38f');
 
     const buttons = window.matchMedia('(orientation: landscape) and (max-height: 520px)').matches ? [] : [
-      { y: 368, fill: '#f2b86f', label: 'REVANCHA', color: '#243d43' }
+      { y: 418, fill: '#f2b86f', label: 'REVANCHA', color: '#243d43' }
     ];
     for (const button of buttons) {
-      const bx = W / 2 - 120, bw = 240, bh = 56;
+      const bx = W / 2 - 120, bw = 240, bh = 44;
       ctx.fillStyle = button.fill;
       rr(bx, button.y, bw, bh, 15);
       ctx.fill();
@@ -1008,7 +1030,7 @@
       ctx.lineWidth = 1;
       rr(bx + 1, button.y + 1, bw - 2, bh - 2, 14);
       ctx.stroke();
-      text(button.label, W / 2, button.y + bh / 2 + 1, 15, button.color);
+      text(button.label, W / 2, button.y + bh / 2 + 1, 14, button.color);
     }
   }
 
@@ -1069,7 +1091,8 @@
     if (dt < 0) dt = 0;
 
     const gamePaused = document.getElementById('leaderboardDialog').open
-      || document.getElementById('gameMenuDialog').open;
+      || document.getElementById('gameMenuDialog').open
+      || document.getElementById('storeDialog').open;
     if (!gamePaused) update(dt);
     render();
 
