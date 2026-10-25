@@ -42,6 +42,24 @@ test('el duelo es determinista y cada impacto activo se aplica una sola vez', ()
   assert.equal(first.right.health, 92);
 });
 
+test('mantiene separados los cuerpos según el ancho visible del arte sin cambiar las hurtboxes', () => {
+  const state = engine.createDuel({
+    left: { id: 'luis', x: 430, spacingWidth: 144 },
+    right: { id: 'rival', x: 530, spacingWidth: 124 }
+  });
+  let duel = engine.stepDuel(state).state;
+  const minimumDistance = (duel.left.spacingWidth + duel.right.spacingWidth) / 2;
+
+  for (let frame = 0; frame < 90; frame += 1) {
+    duel = engine.stepDuel(duel, { left: { moveX: 1 }, right: { moveX: -1 } }).state;
+    assert.ok(duel.right.x - duel.left.x >= minimumDistance - 1e-9);
+  }
+  assert.equal(duel.left.width, 72);
+  assert.equal(duel.right.width, 72);
+  assert.equal(duel.left.facing, 1);
+  assert.equal(duel.right.facing, -1);
+});
+
 test('el bloqueo recibe chip damage pero nunca elimina al peleador', () => {
   const state = engine.createDuel({
     config: configWith({ light: { startupFrames: 0, activeFrames: 1, recoveryFrames: 1, damage: 100, reach: 220 } }),

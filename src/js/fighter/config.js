@@ -24,6 +24,7 @@
     },
     fighter: {
       width: 72,
+      spacingWidth: 124,
       height: 176,
       crouchHeight: 120,
       health: 100,

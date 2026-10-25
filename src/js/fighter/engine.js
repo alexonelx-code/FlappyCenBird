@@ -27,6 +27,7 @@
     }
     const fighter = config.fighter;
     if (!Number.isFinite(fighter.width) || fighter.width <= 0
+        || (fighter.spacingWidth !== undefined && (!Number.isFinite(fighter.spacingWidth) || fighter.spacingWidth <= 0))
         || !Number.isFinite(fighter.height) || fighter.height <= 0
         || !Number.isFinite(fighter.crouchHeight) || fighter.crouchHeight <= 0 || fighter.crouchHeight > fighter.height
         || !Number.isFinite(fighter.health) || fighter.health <= 0
@@ -102,7 +103,7 @@
       'guardDamageScale', 'chipDamage', 'guardKnockbackScale', 'hitstunFrames', 'inputBufferFrames']);
     if (Object.keys(source).some((key) => !statKeys.has(key))) throw new RangeError('Hay una estadística de peleador desconocida.');
     const directKeys = ['width', 'height', 'crouchHeight', 'maxHealth', 'moveSpeed', 'airSpeed', 'jumpVelocity',
-      'guardDamageScale', 'chipDamage', 'guardKnockbackScale', 'hitstunFrames', 'inputBufferFrames'];
+      'guardDamageScale', 'chipDamage', 'guardKnockbackScale', 'hitstunFrames', 'inputBufferFrames', 'spacingWidth'];
     if (directKeys.some((key) => input[key] !== undefined && !Number.isFinite(input[key]))) {
       throw new RangeError('Las estadísticas directas del peleador deben ser números finitos.');
     }
@@ -162,9 +163,13 @@
     const moves = makeMoveSet(input, rules);
     const width = stats.width;
     const height = stats.height;
+    const spacingWidth = Math.max(width, finiteOr(input.spacingWidth, finiteOr(rules.fighter.spacingWidth, width)));
     const maxHealth = stats.health;
     if (rules.arena.width <= rules.arena.wallPadding * 2 + width) {
       throw new RangeError('El ancho del peleador no cabe en la arena.');
+    }
+    if (spacingWidth <= 0 || spacingWidth > rules.arena.width - rules.arena.wallPadding * 2) {
+      throw new RangeError('El espacio visual del peleador no cabe en la arena.');
     }
     const defaultX = rules.arena.width * (side === 'left' ? 0.28 : 0.72);
     const x = finiteOr(input.x, defaultX);
@@ -175,12 +180,14 @@
       archetype: String(input.archetype || 'Peleador'),
       palette: input.palette ? freezeDeep({ ...input.palette }) : null,
       sprite: input.sprite ? freezeDeep(JSON.parse(JSON.stringify(input.sprite))) : null,
-      x: clamp(x, rules.arena.wallPadding + width / 2, rules.arena.width - rules.arena.wallPadding - width / 2),
+      x: clamp(x, rules.arena.wallPadding + spacingWidth / 2,
+        rules.arena.width - rules.arena.wallPadding - spacingWidth / 2),
       y: rules.arena.floorY,
       vx: 0,
       vy: 0,
       facing: side === 'left' ? 1 : -1,
       width,
+      spacingWidth,
       height,
       crouchHeight: stats.crouchHeight,
       stats: freezeDeep(stats),
@@ -203,7 +210,11 @@
 
   function validateFighterDefinition(input = {}, config = defaultConfig) {
     const fighter = makeFighter(input, 'left', copyConfig(config || defaultConfig));
-    return { stats: { ...fighter.stats }, moves: Object.fromEntries(Object.entries(fighter.moves).map(([id, move]) => [id, { ...move }])) };
+    return {
+      stats: { ...fighter.stats },
+      moves: Object.fromEntries(Object.entries(fighter.moves).map(([id, move]) => [id, { ...move }])),
+      spacingWidth: fighter.spacingWidth
+    };
   }
 
   function moveFor(fighter, moveId, rules) {
@@ -320,8 +331,8 @@
     fighter.x += fighter.vx / rules.tickRate;
     fighter.y += fighter.vy / rules.tickRate;
 
-    const minX = rules.arena.wallPadding + fighter.width / 2;
-    const maxX = rules.arena.width - rules.arena.wallPadding - fighter.width / 2;
+    const minX = rules.arena.wallPadding + fighter.spacingWidth / 2;
+    const maxX = rules.arena.width - rules.arena.wallPadding - fighter.spacingWidth / 2;
     fighter.x = clamp(fighter.x, minX, maxX);
 
     const height = bodyHeight(fighter);
@@ -351,6 +362,23 @@
       left.facing = -1;
       right.facing = 1;
     }
+  }
+
+  function separateFighters(left, right, rules) {
+    const delta = right.x - left.x;
+    const distance = Math.abs(delta);
+    const minimumDistance = (left.spacingWidth + right.spacingWidth) / 2;
+    if (distance >= minimumDistance) return;
+
+    const leftmost = delta < 0 ? right : left;
+    const rightmost = delta < 0 ? left : right;
+    const centerMin = rules.arena.wallPadding + leftmost.spacingWidth / 2 + minimumDistance / 2;
+    const centerMax = rules.arena.width - rules.arena.wallPadding - rightmost.spacingWidth / 2 - minimumDistance / 2;
+    const center = clamp((left.x + right.x) / 2, centerMin, centerMax);
+    leftmost.x = center - minimumDistance / 2;
+    rightmost.x = center + minimumDistance / 2;
+    if (leftmost.vx > 0) leftmost.vx = 0;
+    if (rightmost.vx < 0) rightmost.vx = 0;
   }
 
   function overlaps(a, b) {
@@ -508,6 +536,7 @@
 
     advanceFighter(next.left, leftInput, rules);
     advanceFighter(next.right, rightInput, rules);
+    separateFighters(next.left, next.right, rules);
     faceOpponents(next.left, next.right);
 
     const leftHit = canConnect(next.left, next.right, rules);
