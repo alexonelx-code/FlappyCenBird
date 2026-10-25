@@ -9,12 +9,14 @@
   }
 
   const entries = [
-    { id: 'fighter-01', name: 'Luis', archetype: 'Equilibrado', portraitSrc: 'assets/fighters/characters/luis-original.jpg', spacingWidth: 144, palette: { accent: '#2875df', shadow: '#183b75', skin: '#f1bd93' }, stats: { health: 100, groundSpeed: 310, airSpeed: 260, jumpVelocity: 740 }, moves: { light: { damage: 8, reach: 79, startupFrames: 5, recoveryFrames: 10, knockback: 180 }, heavy: { damage: 14, reach: 101, startupFrames: 11, recoveryFrames: 18, knockback: 280 } }, sprite: {
+    { id: 'fighter-01', name: 'Luis', archetype: 'Equilibrado', portraitSrc: 'assets/fighters/characters/luis-original.jpg', spacingWidth: 168, palette: { accent: '#2875df', shadow: '#183b75', skin: '#f1bd93' }, stats: { health: 100, groundSpeed: 310, airSpeed: 260, jumpVelocity: 740 }, moves: { light: { damage: 8, reach: 79, startupFrames: 5, recoveryFrames: 10, knockback: 180 }, heavy: { damage: 14, reach: 101, startupFrames: 11, recoveryFrames: 18, knockback: 280 } }, sprite: {
       src: 'assets/fighters/characters/fighter-01.png',
       frameWidth: 229,
       frameHeight: 229,
       anchor: { x: 114.5, y: 229 },
       visualScale: 0.82,
+      // These poses have transparent padding below their ground-contact pixels.
+      frameFootAnchors: { 24: 221, 25: 221, 26: 225, 28: 221, 29: 221 },
       animations: {
         idle: { frames: [0, 1], fps: 5, loop: true },
         walk: { frames: [2, 3, 4, 5], fps: 10, loop: true },

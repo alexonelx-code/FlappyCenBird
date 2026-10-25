@@ -248,7 +248,7 @@
       button.append(badge, avatarDisplay, copy);
       button.addEventListener('click', () => {
         showFeaturedFighter(fighter.id);
-        toggleFighter(fighter.id);
+        addFighter(fighter.id);
       });
       button.addEventListener('focus', () => showFeaturedFighter(fighter.id));
       button.addEventListener('pointerenter', () => showFeaturedFighter(fighter.id));
@@ -338,9 +338,14 @@
     document.getElementById('fighterDifficultyFeature').dataset.level = input?.value || 'normal';
   }
 
-  function toggleFighter(id) {
-    if (chosen.includes(id)) chosen = chosen.filter((item) => item !== id);
-    else if (chosen.length < globalThis.CenFighterTeams.TEAM_SIZE) chosen.push(id);
+  function addFighter(id) {
+    if (chosen.length < globalThis.CenFighterTeams.TEAM_SIZE) chosen.push(id);
+    updateSelection();
+  }
+
+  function removeFighter(slotIndex) {
+    if (slotIndex < 0 || slotIndex >= chosen.length) return;
+    chosen.splice(slotIndex, 1);
     updateSelection();
   }
 
@@ -349,8 +354,13 @@
     rosterRoot.querySelectorAll('.fighter-select-card').forEach((button) => {
       const id = button.dataset.fighterId;
       const order = chosen.indexOf(id);
+      const count = chosen.filter((item) => item === id).length;
       button.setAttribute('aria-pressed', String(order >= 0));
-      button.querySelector('.fighter-select-index').textContent = order >= 0 ? String(order + 1) : String(roster.findIndex((fighter) => fighter.id === id) + 1).padStart(2, '0');
+      button.disabled = chosen.length >= globalThis.CenFighterTeams.TEAM_SIZE;
+      button.querySelector('.fighter-select-index').textContent = count > 1
+        ? `×${count}`
+        : order >= 0 ? String(order + 1) : String(roster.findIndex((fighter) => fighter.id === id) + 1).padStart(2, '0');
+      button.setAttribute('aria-label', `Añadir ${fighterById(id).name}${count ? `. Seleccionado ${count} ${count === 1 ? 'vez' : 'veces'}` : ''}`);
     });
     selectionSummary.textContent = chosen.length === 3
       ? '3/3'
@@ -364,6 +374,8 @@
       slot.classList.toggle('is-first', Boolean(fighter && index === 0));
       slot.querySelector('span').textContent = fighter ? String(index + 1).padStart(2, '0') : `0${index + 1}`;
       slot.querySelector('strong').textContent = fighter?.name || ['Primer turno', 'Segundo turno', 'Tercer turno'][index];
+      slot.disabled = !fighter;
+      slot.setAttribute('aria-label', fighter ? `Quitar a ${fighter.name} del puesto ${index + 1}` : `Puesto ${index + 1} vacío`);
     });
     continueToStageButton.disabled = chosen.length !== 3;
     startButton.disabled = chosen.length !== 3;
@@ -371,6 +383,10 @@
     drawDifficultyPreview();
     document.getElementById('fighterSetupBalance').textContent = String(window.CenEconomy.getProfile()?.cents || 0);
   }
+
+  document.querySelectorAll('.fighter-team-slot').forEach((slot, index) => {
+    slot.addEventListener('click', () => removeFighter(index));
+  });
 
   function getDifficulty() {
     return document.querySelector('input[name="fighterDifficulty"]:checked')?.value || 'normal';

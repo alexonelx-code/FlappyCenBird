@@ -75,7 +75,7 @@
 
     ctx.save();
     ctx.globalAlpha = fighter.knockedOut ? 0.55 : 1;
-    pixel(ctx, fighter.x - artWidth * 0.31, fighter.y + 5, artWidth * 0.62, 6, 'rgba(6, 11, 20, .55)');
+    pixel(ctx, fighter.x - artWidth * 0.31, fighter.y + 1, artWidth * 0.62, 4, 'rgba(6, 11, 20, .55)');
     ctx.translate(fighter.x + recoil + fighter.facing * lunge, fighter.y - bob);
     ctx.scale(fighter.facing, 1);
     ctx.imageSmoothingEnabled = false;
@@ -120,10 +120,12 @@
     const index = clip.frames[clipStep];
     const scale = fighter.height * (sprite.visualScale || 1) / sprite.anchor.y;
     const width = sprite.frameWidth * scale;
+    const frameFootAnchor = sprite.frameFootAnchors?.[index] || sprite.anchor.y;
+    const footOffset = (sprite.anchor.y - frameFootAnchor) * scale;
     ctx.save();
     ctx.globalAlpha = fighter.knockedOut ? 0.58 : 1;
-    pixel(ctx, fighter.x - width * 0.34, fighter.y + 5, width * 0.68, 6, 'rgba(5, 12, 23, .38)');
-    ctx.translate(fighter.x, fighter.y);
+    pixel(ctx, fighter.x - width * 0.34, fighter.y + 1, width * 0.68, 4, 'rgba(5, 12, 23, .38)');
+    ctx.translate(fighter.x, fighter.y + footOffset);
     ctx.scale(fighter.facing * scale, scale);
     ctx.imageSmoothingEnabled = false;
     ctx.drawImage(image, (index % columns) * sprite.frameWidth, Math.floor(index / columns) * sprite.frameHeight,

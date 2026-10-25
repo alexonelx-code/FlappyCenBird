@@ -49,6 +49,15 @@
         throw new RangeError(`El clip ${name} no tiene frames, velocidad y ciclo válidos.`);
       }
     });
+    if (definition.frameFootAnchors !== undefined) {
+      const anchors = definition.frameFootAnchors;
+      const referencedFrames = new Set(Object.values(animations).flatMap((clip) => clip.frames));
+      if (!anchors || typeof anchors !== 'object' || Array.isArray(anchors)
+          || Object.entries(anchors).some(([frame, y]) => !/^\d+$/.test(frame)
+            || !referencedFrames.has(Number(frame)) || !Number.isFinite(y) || y <= 0 || y > frameHeight)) {
+        throw new RangeError('Las anclas de pies por frame deben apuntar a frames usados y quedar dentro del atlas.');
+      }
+    }
     if (!hitboxes || typeof hitboxes !== 'object') throw new TypeError('El atlas necesita hitboxes separados del dibujo.');
     assertRect(hitboxes.body, 'La caja corporal');
     ['light', 'medium', 'heavy', 'special'].forEach((name) => assertRect(hitboxes[name], `La caja de ${name}`));

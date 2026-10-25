@@ -156,3 +156,38 @@ test('el match 3v3 conserva la vida del superviviente, repone reservas y concluy
   assert.ok(entered.filter((event) => event.side === 'cpu')
     .every((event) => event.health === event.maxHealth));
 });
+
+test('un equipo con tres Luis trae cada reserva sin pisar IDs o vida', () => {
+  const roster = globalThis.CenFighterRoster.entries.map((fighter) => {
+    if (fighter.id === 'fighter-02') {
+      return {
+        ...fighter,
+        moves: {
+          ...fighter.moves,
+          light: { startupFrames: 0, activeFrames: 1, recoveryFrames: 0, damage: 300, reach: 500, knockback: 0 }
+        }
+      };
+    }
+    return fighter;
+  });
+  let match = teams.createMatch({
+    roster,
+    playerTeam: ['fighter-01', 'fighter-01', 'fighter-01'],
+    cpuTeam: ['fighter-02', 'fighter-02', 'fighter-02'],
+    seed: 5
+  });
+
+  for (let reserveIndex = 1; reserveIndex <= 2; reserveIndex += 1) {
+    const previousId = match.active.player;
+    const update = teams.stepMatch(match, { cpu: { attack: 'light' } });
+    match = update.state;
+
+    assert.ok(update.events.some((event) => event.type === 'team-fighter-eliminated'
+      && event.side === 'player' && event.combatantId === previousId));
+    assert.equal(match.active.player, `player:fighter-01:${reserveIndex + 1}`);
+    assert.equal(match.combatants[match.active.player].health, 100);
+    assert.equal(match.combatants[previousId].health, 0);
+
+    while (match.phase === 'transition') match = teams.stepMatch(match).state;
+  }
+});
