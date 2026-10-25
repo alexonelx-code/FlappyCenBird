@@ -1,7 +1,7 @@
 (() => {
   'use strict';
 
-  const ANIMATIONS = Object.freeze(['idle', 'walk', 'jump', 'crouch', 'block', 'light', 'heavy', 'hurt', 'ko', 'enter']);
+  const ANIMATIONS = Object.freeze(['idle', 'walk', 'jump', 'crouch', 'block', 'light', 'medium', 'heavy', 'special', 'hurt', 'ko', 'enter']);
 
   function clone(value) {
     return JSON.parse(JSON.stringify(value));
@@ -47,7 +47,7 @@
     });
     if (!hitboxes || typeof hitboxes !== 'object') throw new TypeError('El atlas necesita hitboxes separados del dibujo.');
     assertRect(hitboxes.body, 'La caja corporal');
-    ['light', 'heavy'].forEach((name) => assertRect(hitboxes[name], `La caja de ${name}`));
+    ['light', 'medium', 'heavy', 'special'].forEach((name) => assertRect(hitboxes[name], `La caja de ${name}`));
     return true;
   }
 

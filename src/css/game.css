@@ -1430,6 +1430,9 @@ input:focus-visible { outline: 3px solid var(--gold); outline-offset: 3px; }
 .fighter-face-pad .face-x { grid-area: 2 / 3; background: rgba(86, 146, 213, .74); }
 .fighter-face-pad .face-v { grid-area: 3 / 2; background: rgba(223, 99, 89, .74); }
 .fighter-face-pad .face-z { grid-area: 2 / 1; background: rgba(70, 183, 132, .74); }
+.fighter-face-pad button { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; }
+.fighter-face-pad button > span { font-size: 14px; line-height: 1; transform: none; }
+.fighter-face-pad button > small { display: block; max-width: none; overflow: visible; color: inherit; font: 700 5px/1 "Courier New", Courier, monospace; letter-spacing: -.35px; white-space: nowrap; }
 .fighter-touch-controls button.is-pressed { border-color: #fff1b7; transform: translate(2px, 2px); box-shadow: none; }
 .fighter-analog-control { display: grid; justify-items: center; gap: 3px; color: rgba(244, 231, 205, .68); font: 700 8px/1 "Courier New", Courier, monospace; letter-spacing: .14em; }
 .fighter-analog-stick { position: relative; display: grid; place-items: center; width: 104px; height: 104px; min-width: 104px !important; min-height: 104px !important; padding: 0; overflow: hidden; border: 2px solid rgba(227, 224, 221, .35) !important; border-radius: 50% !important; background: radial-gradient(circle, rgba(222, 225, 226, .17) 0 35%, rgba(25, 27, 43, .38) 37% 68%, rgba(225, 223, 221, .12) 70%) !important; box-shadow: inset 0 0 0 2px rgba(20, 20, 34, .35), 0 3px 7px rgba(0, 0, 0, .26) !important; touch-action: none; }
