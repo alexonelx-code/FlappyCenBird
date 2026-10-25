@@ -54,11 +54,10 @@
     const cellHeight = image.naturalHeight / 2;
     const sourceX = (index % 5) * cellWidth;
     const sourceY = Math.floor(index / 5) * cellHeight;
-    const bodyHeight = fighter.crouching && fighter.grounded ? fighter.crouchHeight : fighter.height;
     const spriteAspect = cellWidth / cellHeight;
     const artHeight = portrait
-      ? Math.min(bodyHeight * (fighter.crouching && fighter.grounded ? 0.78 : 1.15), 140)
-      : bodyHeight * (fighter.crouching && fighter.grounded ? 0.98 : 1.38);
+      ? Math.min(fighter.height * 1.15, 140)
+      : fighter.height * 1.08;
     const artWidth = artHeight * spriteAspect * (portrait ? 1.35 : 1);
     const moving = Math.abs(fighter.vx) > 30 && fighter.grounded;
     const attack = fighter.attackId && fighter.moves && fighter.moves[fighter.attackId];
@@ -97,7 +96,7 @@
     return true;
   }
 
-  function drawSprite(ctx, fighter, frame, bodyHeight, reducedMotion) {
+  function drawSprite(ctx, fighter, frame, reducedMotion) {
     const sprite = fighter.sprite;
     const contract = globalThis.CenFighterArtContract;
     if (!sprite || !contract) return false;
@@ -107,7 +106,7 @@
     const columns = Math.floor(image.naturalWidth / sprite.frameWidth);
     const rows = Math.floor(image.naturalHeight / sprite.frameHeight);
     if (!columns || !rows || clip.frames.some((index) => index >= columns * rows)) return false;
-    const animationFrame = fighter.attackId
+    const animationFrame = fighter.attackId && !fighter.victorious
       ? fighter.attackFrame
       : fighter.hitstunFrames > 0 && fighter.stats
         ? Math.max(0, fighter.stats.hitstunFrames - fighter.hitstunFrames)
@@ -115,7 +114,7 @@
     const step = reducedMotion ? 0 : Math.floor(animationFrame * clip.fps / 60);
     const clipStep = clip.loop ? step % clip.frames.length : Math.min(step, clip.frames.length - 1);
     const index = clip.frames[clipStep];
-    const scale = bodyHeight / sprite.anchor.y;
+    const scale = fighter.height * (sprite.visualScale || 1) / sprite.anchor.y;
     const width = sprite.frameWidth * scale;
     ctx.save();
     ctx.globalAlpha = fighter.knockedOut ? 0.58 : 1;
@@ -158,7 +157,7 @@
     const rect = (cx, bottom, width, height, color) => pixel(ctx, cx - width / 2, -bottom - height, width, height, color);
 
     ctx.save();
-    if (drawSprite(ctx, fighter, frame, bodyHeight, reducedMotion)
+    if (drawSprite(ctx, fighter, frame, reducedMotion)
         || drawRosterSprite(ctx, fighter, frame, reducedMotion, portrait)) {
       ctx.restore();
       return;
@@ -446,8 +445,11 @@
     const reducedMotion = Boolean(motionQuery && motionQuery.matches);
     context.imageSmoothingEnabled = false;
     drawBackground(context, frame, reducedMotion, match.boutNumber, options.stageId);
-    drawFighter(context, match.duel.left, 'left', frame, reducedMotion, Boolean(options.portrait));
-    drawFighter(context, match.duel.right, 'right', frame, reducedMotion, Boolean(options.portrait));
+    const winnerSide = match.result?.winnerSide;
+    const left = winnerSide === 'player' ? { ...match.duel.left, victorious: true } : match.duel.left;
+    const right = winnerSide === 'cpu' ? { ...match.duel.right, victorious: true } : match.duel.right;
+    drawFighter(context, left, 'left', frame, reducedMotion, Boolean(options.portrait));
+    drawFighter(context, right, 'right', frame, reducedMotion, Boolean(options.portrait));
     effects.forEach((effect) => drawImpact(context, effect, frame, reducedMotion));
   }
 

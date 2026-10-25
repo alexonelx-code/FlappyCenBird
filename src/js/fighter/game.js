@@ -13,6 +13,7 @@
   const stages = globalThis.CenFighterRenderer.stages;
   const rosterAtlas = new Image();
   rosterAtlas.src = 'assets/fighters/roster-atlas.png';
+  const spriteImages = new Map();
   const soundButton = document.getElementById('fighterSoundButton');
   const status = document.getElementById('fighterStatus');
   const pauseOverlay = document.getElementById('fighterPauseOverlay');
@@ -42,14 +43,51 @@
   let playerName = 'Jugador';
   const tickDuration = 1000 / globalThis.CenFighterConfig.tickRate;
 
+  function spriteImageFor(fighter) {
+    if (!fighter?.sprite) return null;
+    if (!spriteImages.has(fighter.sprite.src)) {
+      const image = new Image();
+      image.addEventListener('load', () => {
+        document.querySelectorAll('canvas.fighter-select-avatar, canvas.fighter-feature-sprite').forEach((canvas) => {
+          const index = Number(canvas.dataset.atlasIndex) || 0;
+          if (roster[index]?.sprite?.src === fighter.sprite.src) drawAtlasCell(canvas, index);
+        });
+        drawDifficultyPreview();
+      }, { once: true });
+      image.src = fighter.sprite.src;
+      spriteImages.set(fighter.sprite.src, image);
+    }
+    const image = spriteImages.get(fighter.sprite.src);
+    return image.complete && image.naturalWidth ? image : null;
+  }
+
   function drawAtlasCell(canvas, index) {
+    const fighter = roster[index];
+    const sprite = fighter?.sprite;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    if (sprite) {
+      canvas.width = sprite.frameWidth;
+      canvas.height = sprite.frameHeight;
+      canvas.style.aspectRatio = `${sprite.frameWidth} / ${sprite.frameHeight}`;
+      canvas.classList.toggle('has-square-sprite', sprite.frameWidth === sprite.frameHeight);
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      const image = spriteImageFor(fighter);
+      if (!image) return;
+      const frame = sprite.animations.idle.frames[0];
+      const columns = Math.floor(image.naturalWidth / sprite.frameWidth);
+      ctx.imageSmoothingEnabled = false;
+      ctx.drawImage(image, (frame % columns) * sprite.frameWidth, Math.floor(frame / columns) * sprite.frameHeight,
+        sprite.frameWidth, sprite.frameHeight, sprite.frameWidth * 0.08, sprite.frameHeight * 0.16,
+        sprite.frameWidth * 0.84, sprite.frameHeight * 0.84);
+      return;
+    }
     if (!rosterAtlas.complete || !rosterAtlas.naturalWidth) return;
     const cellWidth = rosterAtlas.naturalWidth / 5;
     const cellHeight = rosterAtlas.naturalHeight / 2;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
     canvas.width = cellWidth;
     canvas.height = cellHeight;
+    canvas.style.aspectRatio = `${cellWidth} / ${cellHeight}`;
     ctx.imageSmoothingEnabled = false;
     ctx.clearRect(0, 0, cellWidth, cellHeight);
     ctx.drawImage(rosterAtlas, (index % 5) * cellWidth, Math.floor(index / 5) * cellHeight,
@@ -57,7 +95,7 @@
   }
 
   rosterAtlas.addEventListener('load', () => {
-    document.querySelectorAll('.fighter-select-avatar, .fighter-feature-sprite').forEach((canvas) => {
+    document.querySelectorAll('canvas.fighter-select-avatar, canvas.fighter-feature-sprite').forEach((canvas) => {
       drawAtlasCell(canvas, Number(canvas.dataset.atlasIndex) || 0);
     });
     drawDifficultyPreview();
@@ -97,8 +135,13 @@
     document.getElementById('fighterFeaturedName').textContent = fighter.name;
     document.getElementById('fighterFeaturedArchetype').textContent = fighter.archetype || 'Peleador';
     const sprite = document.getElementById('fighterFeaturedSprite');
+    const photo = document.getElementById('fighterFeaturedPhoto');
+    const showPhoto = Boolean(fighter.portraitSrc);
+    photo.hidden = !showPhoto;
+    sprite.hidden = showPhoto;
+    if (showPhoto) photo.src = fighter.portraitSrc;
     sprite.dataset.atlasIndex = String(index);
-    drawAtlasCell(sprite, index);
+    if (!showPhoto) drawAtlasCell(sprite, index);
     if (fighter.palette) {
       sprite.style.setProperty('--fighter-accent', fighter.palette.accent);
       sprite.style.setProperty('--fighter-shadow', fighter.palette.shadow);
@@ -122,6 +165,27 @@
     const artWidth = artHeight * cellWidth / cellHeight;
     const ground = canvas.height - 8;
     const drawFighter = (index, x, flip = false) => {
+      const fighter = roster[index];
+      const sprite = fighter?.sprite;
+      if (sprite) {
+        const image = spriteImageFor(fighter);
+        if (!image) return;
+        const scale = artHeight * (sprite.visualScale || 1) / sprite.anchor.y;
+        const width = sprite.frameWidth * scale;
+        const height = sprite.frameHeight * scale;
+        const frame = sprite.animations.idle.frames[0];
+        const columns = Math.floor(image.naturalWidth / sprite.frameWidth);
+        ctx.save();
+        ctx.imageSmoothingEnabled = false;
+        if (flip) {
+          ctx.translate(x * 2 + width, 0);
+          ctx.scale(-1, 1);
+        }
+        ctx.drawImage(image, (frame % columns) * sprite.frameWidth, Math.floor(frame / columns) * sprite.frameHeight,
+          sprite.frameWidth, sprite.frameHeight, x, ground - height, width, height);
+        ctx.restore();
+        return;
+      }
       ctx.save();
       ctx.imageSmoothingEnabled = false;
       if (flip) {
@@ -148,13 +212,20 @@
       badge.className = 'fighter-select-index';
       badge.textContent = String(index + 1).padStart(2, '0');
       badge.setAttribute('aria-hidden', 'true');
-      const avatar = document.createElement('canvas');
-      avatar.className = 'fighter-select-avatar';
-      avatar.dataset.palette = String(index % 10);
-      avatar.width = 307;
-      avatar.height = 512;
-      avatar.dataset.atlasIndex = String(index);
-      drawAtlasCell(avatar, index);
+      const avatar = fighter.portraitSrc ? document.createElement('img') : document.createElement('canvas');
+      avatar.className = fighter.portraitSrc ? 'fighter-select-avatar fighter-select-photo' : 'fighter-select-avatar';
+      if (fighter.portraitSrc) {
+        avatar.src = fighter.portraitSrc;
+        avatar.alt = '';
+        avatar.loading = 'lazy';
+        avatar.decoding = 'async';
+      } else {
+        avatar.dataset.palette = String(index % 10);
+        avatar.width = 307;
+        avatar.height = 512;
+        avatar.dataset.atlasIndex = String(index);
+        drawAtlasCell(avatar, index);
+      }
       if (fighter.palette) {
         avatar.style.setProperty('--fighter-accent', fighter.palette.accent);
         avatar.style.setProperty('--fighter-shadow', fighter.palette.shadow);
@@ -164,7 +235,17 @@
       name.textContent = fighter.name;
       const archetype = document.createElement('small');
       archetype.textContent = fighter.archetype || 'Peleador';
-      button.append(badge, avatar, name, archetype);
+      const copy = document.createElement('span');
+      copy.className = 'fighter-select-copy';
+      copy.append(name, archetype);
+      let avatarDisplay = avatar;
+      if (fighter.portraitSrc) {
+        const portraitFrame = document.createElement('span');
+        portraitFrame.className = 'fighter-select-photo-frame';
+        portraitFrame.append(avatar);
+        avatarDisplay = portraitFrame;
+      }
+      button.append(badge, avatarDisplay, copy);
       button.addEventListener('click', () => {
         showFeaturedFighter(fighter.id);
         toggleFighter(fighter.id);
@@ -272,8 +353,18 @@
       button.querySelector('.fighter-select-index').textContent = order >= 0 ? String(order + 1) : String(roster.findIndex((fighter) => fighter.id === id) + 1).padStart(2, '0');
     });
     selectionSummary.textContent = chosen.length === 3
-      ? `Equipo listo · ${descriptions.join(' · ')}`
-      : `${chosen.length} de 3 seleccionados${descriptions.length ? ` · ${descriptions.join(' · ')}` : ''}`;
+      ? '3/3'
+      : `${chosen.length}/3`;
+    selectionSummary.setAttribute('aria-label', chosen.length === 3
+      ? `Equipo listo: ${descriptions.join(', ')}`
+      : `${chosen.length} de 3 peleadores seleccionados${descriptions.length ? `: ${descriptions.join(', ')}` : ''}`);
+    document.querySelectorAll('.fighter-team-slot').forEach((slot, index) => {
+      const fighter = chosen[index] ? fighterById(chosen[index]) : null;
+      slot.classList.toggle('is-filled', Boolean(fighter));
+      slot.classList.toggle('is-first', Boolean(fighter && index === 0));
+      slot.querySelector('span').textContent = fighter ? String(index + 1).padStart(2, '0') : `0${index + 1}`;
+      slot.querySelector('strong').textContent = fighter?.name || ['Primer turno', 'Segundo turno', 'Tercer turno'][index];
+    });
     continueToStageButton.disabled = chosen.length !== 3;
     startButton.disabled = chosen.length !== 3;
     if (featuredFighterId) showFeaturedFighter(featuredFighterId);

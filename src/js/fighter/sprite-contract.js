@@ -1,7 +1,7 @@
 (() => {
   'use strict';
 
-  const ANIMATIONS = Object.freeze(['idle', 'walk', 'jump', 'crouch', 'block', 'light', 'medium', 'heavy', 'special', 'hurt', 'ko', 'enter']);
+  const ANIMATIONS = Object.freeze(['idle', 'walk', 'jump', 'crouch', 'block', 'light', 'medium', 'heavy', 'special', 'hurt', 'ko', 'enter', 'victory']);
 
   function clone(value) {
     return JSON.parse(JSON.stringify(value));
@@ -36,6 +36,10 @@
         || anchor.x < 0 || anchor.x > frameWidth || anchor.y <= 0 || anchor.y > frameHeight) {
       throw new RangeError('El ancla de pies debe estar dentro del frame.');
     }
+    if (definition.visualScale !== undefined
+        && (!Number.isFinite(definition.visualScale) || definition.visualScale <= 0 || definition.visualScale > 1.5)) {
+      throw new RangeError('La escala visual del atlas debe ser positiva y menor o igual a 1.5.');
+    }
     if (!animations || typeof animations !== 'object') throw new TypeError('El atlas necesita clips de animación.');
     ANIMATIONS.forEach((name) => {
       const clip = animations[name];
@@ -59,6 +63,7 @@
   function animationFor(fighter) {
     if (fighter.knockedOut) return 'ko';
     if (fighter.hitstunFrames > 0) return 'hurt';
+    if (fighter.victorious) return 'victory';
     if (fighter.attackId) return fighter.attackId;
     if (!fighter.grounded) return 'jump';
     if (fighter.guarding) return 'block';

@@ -46,7 +46,10 @@ test('el catálogo tiene diez luchadores distintos con arquetipos y estadística
     cpuTeam: ['fighter-03', 'fighter-08', 'fighter-10'],
     seed: 40
   });
-  assert.equal(match.combatants[match.active.player].name, 'Brasa');
+  assert.equal(match.combatants[match.active.player].name, 'Luis');
+  assert.equal(roster.entries[0].portraitSrc, 'assets/fighters/characters/luis-original.jpg');
+  assert.equal(roster.entries[0].sprite.visualScale, 0.82);
+  assert.deepEqual(roster.entries[0].sprite.anchor, { x: 114.5, y: 229 });
   assert.equal(match.duel.left.stats.health, 100);
   assert.equal(match.duel.right.stats.guardDamageScale, 0.22);
   assert.equal(match.duel.left.moves.light.damage, 8);
@@ -71,6 +74,7 @@ test('valida el contrato de atlas, clips, ancla y hitboxes de manera independien
   assert.equal(art.create(definition).frameHeight, 112);
 
   assert.throws(() => art.validate({ ...definition, anchor: { x: 48, y: 0 } }), /ancla de pies/);
+  assert.throws(() => art.validate({ ...definition, visualScale: 0 }), /escala visual/);
   assert.throws(() => art.validate({ ...definition, src: 'https://example.com/sprite.png' }), /ruta local/);
   const invalidClip = spriteDefinition();
   invalidClip.animations.walk.frames = [];
