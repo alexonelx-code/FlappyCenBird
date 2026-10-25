@@ -9,6 +9,8 @@
     ['#8fdae5', '#356377', '#f4c89f'], ['#efa95d', '#8c4d32', '#ffe0aa']
   ];
   const HAIR_COLORS = ['#251d2a', '#4a2928', '#1d293e', '#5a382c', '#272437', '#56334a', '#2b3327', '#492936', '#1e3035', '#5c342b'];
+  // The provisional atlas leaves transparent pixels under the second-row fighters' boots.
+  const ROSTER_FOOT_ANCHORS = [510, 512, 512, 512, 512, 483, 483, 483, 480, 480];
   const spriteImages = new Map();
   const motionQuery = typeof window !== 'undefined' && typeof window.matchMedia === 'function'
     ? window.matchMedia('(prefers-reduced-motion: reduce)')
@@ -59,6 +61,8 @@
       ? Math.min(fighter.height * 1.15, 140)
       : fighter.height * 1.08;
     const artWidth = artHeight * spriteAspect * (portrait ? 1.35 : 1);
+    const footAnchor = ROSTER_FOOT_ANCHORS[index] || cellHeight;
+    const anchoredHeight = artHeight * footAnchor / cellHeight;
     const moving = Math.abs(fighter.vx) > 30 && fighter.grounded;
     const attack = fighter.attackId && fighter.moves && fighter.moves[fighter.attackId];
     const strikeStart = attack ? attack.startupFrames : 0;
@@ -76,7 +80,7 @@
     ctx.scale(fighter.facing, 1);
     ctx.imageSmoothingEnabled = false;
     ctx.drawImage(image, sourceX, sourceY, cellWidth, cellHeight,
-      -artWidth / 2, -artHeight, artWidth, artHeight);
+      -artWidth / 2, -anchoredHeight, artWidth, artHeight);
     if (striking) {
       const tint = fighter.attackId === 'special' ? '#b7f5ff'
         : fighter.attackId === 'heavy' ? '#ffe28a'

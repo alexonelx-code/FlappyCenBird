@@ -50,6 +50,7 @@ test('el catálogo tiene diez luchadores distintos con arquetipos y estadística
   assert.equal(roster.entries[0].portraitSrc, 'assets/fighters/characters/luis-original.jpg');
   assert.equal(roster.entries[0].sprite.visualScale, 0.82);
   assert.deepEqual(roster.entries[0].sprite.anchor, { x: 114.5, y: 229 });
+  assert.equal(roster.entries[0].spacingWidth, 144);
   assert.equal(match.duel.left.stats.health, 100);
   assert.equal(match.duel.right.stats.guardDamageScale, 0.22);
   assert.equal(match.duel.left.moves.light.damage, 8);

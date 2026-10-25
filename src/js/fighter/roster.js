@@ -9,7 +9,7 @@
   }
 
   const entries = [
-    { id: 'fighter-01', name: 'Luis', archetype: 'Equilibrado', portraitSrc: 'assets/fighters/characters/luis-original.jpg', palette: { accent: '#2875df', shadow: '#183b75', skin: '#f1bd93' }, stats: { health: 100, groundSpeed: 310, airSpeed: 260, jumpVelocity: 740 }, moves: { light: { damage: 8, reach: 79, startupFrames: 5, recoveryFrames: 10, knockback: 180 }, heavy: { damage: 14, reach: 101, startupFrames: 11, recoveryFrames: 18, knockback: 280 } }, sprite: {
+    { id: 'fighter-01', name: 'Luis', archetype: 'Equilibrado', portraitSrc: 'assets/fighters/characters/luis-original.jpg', spacingWidth: 144, palette: { accent: '#2875df', shadow: '#183b75', skin: '#f1bd93' }, stats: { health: 100, groundSpeed: 310, airSpeed: 260, jumpVelocity: 740 }, moves: { light: { damage: 8, reach: 79, startupFrames: 5, recoveryFrames: 10, knockback: 180 }, heavy: { damage: 14, reach: 101, startupFrames: 11, recoveryFrames: 18, knockback: 280 } }, sprite: {
       src: 'assets/fighters/characters/fighter-01.png',
       frameWidth: 229,
       frameHeight: 229,
