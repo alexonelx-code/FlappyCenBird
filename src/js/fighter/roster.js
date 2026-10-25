@@ -9,7 +9,35 @@
   }
 
   const entries = [
-    { id: 'fighter-01', name: 'Brasa', archetype: 'Equilibrado', palette: { accent: '#ffad70', shadow: '#a64d4c', skin: '#ffe0ae' }, stats: { health: 100, groundSpeed: 310, airSpeed: 260, jumpVelocity: 740 }, moves: { light: { damage: 8, reach: 79, startupFrames: 5, recoveryFrames: 10, knockback: 180 }, heavy: { damage: 14, reach: 101, startupFrames: 11, recoveryFrames: 18, knockback: 280 } } },
+    { id: 'fighter-01', name: 'Luis', archetype: 'Equilibrado', portraitSrc: 'assets/fighters/characters/luis-original.jpg', palette: { accent: '#2875df', shadow: '#183b75', skin: '#f1bd93' }, stats: { health: 100, groundSpeed: 310, airSpeed: 260, jumpVelocity: 740 }, moves: { light: { damage: 8, reach: 79, startupFrames: 5, recoveryFrames: 10, knockback: 180 }, heavy: { damage: 14, reach: 101, startupFrames: 11, recoveryFrames: 18, knockback: 280 } }, sprite: {
+      src: 'assets/fighters/characters/fighter-01.png',
+      frameWidth: 229,
+      frameHeight: 229,
+      anchor: { x: 114.5, y: 229 },
+      visualScale: 0.82,
+      animations: {
+        idle: { frames: [0, 1], fps: 5, loop: true },
+        walk: { frames: [2, 3, 4, 5], fps: 10, loop: true },
+        jump: { frames: [6], fps: 8, loop: false },
+        crouch: { frames: [7, 8, 9], fps: 8, loop: true },
+        block: { frames: [10], fps: 6, loop: true },
+        light: { frames: [12, 13, 14], fps: 12, loop: false },
+        medium: { frames: [15, 16, 17], fps: 12, loop: false },
+        heavy: { frames: [18, 19, 20], fps: 8, loop: false },
+        special: { frames: [21, 22, 23], fps: 8, loop: false },
+        hurt: { frames: [24, 25], fps: 12, loop: false },
+        ko: { frames: [26], fps: 8, loop: false },
+        enter: { frames: [11], fps: 8, loop: false },
+        victory: { frames: [28, 29], fps: 6, loop: true }
+      },
+      hitboxes: {
+        body: { x: -38, y: -170, width: 76, height: 170 },
+        light: { x: 2, y: -116, width: 96, height: 45 },
+        medium: { x: 4, y: -126, width: 120, height: 68 },
+        heavy: { x: 2, y: -128, width: 116, height: 58 },
+        special: { x: 4, y: -128, width: 146, height: 76 }
+      }
+    } },
     { id: 'fighter-02', name: 'Rayo', archetype: 'Rápido', palette: { accent: '#ffe06e', shadow: '#b6683f', skin: '#ffe4b0' }, stats: { health: 94, groundSpeed: 350, airSpeed: 290, jumpVelocity: 760 }, moves: { light: { damage: 7, reach: 72, startupFrames: 4, recoveryFrames: 9, knockback: 158 }, heavy: { damage: 12, reach: 92, startupFrames: 10, recoveryFrames: 16, knockback: 232 } } },
     { id: 'fighter-03', name: 'Marea', archetype: 'Técnica', palette: { accent: '#7bd8d6', shadow: '#326c86', skin: '#f4d09e' }, stats: { health: 98, groundSpeed: 315, airSpeed: 270, jumpVelocity: 755, guardDamageScale: 0.22 }, moves: { light: { damage: 8, reach: 82, startupFrames: 5, recoveryFrames: 10, knockback: 170 }, heavy: { damage: 13, reach: 104, startupFrames: 10, recoveryFrames: 17, knockback: 250 } } },
     { id: 'fighter-04', name: 'Roca', archetype: 'Potente', palette: { accent: '#c79c75', shadow: '#654456', skin: '#ffdaa2' }, stats: { health: 112, groundSpeed: 270, airSpeed: 235, jumpVelocity: 690 }, moves: { light: { damage: 9, reach: 80, startupFrames: 6, recoveryFrames: 12, knockback: 210 }, heavy: { damage: 17, reach: 108, startupFrames: 12, recoveryFrames: 20, knockback: 330 } } },

@@ -15,7 +15,7 @@
   <link rel="icon" href="assets/icons/cengames-mark.svg" type="image/svg+xml">
   <link rel="manifest" href="manifest.webmanifest">
   <script src="src/js/theme.js?v=23"></script>
-  <link rel="stylesheet" href="src/css/game.css?v=54">
+  <link rel="stylesheet" href="src/css/game.css?v=58">
   <title>CenGames</title>
 </head>
 <body>
@@ -213,15 +213,22 @@
         </nav>
         <section class="fighter-setup-step" data-setup-step="fighters" aria-labelledby="fighterSetupTitle">
           <div class="fighter-setup-heading">
-            <div><h1 id="fighterSetupTitle" tabindex="-1">Elige a tus peleadores</h1><p class="fighter-setup-lede">Arma un equipo de tres. El orden de selección define quién entra primero.</p></div>
-            <div class="fighter-selection-summary" id="fighterSelectionSummary" role="status" aria-live="polite">0 de 3 seleccionados</div>
+            <div><span class="fighter-setup-overline">ELIGE TU ALINEACIÓN</span><h1 id="fighterSetupTitle" tabindex="-1">Arma tu equipo</h1><p class="fighter-setup-lede">Elige tres peleadores. El orden define quién entra primero.</p></div>
           </div>
           <div class="fighter-picker-layout">
             <aside class="fighter-feature-card fighter-feature-fighter" aria-live="polite">
-              <div class="fighter-feature-art"><canvas class="fighter-feature-sprite" id="fighterFeaturedSprite" width="307" height="512" aria-hidden="true"></canvas><span class="fighter-feature-order" id="fighterFeaturedOrder"></span></div>
-              <div class="fighter-feature-copy"><span class="fighter-feature-label">PELEADOR</span><h2 id="fighterFeaturedName">Selecciona un personaje</h2><p id="fighterFeaturedArchetype">Diez estilos por descubrir</p></div>
+              <div class="fighter-feature-art" id="fighterFeaturedArt"><img class="fighter-feature-photo" id="fighterFeaturedPhoto" src="assets/fighters/characters/luis-original.jpg" alt="" aria-hidden="true" hidden><canvas class="fighter-feature-sprite" id="fighterFeaturedSprite" width="307" height="512" aria-hidden="true"></canvas><span class="fighter-feature-order" id="fighterFeaturedOrder"></span></div>
+              <div class="fighter-feature-copy"><span class="fighter-feature-label">PELEADOR DESTACADO</span><h2 id="fighterFeaturedName">Luis</h2><p id="fighterFeaturedArchetype">Equilibrado</p></div>
             </aside>
-            <div class="fighter-roster-grid" id="fighterRoster" role="group" aria-label="Elige tres peleadores"></div>
+            <div class="fighter-roster-panel">
+              <div class="fighter-roster-heading"><div><span class="fighter-roster-kicker">ROSTER · 10 PELEADORES</span><h2>Selecciona tu equipo</h2></div><div class="fighter-selection-summary" id="fighterSelectionSummary" role="status" aria-live="polite" aria-label="0 de 3 peleadores seleccionados">0/3</div></div>
+              <div class="fighter-team-slots" id="fighterTeamSlots" aria-label="Puestos del equipo">
+                <div class="fighter-team-slot"><span>01</span><strong>Primer turno</strong></div>
+                <div class="fighter-team-slot"><span>02</span><strong>Segundo turno</strong></div>
+                <div class="fighter-team-slot"><span>03</span><strong>Tercer turno</strong></div>
+              </div>
+              <div class="fighter-roster-grid" id="fighterRoster" role="group" aria-label="Elige tres peleadores"></div>
+            </div>
           </div>
           <div class="fighter-setup-actions"><span class="fighter-picker-hint">Elige 3 distintos · toca una tarjeta para sumar o quitar</span><button class="fighter-primary-button" id="continueToStageButton" type="button" disabled>Elegir escenario <span aria-hidden="true">→</span></button></div>
         </section>
@@ -388,12 +395,12 @@
   <script src="src/js/fighter/config.js" defer></script>
   <script src="src/js/fighter/engine.js" defer></script>
   <script src="src/js/fighter/random.js" defer></script>
-  <script src="src/js/fighter/sprite-contract.js?v=2" defer></script>
-  <script src="src/js/fighter/roster.js" defer></script>
+  <script src="src/js/fighter/sprite-contract.js?v=4" defer></script>
+  <script src="src/js/fighter/roster.js?v=3" defer></script>
   <script src="src/js/fighter/team-match.js" defer></script>
   <script src="src/js/fighter/cpu.js" defer></script>
   <script src="src/js/fighter/learning.js" defer></script>
-  <script src="src/js/fighter/renderer.js?v=43" defer></script>
-  <script src="src/js/fighter/game.js?v=46" defer></script>
+  <script src="src/js/fighter/renderer.js?v=46" defer></script>
+  <script src="src/js/fighter/game.js?v=51" defer></script>
 </body>
 </html>
