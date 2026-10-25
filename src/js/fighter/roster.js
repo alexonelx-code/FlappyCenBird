@@ -32,6 +32,14 @@
       },
       // These poses have transparent padding below their ground-contact pixels.
       frameFootAnchors: { 24: 221, 25: 221, 26: 225, 28: 221, 29: 221 },
+      frameOverrides: {
+        10: {
+          src: 'assets/fighters/characters/luis-block-guard-v2.png',
+          sourceRect: { x: 248, y: 67, width: 914, height: 1029 },
+          drawRect: { x: 13, y: 0, width: 203, height: 229 },
+          footAnchor: 229
+        }
+      },
       animations: {
         idle: { frames: [0, 1], fps: 5, loop: true },
         walk: { frames: [2, 3, 4, 5], fps: 10, loop: true },

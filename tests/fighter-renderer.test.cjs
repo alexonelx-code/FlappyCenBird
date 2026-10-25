@@ -49,7 +49,10 @@ function spriteContext() {
     translate(_x, y) { translateY += y; },
     scale() {},
     drawImage(image, ...args) {
-      if (String(image && image.src || '').endsWith('/fighter-01.png')) calls.spriteDraws.push({ translateY, args });
+      const src = String(image && image.src || '');
+      if (src.endsWith('/fighter-01.png') || src.endsWith('/luis-block-guard-v2.png')) {
+        calls.spriteDraws.push({ translateY, args, src });
+      }
     },
     moveTo() {}, lineTo() {}, closePath() {}, stroke() {}
   };
@@ -80,7 +83,7 @@ test('alinea al piso los frames de daño de Luis con anclas medidas del atlas', 
     }
     set src(path) {
       this._src = path;
-      [this.naturalWidth, this.naturalHeight] = path.endsWith('/fighter-01.png')
+      [this.naturalWidth, this.naturalHeight] = path.endsWith('/fighter-01.png') || path.endsWith('/luis-block-guard-v2.png')
         ? [1374, 1145]
         : [960, 540];
     }
@@ -115,6 +118,44 @@ test('alinea al piso los frames de daño de Luis con anclas medidas del atlas', 
       assert.equal(frame, expectedFrame);
       assert.ok(Math.abs(baseline - fighter.y) < 1e-9);
     });
+  } finally {
+    if (originalImage === undefined) delete global.Image;
+    else global.Image = originalImage;
+  }
+});
+
+test('usa la pose completa de bloqueo de Luis y fija ambos pies al piso', () => {
+  const originalImage = global.Image;
+  global.Image = class MockImage {
+    constructor() { this.complete = true; this.naturalWidth = 0; this.naturalHeight = 0; this.src = ''; }
+    set src(path) {
+      this._src = path;
+      [this.naturalWidth, this.naturalHeight] = path.endsWith('/fighter-01.png')
+        ? [1374, 1145]
+        : path.endsWith('/luis-block-guard-v2.png') ? [1374, 1145] : [960, 540];
+    }
+    get src() { return this._src; }
+  };
+
+  try {
+    const match = teams.createMatch({
+      playerTeam: ['fighter-01', 'fighter-01', 'fighter-01'],
+      cpuTeam: ['fighter-02', 'fighter-03', 'fighter-04'],
+      seed: 28
+    });
+    const fighter = match.duel.left;
+    fighter.guarding = true;
+    const ctx = spriteContext();
+
+    renderer.draw(ctx, match, 0, [], { stageId: 'fachada' });
+
+    const draw = ctx.calls.spriteDraws.find((entry) => entry.src.endsWith('/luis-block-guard-v2.png'));
+    assert.ok(draw, 'la pose block debe dibujar el asset completo de Luis');
+    assert.deepEqual(draw.args.slice(0, 4), [248, 67, 914, 1029]);
+    assert.deepEqual(draw.args.slice(4), [-101.5, -229, 203, 229]);
+    const scale = fighter.height * fighter.sprite.visualScale / fighter.sprite.anchor.y;
+    const baseline = draw.translateY + (draw.args[5] + fighter.sprite.frameOverrides[10].footAnchor) * scale;
+    assert.ok(Math.abs(baseline - match.duel.rules.arena.floorY) < 1e-9);
   } finally {
     if (originalImage === undefined) delete global.Image;
     else global.Image = originalImage;

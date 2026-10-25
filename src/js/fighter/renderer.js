@@ -120,12 +120,20 @@
     const step = reducedMotion ? 0 : Math.floor(animationFrame * clip.fps / 60);
     const clipStep = clip.loop ? step % clip.frames.length : Math.min(step, clip.frames.length - 1);
     const index = clip.frames[clipStep];
+    const override = sprite.frameOverrides?.[index];
+    const overrideImage = override ? spriteImage(override.src) : null;
     const drawBounds = sprite.frameDrawBounds?.[index] || { x: 0, y: 0, width: sprite.frameWidth, height: sprite.frameHeight };
-    const sourceX = (index % columns) * sprite.frameWidth + drawBounds.x;
-    const sourceY = Math.floor(index / columns) * sprite.frameHeight + drawBounds.y;
+    const drawImage = overrideImage || image;
+    const sourceRect = overrideImage ? override.sourceRect : {
+      x: (index % columns) * sprite.frameWidth + drawBounds.x,
+      y: Math.floor(index / columns) * sprite.frameHeight + drawBounds.y,
+      width: drawBounds.width,
+      height: drawBounds.height
+    };
+    const destinationRect = overrideImage ? override.drawRect : drawBounds;
     const scale = fighter.height * (sprite.visualScale || 1) / sprite.anchor.y;
     const width = sprite.frameWidth * scale;
-    const frameFootAnchor = sprite.frameFootAnchors?.[index] || sprite.anchor.y;
+    const frameFootAnchor = overrideImage ? override.footAnchor : sprite.frameFootAnchors?.[index] || sprite.anchor.y;
     const footOffset = (sprite.anchor.y - frameFootAnchor) * scale;
     ctx.save();
     ctx.globalAlpha = fighter.knockedOut ? 0.58 : 1;
@@ -133,8 +141,9 @@
     ctx.translate(fighter.x, fighter.y + footOffset);
     ctx.scale(fighter.facing * scale, scale);
     ctx.imageSmoothingEnabled = false;
-    ctx.drawImage(image, sourceX, sourceY, drawBounds.width, drawBounds.height,
-      drawBounds.x - sprite.anchor.x, drawBounds.y - sprite.anchor.y, drawBounds.width, drawBounds.height);
+    ctx.drawImage(drawImage, sourceRect.x, sourceRect.y, sourceRect.width, sourceRect.height,
+      destinationRect.x - sprite.anchor.x, destinationRect.y - sprite.anchor.y,
+      destinationRect.width, destinationRect.height);
     ctx.restore();
     return true;
   }
