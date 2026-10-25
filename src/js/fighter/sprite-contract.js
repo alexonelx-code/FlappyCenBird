@@ -58,6 +58,18 @@
         throw new RangeError('Las anclas de pies por frame deben apuntar a frames usados y quedar dentro del atlas.');
       }
     }
+    if (definition.frameDrawBounds !== undefined) {
+      const bounds = definition.frameDrawBounds;
+      const referencedFrames = new Set(Object.values(animations).flatMap((clip) => clip.frames));
+      if (!bounds || typeof bounds !== 'object' || Array.isArray(bounds)
+          || Object.entries(bounds).some(([frame, rect]) => !/^\d+$/.test(frame)
+            || !referencedFrames.has(Number(frame))
+            || !rect || !['x', 'y', 'width', 'height'].every((key) => Number.isInteger(rect[key]))
+            || rect.x < 0 || rect.y < 0 || rect.width <= 0 || rect.height <= 0
+            || rect.x + rect.width > frameWidth || rect.y + rect.height > frameHeight)) {
+        throw new RangeError('Los recortes por frame deben apuntar a frames usados y quedar dentro del atlas.');
+      }
+    }
     if (!hitboxes || typeof hitboxes !== 'object') throw new TypeError('El atlas necesita hitboxes separados del dibujo.');
     assertRect(hitboxes.body, 'La caja corporal');
     ['light', 'medium', 'heavy', 'special'].forEach((name) => assertRect(hitboxes[name], `La caja de ${name}`));

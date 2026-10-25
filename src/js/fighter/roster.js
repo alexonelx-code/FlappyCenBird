@@ -15,6 +15,21 @@
       frameHeight: 229,
       anchor: { x: 114.5, y: 229 },
       visualScale: 0.82,
+      // The generated atlas contains detached shoe fragments around these frames.
+      frameDrawBounds: {
+        6: { x: 59, y: 25, width: 134, height: 204 }, 7: { x: 47, y: 77, width: 150, height: 152 },
+        8: { x: 46, y: 87, width: 142, height: 142 }, 9: { x: 59, y: 91, width: 170, height: 138 },
+        10: { x: 63, y: 47, width: 154, height: 182 }, 11: { x: 48, y: 26, width: 171, height: 203 },
+        12: { x: 34, y: 34, width: 150, height: 195 }, 13: { x: 33, y: 37, width: 196, height: 192 },
+        14: { x: 52, y: 32, width: 133, height: 197 }, 15: { x: 56, y: 30, width: 128, height: 199 },
+        16: { x: 35, y: 32, width: 194, height: 197 }, 17: { x: 45, y: 30, width: 163, height: 199 },
+        18: { x: 38, y: 33, width: 164, height: 196 }, 19: { x: 21, y: 32, width: 208, height: 197 },
+        20: { x: 56, y: 36, width: 159, height: 193 }, 21: { x: 47, y: 64, width: 156, height: 165 },
+        22: { x: 8, y: 50, width: 221, height: 179 }, 23: { x: 43, y: 26, width: 168, height: 203 },
+        24: { x: 39, y: 21, width: 190, height: 201 }, 25: { x: 52, y: 19, width: 157, height: 203 },
+        26: { x: 0, y: 112, width: 229, height: 113 },
+        28: { x: 63, y: 21, width: 162, height: 202 }, 29: { x: 50, y: 23, width: 164, height: 200 }
+      },
       // These poses have transparent padding below their ground-contact pixels.
       frameFootAnchors: { 24: 221, 25: 221, 26: 225, 28: 221, 29: 221 },
       animations: {

@@ -51,6 +51,7 @@ test('el catálogo tiene diez luchadores distintos con arquetipos y estadística
   assert.equal(roster.entries[0].sprite.visualScale, 0.82);
   assert.deepEqual(roster.entries[0].sprite.anchor, { x: 114.5, y: 229 });
   assert.deepEqual(roster.entries[0].sprite.frameFootAnchors, { 24: 221, 25: 221, 26: 225, 28: 221, 29: 221 });
+  assert.deepEqual(roster.entries[0].sprite.frameDrawBounds[25], { x: 52, y: 19, width: 157, height: 203 });
   assert.equal(roster.entries[0].spacingWidth, 168);
   assert.equal(match.duel.left.stats.health, 100);
   assert.equal(match.duel.right.stats.guardDamageScale, 0.22);
@@ -97,6 +98,8 @@ test('valida el contrato de atlas, clips, ancla y hitboxes de manera independien
   assert.equal(art.validate({ ...definition, frameFootAnchors: { 0: 108 } }), true);
   assert.throws(() => art.validate({ ...definition, frameFootAnchors: { 0: 0 } }), /anclas de pies por frame/);
   assert.throws(() => art.validate({ ...definition, frameFootAnchors: { 9: 108 } }), /anclas de pies por frame/);
+  assert.equal(art.validate({ ...definition, frameDrawBounds: { 0: { x: 1, y: 2, width: 90, height: 108 } } }), true);
+  assert.throws(() => art.validate({ ...definition, frameDrawBounds: { 0: { x: 90, y: 2, width: 10, height: 108 } } }), /recortes por frame/);
   assert.throws(() => art.validate({ ...definition, src: 'https://example.com/sprite.png' }), /ruta local/);
   const invalidClip = spriteDefinition();
   invalidClip.animations.walk.frames = [];
