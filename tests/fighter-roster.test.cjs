@@ -25,7 +25,9 @@ function spriteDefinition() {
     hitboxes: {
       body: { x: -22, y: -102, width: 44, height: 102 },
       light: { x: 4, y: -77, width: 68, height: 36 },
-      heavy: { x: 3, y: -84, width: 96, height: 48 }
+      medium: { x: 2, y: -78, width: 80, height: 40 },
+      heavy: { x: 3, y: -84, width: 96, height: 48 },
+      special: { x: 1, y: -88, width: 116, height: 54 }
     }
   };
 }

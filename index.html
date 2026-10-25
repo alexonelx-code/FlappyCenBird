@@ -15,7 +15,7 @@
   <link rel="icon" href="assets/icons/cengames-mark.svg" type="image/svg+xml">
   <link rel="manifest" href="manifest.webmanifest">
   <script src="src/js/theme.js?v=23"></script>
-  <link rel="stylesheet" href="src/css/game.css?v=53">
+  <link rel="stylesheet" href="src/css/game.css?v=54">
   <title>CenGames</title>
 </head>
 <body>
@@ -257,19 +257,19 @@
         <div class="fighter-match-clock" id="fighterClock" aria-label="Tiempo restante">40</div>
       </header>
       <div class="fighter-arena-shell">
-        <canvas id="fighterCanvas" width="960" height="540" tabindex="0" role="img" aria-label="Arena de Cen Fighters. Muévete con las flechas, salta con arriba, bloquea con J y ataca con Z, X, C o V.">Este navegador no soporta Canvas.</canvas>
+        <canvas id="fighterCanvas" width="960" height="540" tabindex="0" role="img" aria-label="Arena de Cen Fighters. Flechas para moverte, arriba para saltar, abajo para agacharte, J para cubrirte, Z para puño izquierdo rápido, X para patada frontal, C para puño derecho fuerte y V para el movimiento especial.">Este navegador no soporta Canvas.</canvas>
         <div class="fighter-match-hud" aria-label="Estado de los equipos">
           <div class="fighter-team-hud fighter-player-hud"><div class="fighter-hud-heading"><strong id="fighterPlayerName">Jugador</strong><span id="fighterPlayerActive">Peleador 01</span></div><div class="fighter-health-track"><span id="fighterPlayerHealth"></span></div><div class="fighter-reserves" id="fighterPlayerReserves" aria-label="Reservas del jugador"></div></div>
           <div class="fighter-hud-center"><span>EQUIPOS</span><strong>3v3</strong></div>
           <div class="fighter-team-hud fighter-cpu-hud"><div class="fighter-hud-heading"><strong>CPU</strong><span id="fighterCpuActive">Peleador 04</span></div><div class="fighter-health-track"><span id="fighterCpuHealth"></span></div><div class="fighter-reserves" id="fighterCpuReserves" aria-label="Reservas de la CPU"></div></div>
         </div>
         <p class="sr-only" id="fighterStatus" role="status" aria-live="polite" aria-atomic="true">El combate está listo.</p>
-        <div class="fighter-controls-row"><p>← → mover · ↑ saltar · Z/X/C/V atacar · J cubrir</p><div class="fighter-touch-controls" aria-label="Controles táctiles estilo mando">
+        <div class="fighter-controls-row"><p>← → mover · ↑ saltar · ↓ agacharse · J cubrir · Z puño izq. rápido · X patada frontal · C puño der. fuerte · V especial</p><div class="fighter-touch-controls" aria-label="Controles táctiles estilo mando">
         <div class="fighter-face-pad" aria-label="Ataques Z X C V">
-          <button class="face-c" type="button" data-fighter-attack="heavy" aria-label="Golpe fuerte · tecla C"><span>C</span></button>
-          <button class="face-x" type="button" data-fighter-attack="medium" aria-label="Patada · tecla X"><span>X</span></button>
-          <button class="face-v" type="button" data-fighter-attack="special" aria-label="Especial · tecla V"><span>V</span></button>
-          <button class="face-z" type="button" data-fighter-attack="light" aria-label="Jab · tecla Z"><span>Z</span></button>
+          <button class="face-c" type="button" data-fighter-attack="heavy" aria-label="Puño derecho fuerte · tecla C"><span>C</span><small aria-hidden="true">PUÑO PESADO</small></button>
+          <button class="face-x" type="button" data-fighter-attack="medium" aria-label="Patada frontal media · tecla X"><span>X</span><small aria-hidden="true">PATADA</small></button>
+          <button class="face-v" type="button" data-fighter-attack="special" aria-label="Movimiento especial · tecla V"><span>V</span><small aria-hidden="true">ESPECIAL</small></button>
+          <button class="face-z" type="button" data-fighter-attack="light" aria-label="Puño izquierdo rápido · tecla Z"><span>Z</span><small aria-hidden="true">PUÑO RÁPIDO</small></button>
         </div>
         <div class="fighter-analog-control">
           <button class="fighter-analog-stick" type="button" data-fighter-analog aria-label="Control analógico. Arrastra para moverte; arriba salta y abajo se agacha."><span class="fighter-analog-thumb" aria-hidden="true"></span></button>
@@ -388,7 +388,7 @@
   <script src="src/js/fighter/config.js" defer></script>
   <script src="src/js/fighter/engine.js" defer></script>
   <script src="src/js/fighter/random.js" defer></script>
-  <script src="src/js/fighter/sprite-contract.js" defer></script>
+  <script src="src/js/fighter/sprite-contract.js?v=2" defer></script>
   <script src="src/js/fighter/roster.js" defer></script>
   <script src="src/js/fighter/team-match.js" defer></script>
   <script src="src/js/fighter/cpu.js" defer></script>
