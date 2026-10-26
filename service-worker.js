@@ -1,4 +1,4 @@
-const CACHE_NAME = 'minijuegos-cen-v73';
+const CACHE_NAME = 'minijuegos-cen-v74';
 const APP_FILES = [
   './',
   './index.html',
@@ -18,13 +18,14 @@ const APP_FILES = [
   './src/js/fighter/config.js?v=2',
   './src/js/fighter/engine.js?v=2',
   './src/js/fighter/random.js',
-  './src/js/fighter/sprite-contract.js?v=6',
-  './src/js/fighter/roster.js?v=5',
+  './src/js/fighter/sprite-contract.js?v=7',
+  './src/js/fighter/sprite-atlas.js?v=1',
+  './src/js/fighter/roster.js?v=6',
   './src/js/fighter/team-match.js?v=2',
   './src/js/fighter/cpu.js',
   './src/js/fighter/learning.js',
-  './src/js/fighter/renderer.js?v=51',
-  './src/js/fighter/game.js?v=52',
+  './src/js/fighter/renderer.js?v=52',
+  './src/js/fighter/game.js?v=53',
   './assets/fighters/stages/01-biblioteca.png',
   './assets/fighters/stages/02-campus-nocturno.png',
   './assets/fighters/stages/03-jardin.png',
@@ -32,7 +33,6 @@ const APP_FILES = [
   './assets/fighters/stages/05-monumento.png',
   './assets/fighters/roster-atlas.png',
   './assets/fighters/characters/fighter-01.png',
-  './assets/fighters/characters/luis-block-guard-v2.png',
   './assets/fighters/characters/luis-original.jpg',
   './assets/icons/flappy-cen.svg',
   './assets/icons/cengames-mark.svg',

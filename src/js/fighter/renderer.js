@@ -9,18 +9,17 @@
     ['#8fdae5', '#356377', '#f4c89f'], ['#efa95d', '#8c4d32', '#ffe0aa']
   ];
   const HAIR_COLORS = ['#251d2a', '#4a2928', '#1d293e', '#5a382c', '#272437', '#56334a', '#2b3327', '#492936', '#1e3035', '#5c342b'];
-  // The provisional atlas leaves transparent pixels under the second-row fighters' boots.
   const ROSTER_FOOT_ANCHORS = [510, 512, 512, 512, 512, 483, 483, 483, 480, 480];
   const spriteImages = new Map();
   const motionQuery = typeof window !== 'undefined' && typeof window.matchMedia === 'function'
     ? window.matchMedia('(prefers-reduced-motion: reduce)')
     : null;
   const STAGES = Object.freeze([
-    Object.freeze({ id: 'biblioteca', name: 'Biblioteca', description: 'Duelo bajo la luz del campus.', file: '01-biblioteca.png' }),
-    Object.freeze({ id: 'campus-nocturno', name: 'Campus de noche', description: 'Combate nocturno frente a la universidad.', file: '02-campus-nocturno.png' }),
-    Object.freeze({ id: 'jardin', name: 'Jardín universitario', description: 'Un claro verde rodeado de jardines.', file: '03-jardin.png' }),
-    Object.freeze({ id: 'fachada', name: 'Fachada UNICARIBE', description: 'La entrada principal como arena de combate.', file: '04-fachada.png' }),
-    Object.freeze({ id: 'monumento', name: 'Monumento del Caribe', description: 'Pelea junto al monumento de la ciudad.', file: '05-monumento.png' })
+    Object.freeze({ id: 'biblioteca', name: 'Biblioteca', description: 'Duelo bajo la luz del campus.', file: '01-biblioteca.png', floorY: 472 }),
+    Object.freeze({ id: 'campus-nocturno', name: 'Campus de noche', description: 'Combate nocturno frente a la universidad.', file: '02-campus-nocturno.png', floorY: 472 }),
+    Object.freeze({ id: 'jardin', name: 'Jardín universitario', description: 'Un claro verde rodeado de jardines.', file: '03-jardin.png', floorY: 472 }),
+    Object.freeze({ id: 'fachada', name: 'Fachada UNICARIBE', description: 'La entrada principal como arena de combate.', file: '04-fachada.png', floorY: 472 }),
+    Object.freeze({ id: 'monumento', name: 'Monumento del Caribe', description: 'Pelea junto al monumento de la ciudad.', file: '05-monumento.png', floorY: 472 })
   ]);
   let backgroundCanvas = null;
 
@@ -120,30 +119,23 @@
     const step = reducedMotion ? 0 : Math.floor(animationFrame * clip.fps / 60);
     const clipStep = clip.loop ? step % clip.frames.length : Math.min(step, clip.frames.length - 1);
     const index = clip.frames[clipStep];
-    const override = sprite.frameOverrides?.[index];
-    const overrideImage = override ? spriteImage(override.src) : null;
-    const drawBounds = sprite.frameDrawBounds?.[index] || { x: 0, y: 0, width: sprite.frameWidth, height: sprite.frameHeight };
-    const drawImage = overrideImage || image;
-    const sourceRect = overrideImage ? override.sourceRect : {
-      x: (index % columns) * sprite.frameWidth + drawBounds.x,
-      y: Math.floor(index / columns) * sprite.frameHeight + drawBounds.y,
-      width: drawBounds.width,
-      height: drawBounds.height
-    };
-    const destinationRect = overrideImage ? override.drawRect : drawBounds;
+    const extracted = globalThis.CenFighterSpriteAtlas?.getFrame(image, sprite.frameWidth, sprite.frameHeight, index);
     const scale = fighter.height * (sprite.visualScale || 1) / sprite.anchor.y;
     const width = sprite.frameWidth * scale;
-    const frameFootAnchor = overrideImage ? override.footAnchor : sprite.frameFootAnchors?.[index] || sprite.anchor.y;
-    const footOffset = (sprite.anchor.y - frameFootAnchor) * scale;
     ctx.save();
     ctx.globalAlpha = fighter.knockedOut ? 0.58 : 1;
     drawGroundShadow(ctx, fighter, groundY, width);
-    ctx.translate(fighter.x, fighter.y + footOffset);
+    ctx.translate(fighter.x, fighter.y);
     ctx.scale(fighter.facing * scale, scale);
     ctx.imageSmoothingEnabled = false;
-    ctx.drawImage(drawImage, sourceRect.x, sourceRect.y, sourceRect.width, sourceRect.height,
-      destinationRect.x - sprite.anchor.x, destinationRect.y - sprite.anchor.y,
-      destinationRect.width, destinationRect.height);
+    if (extracted) {
+      ctx.drawImage(extracted.image, 0, 0, extracted.width, extracted.height,
+        extracted.x - sprite.anchor.x, -extracted.height, extracted.width, extracted.height);
+    } else {
+      ctx.drawImage(image, (index % columns) * sprite.frameWidth, Math.floor(index / columns) * sprite.frameHeight,
+        sprite.frameWidth, sprite.frameHeight, -sprite.anchor.x, -sprite.anchor.y,
+        sprite.frameWidth, sprite.frameHeight);
+    }
     ctx.restore();
     return true;
   }

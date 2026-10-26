@@ -77,9 +77,18 @@
       const frame = sprite.animations.idle.frames[0];
       const columns = Math.floor(image.naturalWidth / sprite.frameWidth);
       ctx.imageSmoothingEnabled = false;
-      ctx.drawImage(image, (frame % columns) * sprite.frameWidth, Math.floor(frame / columns) * sprite.frameHeight,
-        sprite.frameWidth, sprite.frameHeight, sprite.frameWidth * 0.08, sprite.frameHeight * 0.16,
-        sprite.frameWidth * 0.84, sprite.frameHeight * 0.84);
+      const art = globalThis.CenFighterSpriteAtlas?.getFrame(image, sprite.frameWidth, sprite.frameHeight, frame);
+      if (art) {
+        const scale = Math.min(sprite.frameWidth / art.width, sprite.frameHeight / art.height);
+        const width = art.width * scale;
+        const height = art.height * scale;
+        ctx.drawImage(art.image, 0, 0, art.width, art.height,
+          (sprite.frameWidth - width) / 2, sprite.frameHeight - height, width, height);
+      } else {
+        ctx.drawImage(image, (frame % columns) * sprite.frameWidth, Math.floor(frame / columns) * sprite.frameHeight,
+          sprite.frameWidth, sprite.frameHeight, sprite.frameWidth * 0.08, sprite.frameHeight * 0.16,
+          sprite.frameWidth * 0.84, sprite.frameHeight * 0.84);
+      }
       return;
     }
     if (!rosterAtlas.complete || !rosterAtlas.naturalWidth) return;
@@ -171,18 +180,34 @@
         const image = spriteImageFor(fighter);
         if (!image) return;
         const scale = artHeight * (sprite.visualScale || 1) / sprite.anchor.y;
-        const width = sprite.frameWidth * scale;
-        const height = sprite.frameHeight * scale;
         const frame = sprite.animations.idle.frames[0];
         const columns = Math.floor(image.naturalWidth / sprite.frameWidth);
+        const art = globalThis.CenFighterSpriteAtlas?.getFrame(image, sprite.frameWidth, sprite.frameHeight, frame);
+        const source = art ? {
+          image: art.image,
+          sourceX: 0,
+          sourceY: 0,
+          width: art.width,
+          height: art.height,
+          offsetX: art.x - sprite.anchor.x
+        } : {
+          image,
+          sourceX: (frame % columns) * sprite.frameWidth,
+          sourceY: Math.floor(frame / columns) * sprite.frameHeight,
+          width: sprite.frameWidth,
+          height: sprite.frameHeight,
+          offsetX: -sprite.anchor.x
+        };
+        const drawWidth = source.width * scale;
+        const drawHeight = source.height * scale;
         ctx.save();
         ctx.imageSmoothingEnabled = false;
         if (flip) {
-          ctx.translate(x * 2 + width, 0);
+          ctx.translate(x * 2 + drawWidth, 0);
           ctx.scale(-1, 1);
         }
-        ctx.drawImage(image, (frame % columns) * sprite.frameWidth, Math.floor(frame / columns) * sprite.frameHeight,
-          sprite.frameWidth, sprite.frameHeight, x, ground - height, width, height);
+        ctx.drawImage(source.image, source.sourceX, source.sourceY, source.width, source.height,
+          x + source.offsetX * scale, ground - drawHeight, drawWidth, drawHeight);
         ctx.restore();
         return;
       }
@@ -405,10 +430,15 @@
     playerName = window.CenGamesUI.getPlayerName();
     matchId = makeMatchId();
     const seed = globalThis.CenFighterRandom.normalizeSeed(matchId);
+    const selectedStage = stages.find((stage) => stage.id === selectedStageId);
     match = globalThis.CenFighterTeams.createMatch({
       playerTeam: chosen,
       roster,
-      seed
+      seed,
+      config: {
+        ...globalThis.CenFighterConfig,
+        arena: { ...globalThis.CenFighterConfig.arena, floorY: selectedStage.floorY }
+      }
     });
     controller = globalThis.CenFighterLearning.createController({
       side: 'right',

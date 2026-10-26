@@ -5,6 +5,7 @@ require('../src/js/fighter/config.js');
 require('../src/js/fighter/engine.js');
 require('../src/js/fighter/random.js');
 require('../src/js/fighter/sprite-contract.js');
+require('../src/js/fighter/sprite-atlas.js');
 require('../src/js/fighter/roster.js');
 const teams = require('../src/js/fighter/team-match.js');
 require('../src/js/fighter/renderer.js');
@@ -50,7 +51,7 @@ function spriteContext() {
     scale() {},
     drawImage(image, ...args) {
       const src = String(image && image.src || '');
-      if (src.endsWith('/fighter-01.png') || src.endsWith('/luis-block-guard-v2.png')) {
+      if (src.endsWith('/fighter-01.png')) {
         calls.spriteDraws.push({ translateY, args, src });
       }
     },
@@ -72,7 +73,7 @@ test('dibuja la arena, placeholders y efectos de impacto sin depender de sprites
   assert.equal(ctx.calls.images, 0);
 });
 
-test('alinea al piso los frames de daño de Luis con anclas medidas del atlas', () => {
+test('mantiene el ancla del cuerpo en el suelo para cada pose del atlas', () => {
   const originalImage = global.Image;
   global.Image = class MockImage {
     constructor() {
@@ -83,9 +84,7 @@ test('alinea al piso los frames de daño de Luis con anclas medidas del atlas', 
     }
     set src(path) {
       this._src = path;
-      [this.naturalWidth, this.naturalHeight] = path.endsWith('/fighter-01.png') || path.endsWith('/luis-block-guard-v2.png')
-        ? [1374, 1145]
-        : [960, 540];
+      [this.naturalWidth, this.naturalHeight] = path.endsWith('/fighter-01.png') ? [1374, 1145] : [960, 540];
     }
     get src() { return this._src; }
   };
@@ -101,19 +100,18 @@ test('alinea al piso los frames de daño de Luis con anclas medidas del atlas', 
     const scale = fighter.height * fighter.sprite.visualScale / fighter.sprite.anchor.y;
 
     [
-      { remainingStun: 12, renderFrame: 0, expectedFrame: 24 },
-      { remainingStun: 7, renderFrame: 0, expectedFrame: 25 },
-      { remainingStun: 0, renderFrame: 6, expectedFrame: 3 }
-    ].forEach(({ remainingStun, renderFrame, expectedFrame }) => {
+      { remainingStun: 12, renderFrame: 0, expectedFrame: 24, moving: false },
+      { remainingStun: 7, renderFrame: 0, expectedFrame: 25, moving: false },
+      { remainingStun: 0, renderFrame: 6, expectedFrame: 3, moving: true },
+      { remainingStun: 0, renderFrame: 0, expectedFrame: 0, moving: false }
+    ].forEach(({ remainingStun, renderFrame, expectedFrame, moving }) => {
       fighter.hitstunFrames = remainingStun;
-      fighter.vx = remainingStun ? 0 : 40;
+      fighter.vx = moving ? 40 : 0;
       renderer.draw(ctx, match, renderFrame, [], { stageId: 'fachada' });
       const { translateY, args } = ctx.calls.spriteDraws.at(-1);
       const frame = Math.floor(args[0] / fighter.sprite.frameWidth)
         + Math.floor(args[1] / fighter.sprite.frameHeight) * 6;
-      const frameFootAnchor = fighter.sprite.frameFootAnchors[frame] || fighter.sprite.anchor.y;
-      const cropY = fighter.sprite.frameDrawBounds?.[frame]?.y || 0;
-      const baseline = translateY + (args[5] + frameFootAnchor - cropY) * scale;
+      const baseline = translateY + (args[5] + fighter.sprite.frameHeight) * scale;
 
       assert.equal(frame, expectedFrame);
       assert.ok(Math.abs(baseline - fighter.y) < 1e-9);
@@ -124,15 +122,13 @@ test('alinea al piso los frames de daño de Luis con anclas medidas del atlas', 
   }
 });
 
-test('usa la pose completa de bloqueo de Luis y fija ambos pies al piso', () => {
+test('usa la hoja pixelada original para todas las poses de Luis', () => {
   const originalImage = global.Image;
   global.Image = class MockImage {
     constructor() { this.complete = true; this.naturalWidth = 0; this.naturalHeight = 0; this.src = ''; }
     set src(path) {
       this._src = path;
-      [this.naturalWidth, this.naturalHeight] = path.endsWith('/fighter-01.png')
-        ? [1374, 1145]
-        : path.endsWith('/luis-block-guard-v2.png') ? [1374, 1145] : [960, 540];
+      [this.naturalWidth, this.naturalHeight] = path.endsWith('/fighter-01.png') ? [1374, 1145] : [960, 540];
     }
     get src() { return this._src; }
   };
@@ -149,12 +145,11 @@ test('usa la pose completa de bloqueo de Luis y fija ambos pies al piso', () => 
 
     renderer.draw(ctx, match, 0, [], { stageId: 'fachada' });
 
-    const draw = ctx.calls.spriteDraws.find((entry) => entry.src.endsWith('/luis-block-guard-v2.png'));
-    assert.ok(draw, 'la pose block debe dibujar el asset completo de Luis');
-    assert.deepEqual(draw.args.slice(0, 4), [248, 67, 914, 1029]);
-    assert.deepEqual(draw.args.slice(4), [-101.5, -229, 203, 229]);
+    const draw = ctx.calls.spriteDraws.find((entry) => entry.src.endsWith('/fighter-01.png'));
+    assert.ok(draw, 'todas las poses se toman de la hoja pixelada original');
+    assert.equal(fighter.sprite.src, 'assets/fighters/characters/fighter-01.png');
     const scale = fighter.height * fighter.sprite.visualScale / fighter.sprite.anchor.y;
-    const baseline = draw.translateY + (draw.args[5] + fighter.sprite.frameOverrides[10].footAnchor) * scale;
+    const baseline = draw.translateY + (draw.args[5] + fighter.sprite.frameHeight) * scale;
     assert.ok(Math.abs(baseline - match.duel.rules.arena.floorY) < 1e-9);
   } finally {
     if (originalImage === undefined) delete global.Image;
@@ -202,35 +197,3 @@ test('mantiene la sombra de Luis en el suelo mientras salta', () => {
     else global.Image = originalImage;
   }
 });
-
-test('recorta los fragmentos sueltos de los frames de daño de Luis', () => {
-  const originalImage = global.Image;
-  global.Image = class MockImage {
-    constructor() { this.complete = true; this.naturalWidth = 0; this.naturalHeight = 0; this.src = ''; }
-    set src(path) {
-      this._src = path;
-      [this.naturalWidth, this.naturalHeight] = path.endsWith('/fighter-01.png') ? [1374, 1145] : [960, 540];
-    }
-    get src() { return this._src; }
-  };
-
-  try {
-    const match = teams.createMatch({
-      playerTeam: ['fighter-01', 'fighter-01', 'fighter-01'],
-      cpuTeam: ['fighter-02', 'fighter-03', 'fighter-04'],
-      seed: 18
-    });
-    match.duel.left.hitstunFrames = 7;
-    const ctx = spriteContext();
-    renderer.draw(ctx, match, 0, [], { stageId: 'monumento' });
-    const { args } = ctx.calls.spriteDraws.at(-1);
-    const bounds = match.duel.left.sprite.frameDrawBounds[25];
-
-    assert.deepEqual(args.slice(0, 4), [229 + bounds.x, 4 * 229 + bounds.y, bounds.width, bounds.height]);
-    assert.deepEqual(args.slice(4), [bounds.x - 114.5, bounds.y - 229, bounds.width, bounds.height]);
-  } finally {
-    if (originalImage === undefined) delete global.Image;
-    else global.Image = originalImage;
-  }
-});
-

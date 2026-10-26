@@ -5,6 +5,7 @@ require('../src/js/fighter/config.js');
 require('../src/js/fighter/engine.js');
 require('../src/js/fighter/random.js');
 require('../src/js/fighter/sprite-contract.js');
+require('../src/js/fighter/sprite-atlas.js');
 require('../src/js/fighter/roster.js');
 const teams = require('../src/js/fighter/team-match.js');
 const engine = globalThis.CenFighterEngine;
@@ -48,16 +49,9 @@ test('el catálogo tiene diez luchadores distintos con arquetipos y estadística
   });
   assert.equal(match.combatants[match.active.player].name, 'Luis');
   assert.equal(roster.entries[0].portraitSrc, 'assets/fighters/characters/luis-original.jpg');
-  assert.equal(roster.entries[0].sprite.visualScale, 0.82);
+  assert.equal(roster.entries[0].sprite.visualScale, 0.70);
   assert.deepEqual(roster.entries[0].sprite.anchor, { x: 114.5, y: 229 });
-  assert.deepEqual(roster.entries[0].sprite.frameFootAnchors, { 24: 221, 25: 221, 26: 225, 28: 221, 29: 221 });
-  assert.deepEqual(roster.entries[0].sprite.frameOverrides[10], {
-    src: 'assets/fighters/characters/luis-block-guard-v2.png',
-    sourceRect: { x: 248, y: 67, width: 914, height: 1029 },
-    drawRect: { x: 13, y: 0, width: 203, height: 229 },
-    footAnchor: 229
-  });
-  assert.deepEqual(roster.entries[0].sprite.frameDrawBounds[25], { x: 52, y: 19, width: 157, height: 203 });
+  assert.equal(roster.entries[0].sprite.src, 'assets/fighters/characters/fighter-01.png');
   assert.equal(roster.entries[0].spacingWidth, 168);
   assert.equal(match.duel.left.stats.health, 100);
   assert.equal(match.duel.right.stats.guardDamageScale, 0.22);
@@ -101,22 +95,6 @@ test('valida el contrato de atlas, clips, ancla y hitboxes de manera independien
 
   assert.throws(() => art.validate({ ...definition, anchor: { x: 48, y: 0 } }), /ancla de pies/);
   assert.throws(() => art.validate({ ...definition, visualScale: 0 }), /escala visual/);
-  assert.equal(art.validate({ ...definition, frameFootAnchors: { 0: 108 } }), true);
-  assert.throws(() => art.validate({ ...definition, frameFootAnchors: { 0: 0 } }), /anclas de pies por frame/);
-  assert.throws(() => art.validate({ ...definition, frameFootAnchors: { 9: 108 } }), /anclas de pies por frame/);
-  assert.equal(art.validate({ ...definition, frameDrawBounds: { 0: { x: 1, y: 2, width: 90, height: 108 } } }), true);
-  assert.throws(() => art.validate({ ...definition, frameDrawBounds: { 0: { x: 90, y: 2, width: 10, height: 108 } } }), /recortes por frame/);
-  const validOverride = {
-    0: {
-      src: 'assets/fighters/block.png',
-      sourceRect: { x: 0, y: 0, width: 64, height: 80 },
-      drawRect: { x: 16, y: 0, width: 64, height: 108 },
-      footAnchor: 108
-    }
-  };
-  assert.equal(art.validate({ ...definition, frameOverrides: validOverride }), true);
-  assert.throws(() => art.validate({ ...definition, frameOverrides: { 9: validOverride[0] } }), /reemplazos por frame/);
-  assert.throws(() => art.validate({ ...definition, frameOverrides: { 0: { ...validOverride[0], drawRect: { x: 50, y: 0, width: 64, height: 108 } } } }), /reemplazos por frame/);
   assert.throws(() => art.validate({ ...definition, src: 'https://example.com/sprite.png' }), /ruta local/);
   const invalidClip = spriteDefinition();
   invalidClip.animations.walk.frames = [];
