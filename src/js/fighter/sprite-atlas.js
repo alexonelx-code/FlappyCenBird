@@ -3,14 +3,16 @@
 
   const cachedFrames = new Map();
 
-  // Poses overflow their cells, so recover a 14-pixel gutter without swallowing the next pose.
-  function extractFrame(pixels, atlasWidth, atlasHeight, frameWidth, frameHeight, index, columns, padding = 14) {
+  // Lower pixels may belong to this pose; the taller leading gutter belongs to the preceding pose.
+  function extractFrame(pixels, atlasWidth, atlasHeight, frameWidth, frameHeight, index, columns,
+    padding = 14, leadingBleed = Math.floor(frameHeight * 0.15)) {
     const cellX = index % columns * frameWidth;
     const cellY = Math.floor(index / columns) * frameHeight;
     const left = Math.max(0, cellX - padding);
-    const top = Math.max(0, cellY - padding);
+    const top = cellY;
     const right = Math.min(atlasWidth, cellX + frameWidth + padding);
     const bottom = Math.min(atlasHeight, cellY + frameHeight + padding);
+    const bleedTop = cellY > 0 ? cellY + leadingBleed : cellY;
     const width = right - left;
     const height = bottom - top;
     const area = width * height;
@@ -35,10 +37,10 @@
       let tail = 0;
       let torsoPixels = 0;
       let cellPixels = 0;
-      let minX = imageX;
-      let minY = imageY;
-      let maxX = imageX;
-      let maxY = imageY;
+      let minX = Infinity;
+      let minY = Infinity;
+      let maxX = -Infinity;
+      let maxY = -Infinity;
       visited[start] = 1;
       queue[tail++] = start;
 
@@ -50,10 +52,12 @@
           cellPixels += 1;
           if (x >= torsoLeft && x <= torsoRight && y >= torsoTop && y <= torsoBottom) torsoPixels += 1;
         }
-        minX = Math.min(minX, x);
-        minY = Math.min(minY, y);
-        maxX = Math.max(maxX, x);
-        maxY = Math.max(maxY, y);
+        if (y >= bleedTop) {
+          minX = Math.min(minX, x);
+          minY = Math.min(minY, y);
+          maxX = Math.max(maxX, x);
+          maxY = Math.max(maxY, y);
+        }
 
         const xInRoi = current % width;
         const neighbors = [current - width, current + width,
@@ -68,7 +72,7 @@
         });
       }
 
-      if (!cellPixels) continue;
+      if (!cellPixels || maxY < 0) continue;
       const score = torsoPixels * 1000 + cellPixels;
       if (!selected || score > selected.score) selected = { score, start, minX, minY, maxX, maxY };
     }
@@ -89,9 +93,11 @@
       const current = queue[head++];
       const x = left + current % width;
       const y = top + Math.floor(current / width);
-      const sourceOffset = (y * atlasWidth + x) * 4;
-      const targetOffset = ((y - frameTop) * frameOutWidth + x - frameLeft) * 4;
-      framePixels.set(pixels.subarray(sourceOffset, sourceOffset + 4), targetOffset);
+      if (y >= bleedTop) {
+        const sourceOffset = (y * atlasWidth + x) * 4;
+        const targetOffset = ((y - frameTop) * frameOutWidth + x - frameLeft) * 4;
+        framePixels.set(pixels.subarray(sourceOffset, sourceOffset + 4), targetOffset);
+      }
       const xInRoi = current % width;
       const neighbors = [current - width, current + width,
         xInRoi > 0 ? current - 1 : -1,

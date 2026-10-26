@@ -29,6 +29,21 @@ test('recupera los píxeles que rebasan una celda y descarta fragmentos vecinos'
   assert.equal(frame.y + frame.height, 11, 'el límite inferior sigue la silueta hasta sus píxeles de contacto');
 });
 
+test('recorta el derrame superior de la pose anterior sin mover el ancla del suelo', () => {
+  const atlasWidth = 8;
+  const atlasHeight = 16;
+  const pixels = new Uint8ClampedArray(atlasWidth * atlasHeight * 4);
+  for (let y = 7; y <= 15; y += 1) pixels[(y * atlasWidth + 3) * 4 + 3] = 255;
+
+  const frame = atlas.extractFrame(pixels, atlasWidth, atlasHeight, 8, 8, 1, 1, 0, 2);
+
+  assert.deepEqual({ x: frame.x, y: frame.y, width: frame.width, height: frame.height }, {
+    x: 3, y: 2, width: 1, height: 6
+  });
+  assert.equal(frame.pixels[3], 255, 'conserva la silueta principal bajo el límite superior');
+  assert.equal(frame.y + frame.height, 8, 'el pie conserva su posición inferior dentro del frame');
+});
+
 test('prepara y reutiliza frames pixelados desde el atlas cargado', () => {
   const originalDocument = global.document;
   const atlasWidth = 8;
