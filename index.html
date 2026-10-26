@@ -223,14 +223,14 @@
             <div class="fighter-roster-panel">
               <div class="fighter-roster-heading"><div><span class="fighter-roster-kicker">ROSTER · 10 PELEADORES</span><h2>Selecciona tu equipo</h2></div><div class="fighter-selection-summary" id="fighterSelectionSummary" role="status" aria-live="polite" aria-label="0 de 3 peleadores seleccionados">0/3</div></div>
               <div class="fighter-team-slots" id="fighterTeamSlots" aria-label="Puestos del equipo">
-                <div class="fighter-team-slot"><span>01</span><strong>Primer turno</strong></div>
-                <div class="fighter-team-slot"><span>02</span><strong>Segundo turno</strong></div>
-                <div class="fighter-team-slot"><span>03</span><strong>Tercer turno</strong></div>
+                <button class="fighter-team-slot" type="button" disabled><span>01</span><strong>Primer turno</strong></button>
+                <button class="fighter-team-slot" type="button" disabled><span>02</span><strong>Segundo turno</strong></button>
+                <button class="fighter-team-slot" type="button" disabled><span>03</span><strong>Tercer turno</strong></button>
               </div>
               <div class="fighter-roster-grid" id="fighterRoster" role="group" aria-label="Elige tres peleadores"></div>
             </div>
           </div>
-          <div class="fighter-setup-actions"><span class="fighter-picker-hint">Elige 3 distintos · toca una tarjeta para sumar o quitar</span><button class="fighter-primary-button" id="continueToStageButton" type="button" disabled>Elegir escenario <span aria-hidden="true">→</span></button></div>
+          <div class="fighter-setup-actions"><span class="fighter-picker-hint">Puedes repetir personajes. Pulsa una tarjeta para añadir y un puesto lleno para quitar.</span><button class="fighter-primary-button" id="continueToStageButton" type="button" disabled>Elegir escenario <span aria-hidden="true">→</span></button></div>
         </section>
         <section class="fighter-setup-step" data-setup-step="stage" aria-labelledby="fighterStageTitle" hidden>
           <div class="fighter-setup-heading"><div><h1 id="fighterStageTitle" tabindex="-1">Elige el escenario</h1><p class="fighter-setup-lede">Este fondo se mantiene durante los cinco duelos del torneo.</p></div><span class="fighter-setup-chip">5 ESCENARIOS</span></div>
@@ -392,15 +392,16 @@
   <script src="src/js/game-character.js?v=28" defer></script>
   <script src="src/js/game-overlay.js?v=28" defer></script>
   <script src="src/js/game.js?v=29" defer></script>
-  <script src="src/js/fighter/config.js" defer></script>
-  <script src="src/js/fighter/engine.js" defer></script>
+  <script src="src/js/fighter/config.js?v=2" defer></script>
+  <script src="src/js/fighter/engine.js?v=2" defer></script>
   <script src="src/js/fighter/random.js" defer></script>
-  <script src="src/js/fighter/sprite-contract.js?v=4" defer></script>
-  <script src="src/js/fighter/roster.js?v=3" defer></script>
-  <script src="src/js/fighter/team-match.js" defer></script>
+  <script src="src/js/fighter/sprite-contract.js?v=7" defer></script>
+  <script src="src/js/fighter/sprite-atlas.js?v=1" defer></script>
+  <script src="src/js/fighter/roster.js?v=6" defer></script>
+  <script src="src/js/fighter/team-match.js?v=2" defer></script>
   <script src="src/js/fighter/cpu.js" defer></script>
   <script src="src/js/fighter/learning.js" defer></script>
-  <script src="src/js/fighter/renderer.js?v=46" defer></script>
-  <script src="src/js/fighter/game.js?v=51" defer></script>
+  <script src="src/js/fighter/renderer.js?v=52" defer></script>
+  <script src="src/js/fighter/game.js?v=53" defer></script>
 </body>
 </html>

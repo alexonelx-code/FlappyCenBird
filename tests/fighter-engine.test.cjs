@@ -42,6 +42,24 @@ test('el duelo es determinista y cada impacto activo se aplica una sola vez', ()
   assert.equal(first.right.health, 92);
 });
 
+test('mantiene separados los cuerpos según el ancho visible del arte sin cambiar las hurtboxes', () => {
+  const state = engine.createDuel({
+    left: { id: 'luis', x: 430, spacingWidth: 144 },
+    right: { id: 'rival', x: 530, spacingWidth: 124 }
+  });
+  let duel = engine.stepDuel(state).state;
+  const minimumDistance = (duel.left.spacingWidth + duel.right.spacingWidth) / 2;
+
+  for (let frame = 0; frame < 90; frame += 1) {
+    duel = engine.stepDuel(duel, { left: { moveX: 1 }, right: { moveX: -1 } }).state;
+    assert.ok(duel.right.x - duel.left.x >= minimumDistance - 1e-9);
+  }
+  assert.equal(duel.left.width, 72);
+  assert.equal(duel.right.width, 72);
+  assert.equal(duel.left.facing, 1);
+  assert.equal(duel.right.facing, -1);
+});
+
 test('el bloqueo recibe chip damage pero nunca elimina al peleador', () => {
   const state = engine.createDuel({
     config: configWith({ light: { startupFrames: 0, activeFrames: 1, recoveryFrames: 1, damage: 100, reach: 220 } }),
@@ -137,4 +155,39 @@ test('el match 3v3 conserva la vida del superviviente, repone reservas y concluy
   assert.equal(entered.filter((event) => event.side === 'cpu').length, 2);
   assert.ok(entered.filter((event) => event.side === 'cpu')
     .every((event) => event.health === event.maxHealth));
+});
+
+test('un equipo con tres Luis trae cada reserva sin pisar IDs o vida', () => {
+  const roster = globalThis.CenFighterRoster.entries.map((fighter) => {
+    if (fighter.id === 'fighter-02') {
+      return {
+        ...fighter,
+        moves: {
+          ...fighter.moves,
+          light: { startupFrames: 0, activeFrames: 1, recoveryFrames: 0, damage: 300, reach: 500, knockback: 0 }
+        }
+      };
+    }
+    return fighter;
+  });
+  let match = teams.createMatch({
+    roster,
+    playerTeam: ['fighter-01', 'fighter-01', 'fighter-01'],
+    cpuTeam: ['fighter-02', 'fighter-02', 'fighter-02'],
+    seed: 5
+  });
+
+  for (let reserveIndex = 1; reserveIndex <= 2; reserveIndex += 1) {
+    const previousId = match.active.player;
+    const update = teams.stepMatch(match, { cpu: { attack: 'light' } });
+    match = update.state;
+
+    assert.ok(update.events.some((event) => event.type === 'team-fighter-eliminated'
+      && event.side === 'player' && event.combatantId === previousId));
+    assert.equal(match.active.player, `player:fighter-01:${reserveIndex + 1}`);
+    assert.equal(match.combatants[match.active.player].health, 100);
+    assert.equal(match.combatants[previousId].health, 0);
+
+    while (match.phase === 'transition') match = teams.stepMatch(match).state;
+  }
 });

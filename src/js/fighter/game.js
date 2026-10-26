@@ -77,9 +77,18 @@
       const frame = sprite.animations.idle.frames[0];
       const columns = Math.floor(image.naturalWidth / sprite.frameWidth);
       ctx.imageSmoothingEnabled = false;
-      ctx.drawImage(image, (frame % columns) * sprite.frameWidth, Math.floor(frame / columns) * sprite.frameHeight,
-        sprite.frameWidth, sprite.frameHeight, sprite.frameWidth * 0.08, sprite.frameHeight * 0.16,
-        sprite.frameWidth * 0.84, sprite.frameHeight * 0.84);
+      const art = globalThis.CenFighterSpriteAtlas?.getFrame(image, sprite.frameWidth, sprite.frameHeight, frame);
+      if (art) {
+        const scale = Math.min(sprite.frameWidth / art.width, sprite.frameHeight / art.height);
+        const width = art.width * scale;
+        const height = art.height * scale;
+        ctx.drawImage(art.image, 0, 0, art.width, art.height,
+          (sprite.frameWidth - width) / 2, sprite.frameHeight - height, width, height);
+      } else {
+        ctx.drawImage(image, (frame % columns) * sprite.frameWidth, Math.floor(frame / columns) * sprite.frameHeight,
+          sprite.frameWidth, sprite.frameHeight, sprite.frameWidth * 0.08, sprite.frameHeight * 0.16,
+          sprite.frameWidth * 0.84, sprite.frameHeight * 0.84);
+      }
       return;
     }
     if (!rosterAtlas.complete || !rosterAtlas.naturalWidth) return;
@@ -171,18 +180,34 @@
         const image = spriteImageFor(fighter);
         if (!image) return;
         const scale = artHeight * (sprite.visualScale || 1) / sprite.anchor.y;
-        const width = sprite.frameWidth * scale;
-        const height = sprite.frameHeight * scale;
         const frame = sprite.animations.idle.frames[0];
         const columns = Math.floor(image.naturalWidth / sprite.frameWidth);
+        const art = globalThis.CenFighterSpriteAtlas?.getFrame(image, sprite.frameWidth, sprite.frameHeight, frame);
+        const source = art ? {
+          image: art.image,
+          sourceX: 0,
+          sourceY: 0,
+          width: art.width,
+          height: art.height,
+          offsetX: art.x - sprite.anchor.x
+        } : {
+          image,
+          sourceX: (frame % columns) * sprite.frameWidth,
+          sourceY: Math.floor(frame / columns) * sprite.frameHeight,
+          width: sprite.frameWidth,
+          height: sprite.frameHeight,
+          offsetX: -sprite.anchor.x
+        };
+        const drawWidth = source.width * scale;
+        const drawHeight = source.height * scale;
         ctx.save();
         ctx.imageSmoothingEnabled = false;
         if (flip) {
-          ctx.translate(x * 2 + width, 0);
+          ctx.translate(x * 2 + drawWidth, 0);
           ctx.scale(-1, 1);
         }
-        ctx.drawImage(image, (frame % columns) * sprite.frameWidth, Math.floor(frame / columns) * sprite.frameHeight,
-          sprite.frameWidth, sprite.frameHeight, x, ground - height, width, height);
+        ctx.drawImage(source.image, source.sourceX, source.sourceY, source.width, source.height,
+          x + source.offsetX * scale, ground - drawHeight, drawWidth, drawHeight);
         ctx.restore();
         return;
       }
@@ -248,7 +273,7 @@
       button.append(badge, avatarDisplay, copy);
       button.addEventListener('click', () => {
         showFeaturedFighter(fighter.id);
-        toggleFighter(fighter.id);
+        addFighter(fighter.id);
       });
       button.addEventListener('focus', () => showFeaturedFighter(fighter.id));
       button.addEventListener('pointerenter', () => showFeaturedFighter(fighter.id));
@@ -338,9 +363,14 @@
     document.getElementById('fighterDifficultyFeature').dataset.level = input?.value || 'normal';
   }
 
-  function toggleFighter(id) {
-    if (chosen.includes(id)) chosen = chosen.filter((item) => item !== id);
-    else if (chosen.length < globalThis.CenFighterTeams.TEAM_SIZE) chosen.push(id);
+  function addFighter(id) {
+    if (chosen.length < globalThis.CenFighterTeams.TEAM_SIZE) chosen.push(id);
+    updateSelection();
+  }
+
+  function removeFighter(slotIndex) {
+    if (slotIndex < 0 || slotIndex >= chosen.length) return;
+    chosen.splice(slotIndex, 1);
     updateSelection();
   }
 
@@ -349,8 +379,13 @@
     rosterRoot.querySelectorAll('.fighter-select-card').forEach((button) => {
       const id = button.dataset.fighterId;
       const order = chosen.indexOf(id);
+      const count = chosen.filter((item) => item === id).length;
       button.setAttribute('aria-pressed', String(order >= 0));
-      button.querySelector('.fighter-select-index').textContent = order >= 0 ? String(order + 1) : String(roster.findIndex((fighter) => fighter.id === id) + 1).padStart(2, '0');
+      button.disabled = chosen.length >= globalThis.CenFighterTeams.TEAM_SIZE;
+      button.querySelector('.fighter-select-index').textContent = count > 1
+        ? `×${count}`
+        : order >= 0 ? String(order + 1) : String(roster.findIndex((fighter) => fighter.id === id) + 1).padStart(2, '0');
+      button.setAttribute('aria-label', `Añadir ${fighterById(id).name}${count ? `. Seleccionado ${count} ${count === 1 ? 'vez' : 'veces'}` : ''}`);
     });
     selectionSummary.textContent = chosen.length === 3
       ? '3/3'
@@ -364,6 +399,8 @@
       slot.classList.toggle('is-first', Boolean(fighter && index === 0));
       slot.querySelector('span').textContent = fighter ? String(index + 1).padStart(2, '0') : `0${index + 1}`;
       slot.querySelector('strong').textContent = fighter?.name || ['Primer turno', 'Segundo turno', 'Tercer turno'][index];
+      slot.disabled = !fighter;
+      slot.setAttribute('aria-label', fighter ? `Quitar a ${fighter.name} del puesto ${index + 1}` : `Puesto ${index + 1} vacío`);
     });
     continueToStageButton.disabled = chosen.length !== 3;
     startButton.disabled = chosen.length !== 3;
@@ -371,6 +408,10 @@
     drawDifficultyPreview();
     document.getElementById('fighterSetupBalance').textContent = String(window.CenEconomy.getProfile()?.cents || 0);
   }
+
+  document.querySelectorAll('.fighter-team-slot').forEach((slot, index) => {
+    slot.addEventListener('click', () => removeFighter(index));
+  });
 
   function getDifficulty() {
     return document.querySelector('input[name="fighterDifficulty"]:checked')?.value || 'normal';
@@ -389,10 +430,15 @@
     playerName = window.CenGamesUI.getPlayerName();
     matchId = makeMatchId();
     const seed = globalThis.CenFighterRandom.normalizeSeed(matchId);
+    const selectedStage = stages.find((stage) => stage.id === selectedStageId);
     match = globalThis.CenFighterTeams.createMatch({
       playerTeam: chosen,
       roster,
-      seed
+      seed,
+      config: {
+        ...globalThis.CenFighterConfig,
+        arena: { ...globalThis.CenFighterConfig.arena, floorY: selectedStage.floorY }
+      }
     });
     controller = globalThis.CenFighterLearning.createController({
       side: 'right',

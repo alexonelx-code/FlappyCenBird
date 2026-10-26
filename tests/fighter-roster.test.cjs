@@ -5,6 +5,7 @@ require('../src/js/fighter/config.js');
 require('../src/js/fighter/engine.js');
 require('../src/js/fighter/random.js');
 require('../src/js/fighter/sprite-contract.js');
+require('../src/js/fighter/sprite-atlas.js');
 require('../src/js/fighter/roster.js');
 const teams = require('../src/js/fighter/team-match.js');
 const engine = globalThis.CenFighterEngine;
@@ -48,8 +49,10 @@ test('el catálogo tiene diez luchadores distintos con arquetipos y estadística
   });
   assert.equal(match.combatants[match.active.player].name, 'Luis');
   assert.equal(roster.entries[0].portraitSrc, 'assets/fighters/characters/luis-original.jpg');
-  assert.equal(roster.entries[0].sprite.visualScale, 0.82);
+  assert.equal(roster.entries[0].sprite.visualScale, 0.70);
   assert.deepEqual(roster.entries[0].sprite.anchor, { x: 114.5, y: 229 });
+  assert.equal(roster.entries[0].sprite.src, 'assets/fighters/characters/fighter-01.png');
+  assert.equal(roster.entries[0].spacingWidth, 168);
   assert.equal(match.duel.left.stats.health, 100);
   assert.equal(match.duel.right.stats.guardDamageScale, 0.22);
   assert.equal(match.duel.left.moves.light.damage, 8);
@@ -66,6 +69,23 @@ test('el catálogo tiene diez luchadores distintos con arquetipos y estadística
   const strike = engine.stepDuel(duel, { left: { attack: 'light' } });
   assert.equal(strike.state.right.health, 93);
   assert.equal(strike.events.some((event) => event.type === 'hit' && event.damage === 7), true);
+});
+
+test('permite tres Luis con reservas independientes y IDs de combate únicos', () => {
+  const match = teams.createMatch({
+    playerTeam: ['fighter-01', 'fighter-01', 'fighter-01'],
+    cpuTeam: ['fighter-02', 'fighter-02', 'fighter-02'],
+    seed: 24
+  });
+  const playerIds = match.teams.player.combatantIds;
+  const cpuIds = match.teams.cpu.combatantIds;
+
+  assert.deepEqual(match.teams.player.characterIds, ['fighter-01', 'fighter-01', 'fighter-01']);
+  assert.equal(new Set([...playerIds, ...cpuIds]).size, 6);
+  assert.deepEqual(playerIds, ['player:fighter-01', 'player:fighter-01:2', 'player:fighter-01:3']);
+  assert.notStrictEqual(match.combatants[playerIds[0]], match.combatants[playerIds[1]]);
+  assert.equal(match.combatants[playerIds[0]].health, 100);
+  assert.equal(match.combatants[playerIds[1]].health, 100);
 });
 
 test('valida el contrato de atlas, clips, ancla y hitboxes de manera independiente', () => {

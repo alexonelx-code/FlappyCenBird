@@ -50,6 +50,7 @@
         archetype: String(source.archetype || 'Peleador'),
         stats: definition.stats,
         moves: definition.moves,
+        spacingWidth: definition.spacingWidth,
         width: definition.stats.width,
         height: definition.stats.height,
         crouchHeight: definition.stats.crouchHeight,
@@ -75,9 +76,6 @@
     if (ids.some((id) => !rosterById.has(id))) {
       throw new RangeError(`${label} contiene un peleador que no existe en el catálogo.`);
     }
-    if (new Set(ids).size !== TEAM_SIZE) {
-      throw new RangeError(`${label} no puede repetir peleadores.`);
-    }
     return ids;
   }
 
@@ -93,10 +91,10 @@
     return { team: entries.slice(0, TEAM_SIZE), rngState };
   }
 
-  function makeCombatant(definition, side, config) {
+  function makeCombatant(definition, side, config, slotIndex = 0) {
     const fighter = config.fighter;
     return {
-      id: `${side}:${definition.id}`,
+      id: `${side}:${definition.id}${slotIndex ? `:${slotIndex + 1}` : ''}`,
       characterId: definition.id,
       name: definition.name,
       archetype: definition.archetype,
@@ -105,6 +103,7 @@
       stats: freezeDeep({ ...definition.stats }),
       moves: freezeDeep(Object.fromEntries(Object.entries(definition.moves).map(([id, move]) => [id, { ...move }]))),
       width: definition.width || fighter.width,
+      spacingWidth: definition.spacingWidth || fighter.spacingWidth || definition.width || fighter.width,
       height: definition.height || fighter.height,
       crouchHeight: definition.crouchHeight || fighter.crouchHeight,
       maxHealth: definition.maxHealth || fighter.health,
@@ -113,7 +112,7 @@
   }
 
   function makeTeam(characterIds, side, rosterById, config) {
-    const combatants = characterIds.map((id) => makeCombatant(rosterById.get(id), side, config));
+    const combatants = characterIds.map((id, index) => makeCombatant(rosterById.get(id), side, config, index));
     return {
       characterIds: characterIds.slice(),
       combatantIds: combatants.map((fighter) => fighter.id),
@@ -132,6 +131,7 @@
       sprite: combatant.sprite,
       x: undefined,
       width: combatant.width,
+      spacingWidth: combatant.spacingWidth,
       height: combatant.height,
       crouchHeight: combatant.crouchHeight,
       stats: combatant.stats,
@@ -166,10 +166,10 @@
     const cpuTeam = makeTeam(cpuIds, 'cpu', rosterById, config);
     const combatants = {};
     playerTeam.combatantIds.forEach((id, index) => {
-      combatants[id] = makeCombatant(rosterById.get(playerIds[index]), 'player', config);
+      combatants[id] = makeCombatant(rosterById.get(playerIds[index]), 'player', config, index);
     });
     cpuTeam.combatantIds.forEach((id, index) => {
-      combatants[id] = makeCombatant(rosterById.get(cpuIds[index]), 'cpu', config);
+      combatants[id] = makeCombatant(rosterById.get(cpuIds[index]), 'cpu', config, index);
     });
 
     const match = {

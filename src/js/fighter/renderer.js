@@ -9,16 +9,17 @@
     ['#8fdae5', '#356377', '#f4c89f'], ['#efa95d', '#8c4d32', '#ffe0aa']
   ];
   const HAIR_COLORS = ['#251d2a', '#4a2928', '#1d293e', '#5a382c', '#272437', '#56334a', '#2b3327', '#492936', '#1e3035', '#5c342b'];
+  const ROSTER_FOOT_ANCHORS = [510, 512, 512, 512, 512, 483, 483, 483, 480, 480];
   const spriteImages = new Map();
   const motionQuery = typeof window !== 'undefined' && typeof window.matchMedia === 'function'
     ? window.matchMedia('(prefers-reduced-motion: reduce)')
     : null;
   const STAGES = Object.freeze([
-    Object.freeze({ id: 'biblioteca', name: 'Biblioteca', description: 'Duelo bajo la luz del campus.', file: '01-biblioteca.png' }),
-    Object.freeze({ id: 'campus-nocturno', name: 'Campus de noche', description: 'Combate nocturno frente a la universidad.', file: '02-campus-nocturno.png' }),
-    Object.freeze({ id: 'jardin', name: 'Jardín universitario', description: 'Un claro verde rodeado de jardines.', file: '03-jardin.png' }),
-    Object.freeze({ id: 'fachada', name: 'Fachada UNICARIBE', description: 'La entrada principal como arena de combate.', file: '04-fachada.png' }),
-    Object.freeze({ id: 'monumento', name: 'Monumento del Caribe', description: 'Pelea junto al monumento de la ciudad.', file: '05-monumento.png' })
+    Object.freeze({ id: 'biblioteca', name: 'Biblioteca', description: 'Duelo bajo la luz del campus.', file: '01-biblioteca.png', floorY: 472 }),
+    Object.freeze({ id: 'campus-nocturno', name: 'Campus de noche', description: 'Combate nocturno frente a la universidad.', file: '02-campus-nocturno.png', floorY: 472 }),
+    Object.freeze({ id: 'jardin', name: 'Jardín universitario', description: 'Un claro verde rodeado de jardines.', file: '03-jardin.png', floorY: 472 }),
+    Object.freeze({ id: 'fachada', name: 'Fachada UNICARIBE', description: 'La entrada principal como arena de combate.', file: '04-fachada.png', floorY: 472 }),
+    Object.freeze({ id: 'monumento', name: 'Monumento del Caribe', description: 'Pelea junto al monumento de la ciudad.', file: '05-monumento.png', floorY: 472 })
   ]);
   let backgroundCanvas = null;
 
@@ -45,7 +46,7 @@
     return spriteImage(`assets/fighters/stages/${stage.file}`);
   }
 
-  function drawRosterSprite(ctx, fighter, frame, reducedMotion, portrait) {
+  function drawRosterSprite(ctx, fighter, frame, reducedMotion, portrait, groundY) {
     const image = spriteImage('assets/fighters/roster-atlas.png');
     if (!image) return false;
     const match = /fighter-(\d+)/.exec(fighter.characterId || fighter.id || '');
@@ -59,6 +60,8 @@
       ? Math.min(fighter.height * 1.15, 140)
       : fighter.height * 1.08;
     const artWidth = artHeight * spriteAspect * (portrait ? 1.35 : 1);
+    const footAnchor = ROSTER_FOOT_ANCHORS[index] || cellHeight;
+    const anchoredHeight = artHeight * footAnchor / cellHeight;
     const moving = Math.abs(fighter.vx) > 30 && fighter.grounded;
     const attack = fighter.attackId && fighter.moves && fighter.moves[fighter.attackId];
     const strikeStart = attack ? attack.startupFrames : 0;
@@ -71,12 +74,12 @@
 
     ctx.save();
     ctx.globalAlpha = fighter.knockedOut ? 0.55 : 1;
-    pixel(ctx, fighter.x - artWidth * 0.31, fighter.y + 5, artWidth * 0.62, 6, 'rgba(6, 11, 20, .55)');
+    drawGroundShadow(ctx, fighter, groundY, artWidth);
     ctx.translate(fighter.x + recoil + fighter.facing * lunge, fighter.y - bob);
     ctx.scale(fighter.facing, 1);
     ctx.imageSmoothingEnabled = false;
     ctx.drawImage(image, sourceX, sourceY, cellWidth, cellHeight,
-      -artWidth / 2, -artHeight, artWidth, artHeight);
+      -artWidth / 2, -anchoredHeight, artWidth, artHeight);
     if (striking) {
       const tint = fighter.attackId === 'special' ? '#b7f5ff'
         : fighter.attackId === 'heavy' ? '#ffe28a'
@@ -96,15 +99,17 @@
     return true;
   }
 
-  function drawSprite(ctx, fighter, frame, reducedMotion) {
+  function drawSprite(ctx, fighter, frame, reducedMotion, groundY) {
     const sprite = fighter.sprite;
     const contract = globalThis.CenFighterArtContract;
     if (!sprite || !contract) return false;
     const image = spriteImage(sprite.src);
     if (!image) return false;
     const clip = sprite.animations[contract.animationFor(fighter)];
-    const columns = Math.floor(image.naturalWidth / sprite.frameWidth);
-    const rows = Math.floor(image.naturalHeight / sprite.frameHeight);
+    const imageWidth = image.naturalWidth || image.width;
+    const imageHeight = image.naturalHeight || image.height;
+    const columns = Math.floor(imageWidth / sprite.frameWidth);
+    const rows = Math.floor(imageHeight / sprite.frameHeight);
     if (!columns || !rows || clip.frames.some((index) => index >= columns * rows)) return false;
     const animationFrame = fighter.attackId && !fighter.victorious
       ? fighter.attackFrame
@@ -114,16 +119,23 @@
     const step = reducedMotion ? 0 : Math.floor(animationFrame * clip.fps / 60);
     const clipStep = clip.loop ? step % clip.frames.length : Math.min(step, clip.frames.length - 1);
     const index = clip.frames[clipStep];
+    const extracted = globalThis.CenFighterSpriteAtlas?.getFrame(image, sprite.frameWidth, sprite.frameHeight, index);
     const scale = fighter.height * (sprite.visualScale || 1) / sprite.anchor.y;
     const width = sprite.frameWidth * scale;
     ctx.save();
     ctx.globalAlpha = fighter.knockedOut ? 0.58 : 1;
-    pixel(ctx, fighter.x - width * 0.34, fighter.y + 5, width * 0.68, 6, 'rgba(5, 12, 23, .38)');
+    drawGroundShadow(ctx, fighter, groundY, width);
     ctx.translate(fighter.x, fighter.y);
     ctx.scale(fighter.facing * scale, scale);
     ctx.imageSmoothingEnabled = false;
-    ctx.drawImage(image, (index % columns) * sprite.frameWidth, Math.floor(index / columns) * sprite.frameHeight,
-      sprite.frameWidth, sprite.frameHeight, -sprite.anchor.x, -sprite.anchor.y, sprite.frameWidth, sprite.frameHeight);
+    if (extracted) {
+      ctx.drawImage(extracted.image, 0, 0, extracted.width, extracted.height,
+        extracted.x - sprite.anchor.x, -extracted.height, extracted.width, extracted.height);
+    } else {
+      ctx.drawImage(image, (index % columns) * sprite.frameWidth, Math.floor(index / columns) * sprite.frameHeight,
+        sprite.frameWidth, sprite.frameHeight, -sprite.anchor.x, -sprite.anchor.y,
+        sprite.frameWidth, sprite.frameHeight);
+    }
     ctx.restore();
     return true;
   }
@@ -133,7 +145,17 @@
     ctx.fillRect(Math.round(x), Math.round(y), Math.round(width), Math.round(height));
   }
 
-  function drawFighter(ctx, fighter, side, frame, reducedMotion, portrait) {
+  function drawGroundShadow(ctx, fighter, groundY, artWidth) {
+    if (!Number.isFinite(groundY)) return;
+    const altitude = Math.max(0, groundY - fighter.y);
+    const scale = Math.max(0.45, 1 - altitude / 500);
+    const width = artWidth * 0.44 * scale;
+    const opacity = Math.max(0.12, 0.3 - altitude / 1000);
+    pixel(ctx, fighter.x - width / 2, groundY + 1, width, 2, `rgba(5, 12, 23, ${opacity})`);
+    pixel(ctx, fighter.x - width * 0.34, groundY + 3, width * 0.68, 1, `rgba(5, 12, 23, ${opacity * 0.65})`);
+  }
+
+  function drawFighter(ctx, fighter, side, frame, reducedMotion, portrait, groundY) {
     const [accent, shadow, skin] = paletteFor(fighter);
     const bodyHeight = fighter.crouching && fighter.grounded ? fighter.crouchHeight : fighter.height;
     const scaleX = bodyHeight / 116 * 1.24;
@@ -157,13 +179,13 @@
     const rect = (cx, bottom, width, height, color) => pixel(ctx, cx - width / 2, -bottom - height, width, height, color);
 
     ctx.save();
-    if (drawSprite(ctx, fighter, frame, reducedMotion)
-        || drawRosterSprite(ctx, fighter, frame, reducedMotion, portrait)) {
+    if (drawSprite(ctx, fighter, frame, reducedMotion, groundY)
+        || drawRosterSprite(ctx, fighter, frame, reducedMotion, portrait, groundY)) {
       ctx.restore();
       return;
     }
     ctx.globalAlpha = fighter.knockedOut ? 0.48 : 1;
-    pixel(ctx, fighter.x - fighter.width * 0.78, fighter.y + 5, fighter.width * 1.56, 7, 'rgba(9, 10, 24, .55)');
+    drawGroundShadow(ctx, fighter, groundY, fighter.width);
     ctx.translate(fighter.x + (fighter.hitstunFrames > 0 ? -fighter.facing * 3 : 0), fighter.y);
     ctx.scale(fighter.facing * scaleX, scaleY);
 
@@ -448,8 +470,9 @@
     const winnerSide = match.result?.winnerSide;
     const left = winnerSide === 'player' ? { ...match.duel.left, victorious: true } : match.duel.left;
     const right = winnerSide === 'cpu' ? { ...match.duel.right, victorious: true } : match.duel.right;
-    drawFighter(context, left, 'left', frame, reducedMotion, Boolean(options.portrait));
-    drawFighter(context, right, 'right', frame, reducedMotion, Boolean(options.portrait));
+    const groundY = match.duel.rules.arena.floorY;
+    drawFighter(context, left, 'left', frame, reducedMotion, Boolean(options.portrait), groundY);
+    drawFighter(context, right, 'right', frame, reducedMotion, Boolean(options.portrait), groundY);
     effects.forEach((effect) => drawImpact(context, effect, frame, reducedMotion));
   }
 
