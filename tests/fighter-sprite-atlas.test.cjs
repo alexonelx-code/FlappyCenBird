@@ -16,6 +16,17 @@ test('ignora ruido casi transparente que une poses vecinas', () => {
   assert.equal(frame.width, 1);
 });
 
+test('recupera pies que sobresalen más de 14 píxeles sin unir ruido tenue', () => {
+  const width = 60;
+  const pixels = new Uint8ClampedArray(width * 80 * 4);
+  for (let y = 8; y <= 57; y += 1) pixels[(y * width + 30) * 4 + 3] = 255;
+  for (let x = 31; x < 49; x += 1) pixels[(20 * width + x) * 4 + 3] = 90;
+  pixels[(20 * width + 49) * 4 + 3] = 255;
+  const frame = atlas.extractFrame(pixels, width, 80, 60, 40, 0, 1);
+  assert.equal(frame.y + frame.height - 1, 57);
+  assert.equal(frame.width, 1);
+});
+
 test('recupera los píxeles que rebasan una celda y descarta fragmentos vecinos', () => {
   const atlasWidth = 8;
   const atlasHeight = 16;

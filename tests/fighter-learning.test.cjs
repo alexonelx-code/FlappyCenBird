@@ -21,6 +21,22 @@ function memoryStorage() {
   };
 }
 
+test('la CPU fácil deja más intervalos entre ataques que la normal', () => {
+  const duel = engine.createDuel({ left: { x: 400 }, right: { x: 500 } });
+  const countAttacks = (difficulty) => {
+    let controller = learning.createController({ difficulty, seed: 25 });
+    controller.table = { 'close:safe:even:free': Object.fromEntries(learning.ACTIONS.map((action) => [action, action === 'light' ? 30 : 0])) };
+    let attacks = 0;
+    for (let frame = 0; frame < 1200; frame += 1) {
+      const result = learning.stepController(controller, duel);
+      controller = result.state;
+      if (result.input.attack) attacks += 1;
+    }
+    return attacks;
+  };
+  assert.ok(countAttacks('muy-facil') < countAttacks('normal'));
+});
+
 test('la política de combate es reproducible con la misma semilla', () => {
   const first = learning.createController({ difficulty: 'normal', seed: 173 });
   const second = learning.createController({ difficulty: 'normal', seed: 173 });

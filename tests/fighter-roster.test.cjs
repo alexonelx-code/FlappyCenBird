@@ -13,6 +13,17 @@ const roster = globalThis.CenFighterRoster;
 const art = globalThis.CenFighterArtContract;
 const config = globalThis.CenFighterConfig;
 
+test('la pose refleja defensa aérea, defensa baja, caída y recuperación', () => {
+  const fighter = { grounded: true, guarding: true, crouching: false, hitstunFrames: 0, vx: 0 };
+  assert.equal(art.animationFor(fighter), 'block');
+  assert.equal(art.animationFor({ ...fighter, crouching: true }), 'blockCrouch');
+  assert.equal(art.animationFor({ ...fighter, grounded: false }), 'blockAir');
+  assert.equal(art.animationFor({ ...fighter, guarding: false, knockdownFrames: 28, hitstunFrames: 28 }), 'hurt');
+  assert.equal(art.animationFor({ ...fighter, guarding: false, knockdownFrames: 20, hitstunFrames: 20 }), 'down');
+  assert.equal(art.animationFor({ ...fighter, guarding: false, knockdownFrames: 8, hitstunFrames: 8 }), 'getup');
+  assert.equal(art.animationFor({ ...fighter, knockedOut: true }), 'ko');
+});
+
 function spriteDefinition() {
   const animations = Object.fromEntries(art.ANIMATIONS.map((name) => [name, {
     frames: [0, 1], fps: 8, loop: name !== 'ko'
@@ -35,7 +46,7 @@ function spriteDefinition() {
 
 test('el catálogo tiene diez luchadores distintos con arquetipos y estadísticas propias', () => {
   assert.deepEqual(config.controls.attacks, {
-    KeyZ: 'light', KeyX: 'medium', KeyC: 'heavy', KeyV: 'special'
+    KeyZ: 'light', KeyX: 'medium', KeyC: 'special'
   });
   assert.equal(roster.entries.length, 10);
   assert.equal(new Set(roster.entries.map((fighter) => fighter.id)).size, 10);

@@ -349,6 +349,17 @@
     next.frame += 1;
 
     if (next.phase === 'transition') {
+      next.duel = { ...next.duel, left: { ...next.duel.left }, right: { ...next.duel.right } };
+      for (const fighter of [next.duel.left, next.duel.right]) {
+        if (!fighter.knockedOut || fighter.grounded) continue;
+        const physics = next.duel.rules.physics;
+        fighter.vy = Math.min(fighter.vy + physics.gravity / next.duel.tickRate, physics.maxFallSpeed);
+        fighter.y = Math.min(next.duel.rules.arena.floorY, fighter.y + fighter.vy / next.duel.tickRate);
+        if (fighter.y >= next.duel.rules.arena.floorY) {
+          fighter.grounded = true;
+          fighter.vy = 0;
+        }
+      }
       next.transitionRemainingFrames = Math.max(0, next.transitionRemainingFrames - 1);
       if (next.transitionRemainingFrames === 0) {
         next.boutNumber += 1;

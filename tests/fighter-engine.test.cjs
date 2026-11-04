@@ -15,10 +15,169 @@ function configWith(overrides = {}) {
   return config;
 }
 
+test('el proyectil viaja, golpea una sola vez y no hace daño a distancia instantáneamente', () => {
+  let duel = engine.createDuel({ left: { x: 250 }, right: { x: 650 } });
+  let hits = 0;
+  for (let i = 0; i < 90; i += 1) {
+    const result = engine.stepDuel(duel, { left: { attack: i === 0 ? 'special' : null } });
+    duel = result.state;
+    if (i < 20) assert.equal(duel.right.health, 100);
+    hits += result.events.filter((event) => event.type === 'hit' && event.moveId === 'special').length;
+  }
+  assert.equal(hits, 1);
+  assert.equal(duel.right.health, 79);
+  assert.equal(duel.projectiles.length, 0);
+});
+
+test('la definitiva exige carga, la consume y lanza un proyectil más potente', () => {
+  let duel = engine.createDuel({ left: { x: 250 }, right: { x: 650 } });
+  duel = engine.stepDuel(duel, { left: { attack: 'ultimate' } }).state;
+  assert.equal(duel.left.attackId, null);
+  duel.left.ultimateCharge = 100;
+  duel = engine.stepDuel(duel).state;
+  duel = engine.stepDuel(duel, { left: { attack: 'ultimate' } }).state;
+  assert.equal(duel.left.attackId, 'ultimate');
+  assert.equal(duel.left.ultimateCharge, 0);
+  const events = [];
+  for (let i = 0; i < 90; i += 1) {
+    const result = engine.stepDuel(duel);
+    duel = result.state;
+    events.push(...result.events);
+  }
+  assert.equal(duel.right.health, 68);
+  assert.equal(events.filter((event) => event.type === 'hit' && event.moveId === 'ultimate').length, 1);
+});
+
+test('la defensa detiene el proyectil y aplica daño de bloqueo una sola vez', () => {
+  let duel = engine.createDuel({ left: { x: 250 }, right: { x: 650 } });
+  const events = [];
+  for (let i = 0; i < 90; i += 1) {
+    const result = engine.stepDuel(duel, { left: { attack: i === 0 ? 'special' : null }, right: { block: true } });
+    duel = result.state;
+    events.push(...result.events);
+  }
+  assert.equal(events.filter((event) => event.type === 'blocked').length, 1);
+  assert.equal(duel.right.health, 95);
+  assert.equal(duel.projectiles.length, 0);
+});
+
+test('puño conectado puede encadenarse a patada y después al proyectil', () => {
+  const config = configWith({ light: { startupFrames: 0, activeFrames: 1, recoveryFrames: 12, reach: 220, knockback: 0 } });
+  Object.assign(config.moves.medium, { startupFrames: 0, activeFrames: 1, recoveryFrames: 12, reach: 220, knockback: 0 });
+  let duel = engine.createDuel({ config, left: { x: 400 }, right: { x: 500 } });
+  duel = engine.stepDuel(duel, { left: { attack: 'light' } }).state;
+  assert.equal(duel.right.health, 92);
+  duel = engine.stepDuel(duel, { left: { attack: 'medium' } }).state;
+  assert.equal(duel.left.attackId, 'medium');
+  assert.equal(duel.right.health, 82);
+  duel = engine.stepDuel(duel, { left: { attack: 'special' } }).state;
+  assert.equal(duel.left.attackId, 'special');
+});
+
+test('el combo de Luis conecta a distancia mínima incluso si el rival intenta cubrirse', () => {
+  let duel = engine.createDuel({ left: { ...globalThis.CenFighterRoster.entries[0], x: 400 }, right: { x: 546 } });
+  const hits = [];
+  for (let frame = 0; frame < 60; frame += 1) {
+    const attack = frame === 0 ? 'light' : frame === 8 ? 'medium' : frame === 18 ? 'special' : null;
+    const result = engine.stepDuel(duel, { left: { attack }, right: { block: frame >= 16 } });
+    duel = result.state;
+    hits.push(...result.events.filter((event) => event.type === 'hit').map((event) => event.moveId));
+  }
+  assert.deepEqual(hits, ['light', 'medium', 'special']);
+});
+
+test('la defensa funciona de pie, agachado y en el aire', () => {
+  const config = configWith({ light: { startupFrames: 0, activeFrames: 1, recoveryFrames: 0, reach: 220 } });
+  for (const stance of ['standing', 'crouch', 'air']) {
+    let duel = engine.createDuel({ config, left: { x: 400 }, right: { x: 500 } });
+    if (stance === 'air') duel = engine.stepDuel(duel, { right: { jump: true } }).state;
+    const result = engine.stepDuel(duel, { left: { attack: 'light' }, right: { block: true, crouch: stance === 'crouch' } });
+    assert.ok(result.events.some((event) => event.type === 'blocked'), stance);
+    assert.equal(result.state.right.guarding, true);
+    assert.equal(result.state.right.crouching, stance === 'crouch');
+  }
+});
+
+test('un golpe fuerte tumba, protege durante la caída y permite levantarse', () => {
+  const config = configWith();
+  Object.assign(config.moves.heavy, { startupFrames: 0, activeFrames: 1, recoveryFrames: 0, reach: 220 });
+  let duel = engine.createDuel({ config, left: { x: 400 }, right: { x: 500 } });
+  duel = engine.stepDuel(duel, { left: { attack: 'heavy' } }).state;
+  assert.equal(duel.right.knockdownFrames, 30);
+  const health = duel.right.health;
+  duel = engine.stepDuel(duel, { left: { attack: 'light' }, right: { moveX: 1, jump: true } }).state;
+  assert.equal(duel.right.health, health);
+  assert.equal(duel.right.grounded, true);
+  for (let i = 0; i < 30; i += 1) duel = engine.stepDuel(duel).state;
+  assert.equal(duel.right.knockdownFrames, 0);
+  duel = engine.stepDuel(duel, { right: { jump: true } }).state;
+  assert.equal(duel.right.grounded, false);
+});
+
+test('un KO en el aire cae al suelo durante la transición sin mutar el estado anterior', () => {
+  const config = configWith({ light: { startupFrames: 0, activeFrames: 1, recoveryFrames: 0, reach: 220, damage: 100 } });
+  let match = teams.createMatch({ config, playerTeam: ['fighter-01', 'fighter-01', 'fighter-01'], cpuTeam: ['fighter-02', 'fighter-02', 'fighter-02'], seed: 7 });
+  match.duel.left.x = 400;
+  match.duel.right.x = 500;
+  match.duel.right.health = 1;
+  match.duel.right.grounded = false;
+  match.duel.right.y = config.arena.floorY - 25;
+  match.duel.right.vy = 0;
+  match = teams.stepMatch(match, { player: { attack: 'light' } }).state;
+  for (let i = 0; i < 8 && match.phase === 'fight'; i += 1) match = teams.stepMatch(match).state;
+  assert.equal(match.phase, 'transition');
+  const original = match;
+  while (match.phase === 'transition' && !match.duel.right.grounded) match = teams.stepMatch(match).state;
+  assert.equal(match.duel.right.y, config.arena.floorY);
+  assert.equal(original.duel.right.grounded, false);
+});
+
+test('se pueden lanzar puños y patadas en el aire conservando impulso', () => {
+  for (const attack of ['light', 'medium']) {
+    let duel = engine.createDuel();
+    duel = engine.stepDuel(duel, { left: { jump: true, moveX: 1 } }).state;
+    const speed = duel.left.vx;
+    duel = engine.stepDuel(duel, { left: { attack } }).state;
+    assert.equal(duel.left.attackId, attack);
+    assert.equal(duel.left.vx, speed);
+  }
+});
+
+test('un ataque bloqueado mantiene la cobertura durante la recuperación', () => {
+  let duel = engine.createDuel({
+    config: configWith({ light: { startupFrames: 0, activeFrames: 1, recoveryFrames: 4, reach: 220 } }),
+    left: { x: 400 }, right: { x: 500 }
+  });
+  duel = engine.stepDuel(duel, { left: { attack: 'light' }, right: { block: true } }).state;
+  assert.equal(duel.right.blockstunFrames, 6);
+  duel = engine.stepDuel(duel, { right: { attack: 'light', attackPulse: true } }).state;
+  assert.equal(duel.right.guarding, true);
+  assert.equal(duel.right.attackId, null);
+  for (let i = 0; i < 6; i += 1) duel = engine.stepDuel(duel).state;
+  assert.equal(duel.right.attackId, 'light');
+});
+
+test('pulsaciones consecutivas del mismo ataque se guardan durante la recuperación', () => {
+  let duel = engine.createDuel();
+  duel = engine.stepDuel(duel, { left: { attack: 'light', attackPulse: true } }).state;
+  duel = engine.stepDuel(duel, { left: { attack: 'light', attackPulse: true } }).state;
+  assert.equal(duel.left.bufferedAttack.id, 'light');
+});
+
+test('un nuevo pulso de salto se conserva aunque el salto anterior todavía esté registrado', () => {
+  let duel = engine.createDuel();
+  duel = engine.stepDuel(duel, { left: { jump: true } }).state;
+  duel = engine.stepDuel(duel, { left: { jump: true, jumpPulse: true } }).state;
+  assert.ok(duel.left.bufferedJump > 0);
+});
+
 test('acepta ataques al agacharse y evita desplazarse agachado', () => {
   let duel = engine.createDuel();
+  duel = engine.stepDuel(duel, { left: { moveX: 1 } }).state;
+  const beforeCrouch = duel.left.x;
   duel = engine.stepDuel(duel, { left: { crouch: true, moveX: 1 } }).state;
-  assert.equal(duel.left.x, engine.createDuel().left.x);
+  assert.equal(duel.left.x, beforeCrouch);
+  assert.equal(duel.left.vx, 0);
   duel = engine.stepDuel(duel, { left: { crouch: true, attack: 'light' } }).state;
   assert.equal(duel.left.attackId, 'light');
 });
@@ -77,6 +236,8 @@ test('el duelo es determinista y cada impacto activo se aplica una sola vez', ()
 
   assert.strictEqual(original.left.health, 100);
   assert.equal(events.filter((event) => event.type === 'hit').length, 1);
+  const impact = events.find((event) => event.type === 'hit');
+  assert.ok(Number.isFinite(impact.x) && Number.isFinite(impact.y));
   assert.equal(first.right.health, 92);
 });
 

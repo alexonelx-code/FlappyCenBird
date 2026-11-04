@@ -1,0 +1,77 @@
+/* Cen Fighters takes its visual cues from campus sports posters. */
+#fighterSetupScreen {
+  background: #172c30;
+  background-image: linear-gradient(90deg, transparent 49.9%, rgba(236, 223, 184, .04) 50%, transparent 50.1%);
+}
+#fighterSetupScreen .fighter-brand { color: #f2e7c9; letter-spacing: .08em; }
+#fighterSetupScreen .fighter-brand strong { color: #e8ad4c; }
+#fighterSetupScreen .fighter-setup-content h1 {
+  color: #f4e9cb;
+  font-family: Georgia, serif;
+  font-weight: 800;
+  letter-spacing: -.035em;
+  text-shadow: none;
+}
+#fighterSetupScreen .fighter-setup-steps > span {
+  border-radius: 2px;
+  border-color: #6d8580;
+  background: #203b3c;
+  box-shadow: none;
+}
+#fighterSetupScreen .fighter-setup-steps > span.is-current {
+  color: #172c30;
+  background: #e9bc65;
+  border-color: #e9bc65;
+}
+#fighterSetupScreen .fighter-setup-steps > span.is-current b { color: #172c30; }
+#fighterSetupScreen .fighter-feature-card,
+#fighterSetupScreen .fighter-roster-panel {
+  border: 1px solid #6b827a;
+  border-radius: 3px;
+  background: #213d3d;
+  box-shadow: 6px 6px 0 #102326;
+}
+#fighterSetupScreen .fighter-select-card,
+#fighterSetupScreen .fighter-team-slot,
+#fighterSetupScreen .fighter-stage-card,
+#fighterSetupScreen .fighter-difficulty-fieldset label {
+  border-radius: 3px;
+  background: #294746;
+  box-shadow: none;
+}
+#fighterSetupScreen .fighter-select-card[aria-pressed="true"] {
+  border-color: #f0c46d;
+  background: #3d5144;
+  box-shadow: inset 0 -3px #f0c46d;
+}
+#fighterSetupScreen .fighter-primary-button {
+  border-radius: 3px;
+  background: #e8b554;
+  color: #172c30;
+  box-shadow: 3px 3px 0 #102326;
+}
+.fighter-face-pad .face-guard { grid-area: 2 / 2; background: #334f55; color: #fff8e8; }
+.fighter-ultimate-track { height: 4px; margin-top: 3px; background: rgba(12, 23, 35, .85); border: 1px solid rgba(255, 228, 171, .5); }
+.fighter-ultimate-track > span { display: block; width: 0; height: 100%; background: #f3c45f; transition: width .12s linear; }
+.fighter-combat-guide { color: #f2e7c9; font: 600 13px/1.5 system-ui, sans-serif; }
+#fighterSetupScreen .fighter-setup-step:not([hidden]) { animation: fighter-step-in .22s ease-out both; }
+#fighterSetupScreen button:focus-visible { outline: 3px solid #f2c96d; outline-offset: 3px; }
+@keyframes fighter-step-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.fighter-face-pad button {
+  transition: transform 70ms ease-out, filter 70ms ease-out, box-shadow 70ms ease-out;
+  -webkit-tap-highlight-color: transparent;
+}
+.fighter-face-pad button.is-pressed {
+  transform: scale(.9) translateY(2px);
+  filter: brightness(1.3);
+  box-shadow: inset 0 2px 5px rgba(0, 0, 0, .45);
+}
+.fighter-analog-stick { -webkit-tap-highlight-color: transparent; }
+.fighter-analog-stick.is-active { filter: brightness(1.2); }
+@media (prefers-reduced-motion: reduce) {
+  .fighter-face-pad button { transition: none; }
+  #fighterSetupScreen .fighter-setup-step:not([hidden]) { animation: none; }
+}

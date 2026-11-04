@@ -2,10 +2,10 @@
   'use strict';
 
   const cachedFrames = new Map();
-  const ALPHA_THRESHOLD = 16;
+  const ALPHA_THRESHOLD = 128;
 
-  // Poses overflow their cells, so recover a 14-pixel gutter without swallowing the next pose.
-  function extractFrame(pixels, atlasWidth, atlasHeight, frameWidth, frameHeight, index, columns, padding = 14) {
+  // The source poses extend beyond their cells; faint compression noise must not join neighboring poses.
+  function extractFrame(pixels, atlasWidth, atlasHeight, frameWidth, frameHeight, index, columns, padding = 28) {
     const cellX = index % columns * frameWidth;
     const cellY = Math.floor(index / columns) * frameHeight;
     const left = Math.max(0, cellX - padding);

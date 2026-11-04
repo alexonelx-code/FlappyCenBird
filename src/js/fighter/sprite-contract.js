@@ -1,7 +1,7 @@
 (() => {
   'use strict';
 
-  const ANIMATIONS = Object.freeze(['idle', 'walk', 'jump', 'crouch', 'block', 'light', 'medium', 'heavy', 'special', 'hurt', 'ko', 'enter', 'victory']);
+  const ANIMATIONS = Object.freeze(['idle', 'walk', 'jump', 'crouch', 'block', 'blockCrouch', 'blockAir', 'light', 'medium', 'heavy', 'special', 'ultimate', 'hurt', 'down', 'getup', 'ko', 'enter', 'victory']);
 
   function clone(value) {
     return JSON.parse(JSON.stringify(value));
@@ -40,6 +40,10 @@
         && (!Number.isFinite(definition.visualScale) || definition.visualScale <= 0 || definition.visualScale > 1.5)) {
       throw new RangeError('La escala visual del atlas debe ser positiva y menor o igual a 1.5.');
     }
+    if (definition.frameOffsets !== undefined && (!definition.frameOffsets || typeof definition.frameOffsets !== 'object'
+        || Object.entries(definition.frameOffsets).some(([index, value]) => !/^\d+$/.test(index) || !Number.isFinite(value)))) {
+      throw new RangeError('Los ajustes horizontales del atlas deben ser números finitos por frame.');
+    }
     if (!animations || typeof animations !== 'object') throw new TypeError('El atlas necesita clips de animación.');
     ANIMATIONS.forEach((name) => {
       const clip = animations[name];
@@ -62,11 +66,14 @@
 
   function animationFor(fighter) {
     if (fighter.knockedOut) return 'ko';
+    if (fighter.knockdownFrames > 0 && fighter.grounded) {
+      return fighter.knockdownFrames > 24 ? 'hurt' : fighter.knockdownFrames > 10 ? 'down' : 'getup';
+    }
     if (fighter.hitstunFrames > 0) return 'hurt';
     if (fighter.victorious) return 'victory';
     if (fighter.attackId) return fighter.attackId;
+    if (fighter.guarding) return !fighter.grounded ? 'blockAir' : fighter.crouching ? 'blockCrouch' : 'block';
     if (!fighter.grounded) return 'jump';
-    if (fighter.guarding) return 'block';
     if (fighter.crouching) return 'crouch';
     if (Math.abs(fighter.vx) > 12) return 'walk';
     return 'idle';

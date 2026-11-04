@@ -120,10 +120,14 @@
     const attack = fighter.attackId && !fighter.victorious && fighter.moves?.[fighter.attackId];
     const phase = attack && fighter.attackFrame >= attack.startupFrames
       ? (fighter.attackFrame < attack.startupFrames + attack.activeFrames ? 1 : 2) : 0;
-    const clipStep = attack && clip.frames.length >= 3
+    let clipStep = attack && clip.frames.length >= 3
       ? phase
       : clip.loop ? step % clip.frames.length : Math.min(step, clip.frames.length - 1);
+    if (clip === sprite.animations.walk && fighter.vx * fighter.facing < 0) {
+      clipStep = clip.frames.length - 1 - clipStep;
+    }
     const index = clip.frames[clipStep];
+    const frameOffset = sprite.frameOffsets?.[index] || 0;
     const extracted = globalThis.CenFighterSpriteAtlas?.getFrame(image, sprite.frameWidth, sprite.frameHeight, index);
     const scale = fighter.height * (sprite.visualScale || 1) / sprite.anchor.y;
     const width = sprite.frameWidth * scale;
@@ -135,13 +139,18 @@
     ctx.imageSmoothingEnabled = false;
     if (extracted) {
       ctx.drawImage(extracted.image, 0, 0, extracted.width, extracted.height,
-        extracted.x - sprite.anchor.x, -extracted.height, extracted.width, extracted.height);
+        extracted.x - sprite.anchor.x + frameOffset, -extracted.height, extracted.width, extracted.height);
     } else {
       ctx.drawImage(image, (index % columns) * sprite.frameWidth, Math.floor(index / columns) * sprite.frameHeight,
-        sprite.frameWidth, sprite.frameHeight, -sprite.anchor.x, -sprite.anchor.y,
+        sprite.frameWidth, sprite.frameHeight, -sprite.anchor.x + frameOffset, -sprite.anchor.y,
         sprite.frameWidth, sprite.frameHeight);
     }
     ctx.restore();
+    if (fighter.guarding) {
+      const h = fighter.crouching ? fighter.crouchHeight : fighter.height;
+      const x = fighter.x + fighter.facing * fighter.width * 0.62;
+      pixel(ctx, x - 2, fighter.y - h * 0.78, 4, h * 0.44, 'rgba(132, 222, 224, .8)');
+    }
     return true;
   }
 
@@ -449,9 +458,10 @@
   function drawImpact(ctx, effect, frame, reducedMotion) {
     const age = frame - effect.frame;
     if (age < 0 || age > 10) return;
-    const growth = reducedMotion ? 0 : Math.floor(age / 2) * 3;
-    const size = reducedMotion ? 4 : Math.max(2, 5 - Math.floor(age / 3));
-    const radius = 9 + growth;
+    const strength = effect.strength || 1;
+    const growth = reducedMotion ? 0 : Math.floor(age / 2) * 3 * strength;
+    const size = reducedMotion ? 4 : Math.max(2, (5 - Math.floor(age / 3)) * strength);
+    const radius = 9 * strength + growth;
     const color = effect.type === 'blocked' ? '#a9eaff' : '#ffe2a1';
     ctx.save();
     ctx.globalAlpha = reducedMotion ? 0.78 : 1 - age / 11;
@@ -476,8 +486,16 @@
     const left = winnerSide === 'player' ? { ...match.duel.left, victorious: true } : match.duel.left;
     const right = winnerSide === 'cpu' ? { ...match.duel.right, victorious: true } : match.duel.right;
     const groundY = match.duel.rules.arena.floorY;
-    drawFighter(context, left, 'left', frame, reducedMotion, Boolean(options.portrait), groundY);
-    drawFighter(context, right, 'right', frame, reducedMotion, Boolean(options.portrait), groundY);
+    (match.duel.projectiles || []).forEach((projectile) => {
+      const radius = projectile.moveId === 'ultimate' ? 20 : 13;
+      const color = projectile.moveId === 'ultimate' ? '#f5bb57' : '#55cfe5';
+      pixel(context, projectile.x - radius, projectile.y - radius * .45, radius * 2, radius * .9, color);
+      pixel(context, projectile.x - radius * .65, projectile.y - radius * .8, radius * 1.3, radius * 1.6, color);
+      pixel(context, projectile.x - radius * .45, projectile.y - radius * .35, radius * .9, radius * .7, '#fff8d0');
+    });
+    const animationFrame = options.animationFrame ?? frame;
+    drawFighter(context, left, 'left', animationFrame, reducedMotion, Boolean(options.portrait), groundY);
+    drawFighter(context, right, 'right', animationFrame, reducedMotion, Boolean(options.portrait), groundY);
     effects.forEach((effect) => drawImpact(context, effect, frame, reducedMotion));
   }
 

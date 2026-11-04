@@ -21,6 +21,7 @@
   const sound = window.FlappyAudio;
   const pressed = new Set();
   const keyboardPressed = new Map();
+  const holdPointers = new Map();
   const touchAnalog = { x: 0, y: 0 };
   let chosen = [];
   let roster = globalThis.CenFighterRoster?.entries || globalThis.CenFighterTeams.DEFAULT_ROSTER;
@@ -35,10 +36,14 @@
   let lastFrameTime = 0;
   let accumulator = 0;
   let renderFrame = 0;
+  let simulationFrame = 0;
+  let hitstopFrames = 0;
+  let stickPointerId = null;
   let canvasPortrait = false;
   let portraitCameraX = 480;
   let canvasPixelRatio = 1;
   let pendingAttack = null;
+  let pendingJump = false;
   let impactEffects = [];
   let lastHudSignature = '';
   let playerName = 'Jugador';
@@ -119,9 +124,12 @@
   function clearInputs() {
     pressed.clear();
     keyboardPressed.clear();
+    holdPointers.clear();
     pendingAttack = null;
+    pendingJump = false;
     touchAnalog.x = 0;
     touchAnalog.y = 0;
+    stickPointerId = null;
     const thumb = document.querySelector('.fighter-analog-thumb');
     if (thumb) thumb.style.transform = '';
     document.querySelector('[data-fighter-analog]')?.classList.remove('is-active');
@@ -453,7 +461,10 @@
     accumulator = 0;
     lastFrameTime = 0;
     renderFrame = 0;
+    simulationFrame = 0;
+    hitstopFrames = 0;
     pendingAttack = null;
+    pendingJump = false;
     impactEffects = [];
     lastHudSignature = '';
     pauseOverlay.hidden = true;
@@ -506,7 +517,9 @@
   function draw() {
     impactEffects = impactEffects.filter((effect) => renderFrame - effect.frame <= 10);
     applyCanvasTransform();
-    globalThis.CenFighterRenderer.draw(context, match, renderFrame, impactEffects, { portrait: canvasPortrait, stageId: selectedStageId });
+    globalThis.CenFighterRenderer.draw(context, match, renderFrame, impactEffects, {
+      portrait: canvasPortrait, stageId: selectedStageId, animationFrame: simulationFrame
+    });
   }
 
   function processEvents(events) {
@@ -514,12 +527,14 @@
     let entrant = null;
     events.forEach((event) => {
       if (event.type === 'hit' || event.type === 'blocked') {
+        hitstopFrames = Math.max(hitstopFrames, event.type === 'blocked' ? 1 : event.moveId === 'ultimate' ? 5 : 3);
         const defender = [match.duel.left, match.duel.right].find((fighter) => fighter.id === event.defenderId);
         if (defender) impactEffects.push({
           type: event.type,
           frame: renderFrame,
-          x: defender.x,
-          y: defender.y - (defender.crouching ? defender.crouchHeight : defender.height) * 0.62
+          x: Number.isFinite(event.x) ? event.x : defender.x,
+          y: Number.isFinite(event.y) ? event.y : defender.y - (defender.crouching ? defender.crouchHeight : defender.height) * 0.62,
+          strength: event.moveId === 'ultimate' ? 2 : event.moveId === 'heavy' || event.moveId === 'special' ? 1.5 : 1
         });
         if (event.type === 'hit') sound?.fighterHit();
         else sound?.fighterBlock();
@@ -546,12 +561,16 @@
     const analogX = Math.abs(touchAnalog.x) < 0.14
       ? 0
       : Math.sign(touchAnalog.x) * (Math.abs(touchAnalog.x) - 0.14) / 0.86;
+    const guard = held('block');
+    const ultimate = guard && pendingAttack === 'special' && match.phase === 'fight' && match.duel.left.ultimateCharge >= 100;
     return {
       moveX: digitalX || analogX,
-      jump: held('jump') || touchAnalog.y < -0.6,
+      jump: pendingJump || held('jump') || touchAnalog.y < -0.6,
+      jumpPulse: pendingJump,
       crouch: held('crouch') || touchAnalog.y > 0.6,
-      block: held('block'),
-      attack: pendingAttack
+      block: guard && !ultimate,
+      attack: ultimate ? 'ultimate' : pendingAttack,
+      attackPulse: Boolean(pendingAttack)
     };
   }
 
@@ -562,6 +581,12 @@
     if (!paused) {
       let steps = 0;
       while (accumulator >= tickDuration && steps < 6 && match.phase !== 'finished') {
+        if (hitstopFrames > 0) {
+          hitstopFrames -= 1;
+          accumulator -= tickDuration;
+          steps += 1;
+          continue;
+        }
         const playerInput = inputForPlayer();
         let cpuInput = {};
         if (match.phase === 'fight') {
@@ -571,8 +596,10 @@
         }
         const update = globalThis.CenFighterTeams.stepMatch(match, { player: playerInput, cpu: cpuInput });
         match = update.state;
+        simulationFrame += 1;
         processEvents(update.events);
         pendingAttack = null;
+        pendingJump = false;
         accumulator -= tickDuration;
         steps += 1;
         renderHud();
@@ -621,6 +648,7 @@
     const playerMax = player ? player.maxHealth : 1;
     const cpuMax = cpuFighter ? cpuFighter.maxHealth : 1;
     const signature = [phase, duel.phase, match.boutNumber, seconds, playerId, cpuId, playerHealth, playerMax, cpuHealth, cpuMax,
+      duel.left.ultimateCharge, duel.right.ultimateCharge,
       match.teams.player.eliminated.join(','), match.teams.cpu.eliminated.join(',')].join('|');
     if (signature === lastHudSignature) return;
     lastHudSignature = signature;
@@ -635,6 +663,10 @@
     document.getElementById('fighterCpuHealth').style.width = `${Math.max(0, cpuHealth / cpuMax * 100)}%`;
     document.getElementById('fighterPlayerHealth').setAttribute('aria-label', `Vida: ${playerHealth} de ${playerMax}`);
     document.getElementById('fighterCpuHealth').setAttribute('aria-label', `Vida CPU: ${cpuHealth} de ${cpuMax}`);
+    const charge = duel.left.ultimateCharge;
+    const meter = document.getElementById('fighterPlayerUltimate');
+    meter.style.width = `${charge}%`;
+    meter.parentElement.setAttribute('aria-label', `Definitiva: ${charge} de 100${charge === 100 ? ', lista: cubrir y proyectil' : ''}`);
     renderReserves(document.getElementById('fighterPlayerReserves'), 'player');
     renderReserves(document.getElementById('fighterCpuReserves'), 'cpu');
   }
@@ -694,6 +726,7 @@
     lastHudSignature = '';
     match = null;
     controller = null;
+    hitstopFrames = 0;
     pauseOverlay.hidden = true;
     resultOverlay.hidden = true;
     window.CenGamesUI.showScreen('games');
@@ -730,11 +763,12 @@
       ArrowRight: 'right', KeyD: 'right',
       ArrowUp: 'jump', KeyW: 'jump', Space: 'jump',
       ArrowDown: 'crouch', KeyS: 'crouch',
-      KeyJ: 'block', ShiftLeft: 'block', ShiftRight: 'block'
+      KeyJ: 'block', KeyV: 'block', ShiftLeft: 'block', ShiftRight: 'block'
     };
     const attack = globalThis.CenFighterConfig.controls.attacks[event.code];
     if (controls[event.code]) {
       event.preventDefault();
+      if (controls[event.code] === 'jump' && !Array.from(keyboardPressed.values()).includes('jump')) pendingJump = true;
       keyboardPressed.set(event.code, controls[event.code]);
     } else if (attack) {
       event.preventDefault();
@@ -746,7 +780,7 @@
     const controls = {
       ArrowLeft: 'left', KeyA: 'left', ArrowRight: 'right', KeyD: 'right',
       ArrowUp: 'jump', KeyW: 'jump', Space: 'jump', ArrowDown: 'crouch', KeyS: 'crouch',
-      KeyJ: 'block', ShiftLeft: 'block', ShiftRight: 'block'
+      KeyJ: 'block', KeyV: 'block', ShiftLeft: 'block', ShiftRight: 'block'
     };
     if (controls[event.code]) keyboardPressed.delete(event.code);
   }
@@ -755,13 +789,16 @@
     document.querySelectorAll('[data-fighter-hold]').forEach((button) => {
       const key = button.dataset.fighterHold;
       button.addEventListener('pointerdown', (event) => {
-        if (!sessionActive || paused) return;
+        if (!sessionActive || paused || holdPointers.has(button)) return;
         event.preventDefault();
+        holdPointers.set(button, event.pointerId);
         button.setPointerCapture(event.pointerId);
         pressed.add(key);
         button.classList.add('is-pressed');
       });
       const release = (event) => {
+        if (holdPointers.get(button) !== event.pointerId) return;
+        holdPointers.delete(button);
         event.preventDefault();
         pressed.delete(key);
         button.classList.remove('is-pressed');
@@ -783,7 +820,6 @@
     });
     document.querySelectorAll('[data-fighter-analog]').forEach((stick) => {
       const thumb = stick.querySelector('.fighter-analog-thumb');
-      let pointerId = null;
       const updateStick = (event) => {
         const rect = stick.getBoundingClientRect();
         const radius = Math.max(1, Math.min(rect.width, rect.height) * 0.34);
@@ -794,28 +830,30 @@
           dx *= radius / distance;
           dy *= radius / distance;
         }
+        const nextY = dy / radius;
+        if (touchAnalog.y >= -0.6 && nextY < -0.6) pendingJump = true;
         touchAnalog.x = dx / radius;
-        touchAnalog.y = dy / radius;
+        touchAnalog.y = nextY;
         thumb.style.transform = `translate(${Math.round(dx)}px, ${Math.round(dy)}px)`;
       };
       const releaseStick = (event) => {
-        if (pointerId !== event.pointerId) return;
-        pointerId = null;
+        if (stickPointerId !== event.pointerId) return;
+        stickPointerId = null;
         touchAnalog.x = 0;
         touchAnalog.y = 0;
         thumb.style.transform = '';
         stick.classList.remove('is-active');
       };
       stick.addEventListener('pointerdown', (event) => {
-        if (!sessionActive || paused) return;
+        if (!sessionActive || paused || stickPointerId !== null) return;
         event.preventDefault();
-        pointerId = event.pointerId;
-        stick.setPointerCapture(pointerId);
+        stickPointerId = event.pointerId;
+        stick.setPointerCapture(stickPointerId);
         stick.classList.add('is-active');
         updateStick(event);
       });
       stick.addEventListener('pointermove', (event) => {
-        if (pointerId === event.pointerId) updateStick(event);
+        if (stickPointerId === event.pointerId) updateStick(event);
       });
       stick.addEventListener('pointerup', releaseStick);
       stick.addEventListener('pointercancel', releaseStick);

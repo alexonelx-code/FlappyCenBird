@@ -17,10 +17,15 @@
 })(globalThis, (engine, cpu, random) => {
   'use strict';
 
-  const ACTIONS = Object.freeze(['approach', 'retreat', 'block', 'light', 'heavy', 'jump']);
+  const ACTIONS = Object.freeze(['approach', 'retreat', 'block', 'light', 'heavy', 'special', 'ultimate', 'jump']);
   const POLICY_PREFIX = 'cengames_fighter_policy_v1:';
   const LEARNING = Object.freeze({ alpha: 0.16, gamma: 0.92, trainingEpisodes: 12, trainingFrames: 240 });
   const EXPLORATION = Object.freeze({ 'muy-facil': 0.42, normal: 0.2, dificil: 0.07 });
+  const PACING = Object.freeze({
+    'muy-facil': Object.freeze({ attackCooldown: 54, attackChance: 0.45 }),
+    normal: Object.freeze({ attackCooldown: 25, attackChance: 0.85 }),
+    dificil: Object.freeze({ attackCooldown: 12, attackChance: 1 })
+  });
   let baseline = null;
 
   function cloneTable(table) {
@@ -41,7 +46,10 @@
     const opponent = duel[side === 'left' ? 'right' : 'left'];
     const distance = distanceBetween(actor, opponent);
     const move = opponent.attackId && (opponent.moves?.[opponent.attackId] || duel.rules.moves[opponent.attackId]);
-    const threat = Boolean(move && distance <= move.reach + 12
+    const incomingProjectile = (duel.projectiles || []).some((projectile) => projectile.ownerId !== actor.id
+      && (actor.x - projectile.x) * projectile.direction > 0 && Math.abs(actor.x - projectile.x) < 120
+      && projectile.y >= actor.y - actor.height && projectile.y <= actor.y);
+    const threat = incomingProjectile || Boolean(move && distance <= move.reach + 12
       && opponent.attackFrame >= Math.max(0, move.startupFrames - 7)
       && opponent.attackFrame < move.startupFrames + move.activeFrames);
     const healthDelta = actor.health / actor.maxHealth - opponent.health / opponent.maxHealth;
@@ -74,6 +82,10 @@
     const distance = distanceBetween(actor, opponent);
     const moveId = action;
     const moves = actor.moves || rules.moves;
+    if ((moveId === 'special' || (moveId === 'ultimate' && actor.ultimateCharge >= 100))
+        && actor.grounded && distance <= 520) {
+      return { moveX: 0, crouch: false, block: false, jump: false, attack: moveId };
+    }
     if ((moveId === 'light' || moveId === 'heavy') && moves[moveId]
         && distance <= moves[moveId].reach) {
       return { moveX: 0, crouch: false, block: false, jump: false, attack: moveId };
@@ -183,6 +195,7 @@
       intent: { moveX: 0, crouch: false, block: false },
       pulse: { jump: false, attack: null },
       action: 'approach',
+      attackCooldown: 0,
       previousObservation: null,
       previousAction: null,
       previousHealth: null,
@@ -203,6 +216,7 @@
     const next = {
       ...state,
       rng: { ...state.rng },
+      attackCooldown: Math.max(0, (state.attackCooldown || 0) - 1),
       intent: { ...state.intent },
       pulse: { jump: false, attack: null }
     };
@@ -210,13 +224,20 @@
       update(next.table, state.previousObservation.key, state.previousAction, observation.key,
         transitionReward(state.previousObservation, observation, state.previousAction));
     }
+    if (newBout) next.attackCooldown = 0;
 
     const decisionReady = state.cpu.decisionFramesRemaining === 0 || newBout;
     const cpuStep = cpu.stepController(state.cpu, duel);
     next.cpu = cpuStep.state;
     if (decisionReady && duel.phase !== 'finished') {
       next.action = choose(next.table, observation.key, EXPLORATION[state.difficulty], next.rng);
-      const input = actionInput(next.action, actor, opponent, duel.rules);
+      let input = actionInput(next.action, actor, opponent, duel.rules);
+      const pacing = PACING[state.difficulty];
+      if (input.attack && (next.attackCooldown > 0 || draw(next.rng) >= pacing.attackChance)) {
+        input = { moveX: 0, crouch: false, block: false, jump: false, attack: null };
+      } else if (input.attack) {
+        next.attackCooldown = pacing.attackCooldown;
+      }
       next.intent = { moveX: input.moveX, crouch: input.crouch, block: input.block };
       next.pulse = { jump: input.jump, attack: input.attack };
     }

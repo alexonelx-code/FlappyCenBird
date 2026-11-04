@@ -193,6 +193,7 @@
       stats: freezeDeep(stats),
       moves: freezeDeep(moves),
       health: clamp(Math.floor(finiteOr(input.health, maxHealth)), 0, maxHealth),
+      ultimateCharge: 0,
       maxHealth,
       grounded: true,
       guarding: false,
@@ -200,7 +201,10 @@
       attackId: null,
       attackFrame: 0,
       attackConnected: false,
+      projectileSpawned: false,
       hitstunFrames: 0,
+      blockstunFrames: 0,
+      knockdownFrames: 0,
       bufferedAttack: null,
       bufferedJump: 0,
       previousAttack: null,
@@ -238,6 +242,7 @@
       rules,
       left,
       right,
+      projectiles: [],
       result: null
     };
   }
@@ -254,6 +259,7 @@
       ...state,
       left: cloneFighter(state.left),
       right: cloneFighter(state.right),
+      projectiles: (state.projectiles || []).map((projectile) => ({ ...projectile })),
       result: state.result ? { ...state.result } : null
     };
   }
@@ -263,17 +269,25 @@
     return {
       moveX: clamp(finiteOr(input.moveX, 0), -1, 1),
       jump: input.jump === true,
+      jumpPulse: input.jumpPulse === true,
       crouch: input.crouch === true,
       block: input.block === true,
-      attack: typeof input.attack === 'string' ? input.attack : null
+      attack: typeof input.attack === 'string' ? input.attack : null,
+      attackPulse: input.attackPulse === true
     };
   }
 
   function startAttack(fighter, moveId) {
+    if (moveId === 'ultimate') {
+      if (fighter.ultimateCharge < 100) return false;
+      fighter.ultimateCharge = 0;
+    }
     fighter.attackId = moveId;
     fighter.attackFrame = 0;
     fighter.attackConnected = false;
+    fighter.projectileSpawned = false;
     fighter.bufferedAttack = null;
+    return true;
   }
 
   function bodyHeight(fighter) {
@@ -281,32 +295,53 @@
   }
 
   function advanceFighter(fighter, input, rules) {
-    const actionPressed = input.attack && input.attack !== fighter.previousAttack;
-    const jumpPressed = input.jump && !fighter.previousJump;
+    const actionPressed = input.attack && (input.attackPulse || input.attack !== fighter.previousAttack);
+    const jumpPressed = input.jump && (input.jumpPulse || !fighter.previousJump);
     const hadAttack = Boolean(fighter.attackId);
     const wasStunned = fighter.hitstunFrames > 0;
+    const wasBlocking = fighter.blockstunFrames > 0;
 
     fighter.previousAttack = input.attack;
     fighter.previousJump = input.jump;
     fighter.guarding = false;
     fighter.crouching = false;
 
-    if (actionPressed && fighter.moves[input.attack] && (hadAttack || wasStunned || !fighter.grounded)) {
+    if (actionPressed && fighter.moves[input.attack] && (hadAttack || wasStunned || wasBlocking || !fighter.grounded)) {
       fighter.bufferedAttack = { id: input.attack, frames: fighter.stats.inputBufferFrames };
     }
     if (jumpPressed) fighter.bufferedJump = fighter.stats.inputBufferFrames;
+
+    if (hadAttack && fighter.attackConnected && fighter.bufferedAttack && fighter.grounded) {
+      const current = fighter.moves[fighter.attackId];
+      const nextMove = fighter.bufferedAttack.id;
+      const chain = (fighter.attackId === 'light' && nextMove === 'medium')
+        || (fighter.attackId === 'medium' && nextMove === 'special');
+      if (chain && fighter.attackFrame >= current.startupFrames + current.activeFrames) {
+        startAttack(fighter, nextMove);
+        if (nextMove === 'medium') fighter.x += fighter.facing * 20;
+        if (nextMove === 'special') fighter.attackFrame = fighter.moves.special.startupFrames;
+      }
+    }
 
     if (fighter.knockedOut) return;
 
     if (wasStunned) {
       fighter.hitstunFrames -= 1;
-    } else if (!hadAttack && input.block && fighter.grounded) {
+      if (fighter.knockdownFrames > 0) fighter.knockdownFrames -= 1;
+    } else if (wasBlocking) {
+      fighter.blockstunFrames -= 1;
       fighter.guarding = true;
+      fighter.crouching = input.crouch && fighter.grounded;
+    } else if (!hadAttack && input.block) {
+      fighter.guarding = true;
+      fighter.crouching = input.crouch && fighter.grounded;
       fighter.bufferedAttack = null;
     } else if (!hadAttack && !input.block) {
-      if (actionPressed && fighter.moves[input.attack] && fighter.grounded) {
+      if (actionPressed && fighter.moves[input.attack] && (input.attack !== 'ultimate' || fighter.ultimateCharge >= 100)
+          && (fighter.grounded || input.attack === 'light' || input.attack === 'medium')) {
         startAttack(fighter, input.attack);
-      } else if (fighter.bufferedAttack && fighter.bufferedAttack.frames > 0 && fighter.grounded) {
+      } else if (fighter.bufferedAttack && fighter.bufferedAttack.frames > 0 && fighter.grounded
+          && (fighter.bufferedAttack.id !== 'ultimate' || fighter.ultimateCharge >= 100)) {
         startAttack(fighter, fighter.bufferedAttack.id);
       } else if (input.crouch && fighter.grounded) {
         fighter.crouching = true;
@@ -318,8 +353,11 @@
     const speed = fighter.grounded ? fighter.stats.groundSpeed : fighter.stats.airSpeed;
     if (moveX) {
       fighter.vx = moveX * speed;
+    } else if (fighter.crouching && !wasStunned && !wasBlocking) {
+      fighter.vx = 0;
     } else {
-      const friction = wasStunned ? rules.physics.knockbackFriction : rules.physics.groundFriction;
+      const friction = wasStunned ? rules.physics.knockbackFriction
+        : !fighter.grounded && fighter.attackId ? 1 : rules.physics.groundFriction;
       fighter.vx *= friction;
       if (Math.abs(fighter.vx) < 1) fighter.vx = 0;
     }
@@ -414,7 +452,7 @@
   }
 
   function canConnect(attacker, defender, rules) {
-    if (!attacker.attackId || attacker.attackConnected || attacker.knockedOut) return false;
+    if (!attacker.attackId || ['special', 'ultimate'].includes(attacker.attackId) || attacker.attackConnected || attacker.knockedOut || defender.knockdownFrames > 0) return false;
     const move = attacker.moves[attacker.attackId];
     const activeStart = move.startupFrames;
     const activeEnd = activeStart + move.activeFrames;
@@ -428,7 +466,7 @@
     events.push({ type: 'duel-finished', ...state.result });
   }
 
-  function resolveStrike(attacker, defender, moveId, rules, events) {
+  function resolveStrike(attacker, defender, moveId, rules, events, projectile = null) {
     const move = attacker.moves[moveId];
     const blocked = defender.guarding;
     const proposedDamage = blocked
@@ -437,10 +475,18 @@
     const damage = blocked
       ? Math.min(proposedDamage, Math.max(0, defender.health - 1))
       : Math.min(proposedDamage, defender.health);
+    const targetBox = hurtBox(defender);
+    const sourceBox = projectile
+      ? { left: projectile.x - 12, right: projectile.x + 12, top: projectile.y - 12, bottom: projectile.y + 12 }
+      : attackBox(attacker, move);
+    const impactX = (Math.max(sourceBox.left, targetBox.left) + Math.min(sourceBox.right, targetBox.right)) / 2;
+    const impactY = (Math.max(sourceBox.top, targetBox.top) + Math.min(sourceBox.bottom, targetBox.bottom)) / 2;
 
-    if (attacker.attackId === moveId) attacker.attackConnected = true;
+    if (!projectile && attacker.attackId === moveId) attacker.attackConnected = true;
     defender.health = Math.max(0, defender.health - damage);
-    defender.vx = attacker.facing * move.knockback * (blocked ? defender.stats.guardKnockbackScale : 1);
+    attacker.ultimateCharge = Math.min(100, attacker.ultimateCharge + (blocked ? 5 : 25));
+    defender.ultimateCharge = Math.min(100, defender.ultimateCharge + (blocked ? 3 : 12));
+    defender.vx = (projectile ? projectile.direction : attacker.facing) * move.knockback * (blocked ? defender.stats.guardKnockbackScale : 1);
     if (!blocked) {
       defender.hitstunFrames = move.hitstunFrames ?? defender.stats.hitstunFrames;
       defender.attackId = null;
@@ -448,6 +494,11 @@
       defender.attackConnected = false;
       defender.bufferedAttack = null;
       defender.bufferedJump = 0;
+      defender.blockstunFrames = 0;
+      defender.knockdownFrames = (moveId === 'heavy' || moveId === 'ultimate') && defender.grounded ? 30 : 0;
+      if (defender.knockdownFrames) defender.hitstunFrames = Math.max(defender.hitstunFrames, defender.knockdownFrames);
+    } else {
+      defender.blockstunFrames = 6;
     }
 
     events.push({
@@ -456,6 +507,8 @@
       defenderId: defender.id,
       moveId,
       damage,
+      x: impactX,
+      y: impactY,
       health: defender.health
     });
     if (defender.health <= 0) {
@@ -486,6 +539,8 @@
       fighter.vx = 0;
       fighter.vy = 0;
       fighter.hitstunFrames = 0;
+      fighter.blockstunFrames = 0;
+      fighter.knockdownFrames = 0;
       fighter.attackId = null;
       fighter.attackFrame = 0;
       fighter.attackConnected = false;
@@ -495,7 +550,38 @@
       fighter.grounded = true;
       fighter.y = state.rules.arena.floorY;
     });
+    state.projectiles = [];
     events.push({ type: 'sudden-death-started', frames: state.suddenDeathRemainingFrames });
+  }
+
+  function advanceProjectiles(state, events) {
+    const fighters = [state.left, state.right];
+    for (const fighter of fighters) {
+      const moveId = fighter.attackId;
+      const move = fighter.moves[moveId];
+      if ((moveId === 'special' || moveId === 'ultimate') && !fighter.projectileSpawned && fighter.attackFrame >= move.startupFrames) {
+        fighter.projectileSpawned = true;
+        state.projectiles.push({ ownerId: fighter.id, moveId, direction: fighter.facing,
+          x: fighter.x + fighter.facing * fighter.width / 2, y: fighter.y - fighter.height * 0.3 });
+      }
+    }
+    const hits = new Set();
+    state.projectiles = state.projectiles.filter((projectile) => {
+      const owner = fighters.find((fighter) => fighter.id === projectile.ownerId);
+      const target = owner === state.left ? state.right : state.left;
+      const previousX = projectile.x;
+      projectile.x += projectile.direction * (projectile.moveId === 'ultimate' ? 700 : 540) / state.tickRate;
+      const radius = projectile.moveId === 'ultimate' ? 20 : 12;
+      const box = { left: Math.min(previousX, projectile.x) - radius, right: Math.max(previousX, projectile.x) + radius,
+        top: projectile.y - radius, bottom: projectile.y + radius };
+      if (!target.knockedOut && !target.knockdownFrames && overlaps(box, hurtBox(target))) {
+        resolveStrike(owner, target, projectile.moveId, state.rules, events, projectile);
+        hits.add(owner.id);
+        return false;
+      }
+      return projectile.x >= -20 && projectile.x <= state.rules.arena.width + 20;
+    });
+    return hits;
   }
 
   function resolveKnockouts(state, events) {
@@ -551,13 +637,16 @@
     const rightMoveId = rightHit ? next.right.attackId : null;
     if (leftHit) resolveStrike(next.left, next.right, leftMoveId, rules, events);
     if (rightHit) resolveStrike(next.right, next.left, rightMoveId, rules, events);
+    const projectileHits = advanceProjectiles(next, events);
+    const leftConnected = leftHit || projectileHits.has(next.left.id);
+    const rightConnected = rightHit || projectileHits.has(next.right.id);
 
-    if (next.phase === 'sudden_death' && (leftHit || rightHit) && !next.result) {
-      if (leftHit && rightHit) {
+    if (next.phase === 'sudden_death' && (leftConnected || rightConnected) && !next.result) {
+      if (leftConnected && rightConnected) {
         finishDuel(next, null, null, 'sudden_death_double_hit', events);
       } else {
-        const winner = leftHit ? next.left : next.right;
-        const loser = leftHit ? next.right : next.left;
+        const winner = leftConnected ? next.left : next.right;
+        const loser = leftConnected ? next.right : next.left;
         finishDuel(next, winner.id, loser.id, 'sudden_death_hit', events);
       }
     } else if (resolveKnockouts(next, events)) {

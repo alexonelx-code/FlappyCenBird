@@ -207,3 +207,33 @@ test('mantiene la sombra de Luis en el suelo mientras salta', () => {
     else global.Image = originalImage;
   }
 });
+
+test('ancla los pies extraídos al suelo en cada escenario y los eleva al saltar', () => {
+  const originalImage = global.Image;
+  const originalAtlas = globalThis.CenFighterSpriteAtlas;
+  global.Image = class MockImage {
+    constructor() { this.complete = true; this.src = ''; }
+    set src(path) { this._src = path; [this.naturalWidth, this.naturalHeight] = path.endsWith('/fighter-01.png') ? [1374, 1145] : [960, 540]; }
+    get src() { return this._src; }
+  };
+  globalThis.CenFighterSpriteAtlas = { getFrame: () => ({ image: { src: '/fighter-01.png' }, x: 40, y: 8, width: 150, height: 239 }) };
+  try {
+    const match = teams.createMatch({ playerTeam: ['fighter-01', 'fighter-01', 'fighter-01'], cpuTeam: ['fighter-02', 'fighter-03', 'fighter-04'], seed: 3 });
+    const fighter = match.duel.left;
+    const ctx = spriteContext();
+    for (const stage of renderer.stages) {
+      for (const altitude of [0, 80]) {
+        fighter.y = stage.floorY - altitude;
+        fighter.grounded = altitude === 0;
+        renderer.draw(ctx, match, 0, [], { stageId: stage.id });
+        const draw = ctx.calls.spriteDraws.at(-1);
+        const scale = fighter.height * fighter.sprite.visualScale / fighter.sprite.anchor.y;
+        assert.equal(draw.translateY + (draw.args[5] + draw.args[7]) * scale, stage.floorY - altitude);
+      }
+    }
+  } finally {
+    globalThis.CenFighterSpriteAtlas = originalAtlas;
+    if (originalImage === undefined) delete global.Image;
+    else global.Image = originalImage;
+  }
+});

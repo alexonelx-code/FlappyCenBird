@@ -19,7 +19,7 @@
       maxFallSpeed: 1050,
       moveSpeed: 330,
       airSpeed: 280,
-      groundFriction: 0.76,
+      groundFriction: 0.55,
       knockbackFriction: 0.88
     },
     fighter: {
@@ -32,14 +32,13 @@
       chipDamage: 1,
       guardKnockbackScale: 0.3,
       hitstunFrames: 12,
-      inputBufferFrames: 6
+      inputBufferFrames: 8
     },
     controls: {
       attacks: {
         KeyZ: 'light',
         KeyX: 'medium',
-        KeyC: 'heavy',
-        KeyV: 'special'
+        KeyC: 'special'
       }
     },
     moves: {
@@ -86,6 +85,17 @@
         hitboxBottom: 0.76,
         hitstunFrames: 25,
         knockback: 340
+      },
+      ultimate: {
+        startupFrames: 22,
+        activeFrames: 4,
+        recoveryFrames: 30,
+        damage: 32,
+        reach: 126,
+        hitboxTop: 0.2,
+        hitboxBottom: 0.76,
+        hitstunFrames: 30,
+        knockback: 380
       }
     }
   };
