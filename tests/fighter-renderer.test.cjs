@@ -218,7 +218,8 @@ test('ancla los pies extraídos al suelo en cada escenario y los eleva al saltar
     set src(path) { this._src = path; [this.naturalWidth, this.naturalHeight] = path.endsWith('/fighter-01.png') ? [1374, 1145] : [960, 540]; }
     get src() { return this._src; }
   };
-  globalThis.CenFighterSpriteAtlas = { getFrame: () => ({ image: { src: '/fighter-01.png' }, x: 40, y: 8, width: 150, height: 239 }) };
+  globalThis.CenFighterSpriteAtlas = { getFrame: (image) => image.src.endsWith('/fighter-01.png')
+    ? { image: { src: '/fighter-01.png' }, x: 40, y: 8, width: 150, height: 239 } : null };
   try {
     const match = teams.createMatch({ playerTeam: ['fighter-01', 'fighter-01', 'fighter-01'], cpuTeam: ['fighter-02', 'fighter-03', 'fighter-04'], seed: 3 });
     const fighter = match.duel.left;
@@ -233,6 +234,34 @@ test('ancla los pies extraídos al suelo en cada escenario y los eleva al saltar
         assert.equal(draw.translateY + (draw.args[5] + draw.args[7]) * scale, stage.floorY - altitude);
       }
     }
+  } finally {
+    globalThis.CenFighterSpriteAtlas = originalAtlas;
+    if (originalImage === undefined) delete global.Image;
+    else global.Image = originalImage;
+  }
+});
+
+test('los rivales usan el recorte aislado y apoyan sus pies en el suelo', () => {
+  const originalImage = global.Image;
+  const originalAtlas = globalThis.CenFighterSpriteAtlas;
+  global.Image = class MockImage {
+    constructor() { this.complete = true; this.src = ''; }
+    set src(path) { this._src = path; [this.naturalWidth, this.naturalHeight] = [1536, 1024]; }
+    get src() { return this._src; }
+  };
+  const isolated = { src: '/isolated-roster.png' };
+  globalThis.CenFighterSpriteAtlas = { getFrame: (_image, _width, _height, _index, padding) => {
+    assert.equal(padding, 0);
+    return { image: isolated, x: 20, y: 30, width: 250, height: 470 };
+  } };
+  try {
+    const match = teams.createMatch({ playerTeam: ['fighter-02', 'fighter-02', 'fighter-02'], cpuTeam: ['fighter-03', 'fighter-03', 'fighter-03'], seed: 9 });
+    const ctx = spriteContext();
+    const calls = [];
+    ctx.drawImage = (image, ...args) => { if (image === isolated) calls.push(args); };
+    renderer.draw(ctx, match, 0, [], { stageId: 'fachada' });
+    assert.equal(calls.length, 2);
+    for (const args of calls) assert.ok(Math.abs(args[5] + args[7]) < 1e-9);
   } finally {
     globalThis.CenFighterSpriteAtlas = originalAtlas;
     if (originalImage === undefined) delete global.Image;

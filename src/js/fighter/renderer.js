@@ -51,8 +51,8 @@
     if (!image) return false;
     const match = /fighter-(\d+)/.exec(fighter.characterId || fighter.id || '');
     const index = Math.max(0, Math.min(9, Number(match && match[1]) - 1 || 0));
-    const cellWidth = image.naturalWidth / 5;
-    const cellHeight = image.naturalHeight / 2;
+    const cellWidth = Math.floor(image.naturalWidth / 5);
+    const cellHeight = Math.floor(image.naturalHeight / 2);
     const sourceX = (index % 5) * cellWidth;
     const sourceY = Math.floor(index / 5) * cellHeight;
     const spriteAspect = cellWidth / cellHeight;
@@ -62,24 +62,29 @@
     const artWidth = artHeight * spriteAspect * (portrait ? 1.35 : 1);
     const footAnchor = ROSTER_FOOT_ANCHORS[index] || cellHeight;
     const anchoredHeight = artHeight * footAnchor / cellHeight;
-    const moving = Math.abs(fighter.vx) > 30 && fighter.grounded;
     const attack = fighter.attackId && fighter.moves && fighter.moves[fighter.attackId];
     const strikeStart = attack ? attack.startupFrames : 0;
     const strikeEnd = attack ? strikeStart + attack.activeFrames : 0;
     const striking = Boolean(attack && fighter.attackFrame >= strikeStart && fighter.attackFrame < strikeEnd);
     const advancing = Boolean(attack && fighter.attackFrame >= Math.floor(strikeStart * 0.55));
-    const bob = reducedMotion ? 0 : moving ? Math.abs(Math.sin(frame * 0.42)) * 3 : Math.sin(frame * 0.13) * 1.2;
     const lunge = advancing ? (striking ? 13 : 5) : 0;
     const recoil = fighter.hitstunFrames > 0 ? fighter.facing * -4 : 0;
 
     ctx.save();
     ctx.globalAlpha = fighter.knockedOut ? 0.55 : 1;
     drawGroundShadow(ctx, fighter, groundY, artWidth);
-    ctx.translate(fighter.x + recoil + fighter.facing * lunge, fighter.y - bob);
+    ctx.translate(fighter.x + recoil + fighter.facing * lunge, fighter.y);
     ctx.scale(fighter.facing, 1);
     ctx.imageSmoothingEnabled = false;
-    ctx.drawImage(image, sourceX, sourceY, cellWidth, cellHeight,
-      -artWidth / 2, -anchoredHeight, artWidth, artHeight);
+    const extracted = globalThis.CenFighterSpriteAtlas?.getFrame(image, cellWidth, cellHeight, index, 0);
+    if (extracted) {
+      ctx.drawImage(extracted.image, 0, 0, extracted.width, extracted.height,
+        -artWidth / 2 + extracted.x * artWidth / cellWidth, -extracted.height * artHeight / cellHeight,
+        extracted.width * artWidth / cellWidth, extracted.height * artHeight / cellHeight);
+    } else {
+      ctx.drawImage(image, sourceX, sourceY, cellWidth, cellHeight,
+        -artWidth / 2, -anchoredHeight, artWidth, artHeight);
+    }
     if (striking) {
       const tint = fighter.attackId === 'special' ? '#b7f5ff'
         : fighter.attackId === 'heavy' ? '#ffe28a'
@@ -137,6 +142,7 @@
     ctx.translate(fighter.x, fighter.y);
     ctx.scale(fighter.facing * scale, scale);
     ctx.imageSmoothingEnabled = false;
+    if (fighter.impactFlashFrames > 0 && !reducedMotion) ctx.filter = 'brightness(1.65)';
     if (extracted) {
       ctx.drawImage(extracted.image, 0, 0, extracted.width, extracted.height,
         extracted.x - sprite.anchor.x + frameOffset, -extracted.height, extracted.width, extracted.height);

@@ -74,6 +74,30 @@ test('puño conectado puede encadenarse a patada y después al proyectil', () =>
   assert.equal(duel.left.attackId, 'special');
 });
 
+test('el avance de una cadena ocurre de forma gradual durante cuatro cuadros', () => {
+  const config = configWith({ light: { startupFrames: 0, activeFrames: 1, recoveryFrames: 12, reach: 220, knockback: 0 } });
+  let duel = engine.createDuel({ config, left: { x: 300 }, right: { x: 440 } });
+  duel = engine.stepDuel(duel, { left: { attack: 'light' } }).state;
+  const before = duel.left.x;
+  duel = engine.stepDuel(duel, { left: { attack: 'medium' } }).state;
+  assert.ok(duel.left.x - before <= 5.01);
+  assert.ok(duel.left.attackDriveFrames > 0);
+  const steps = duel.left.attackDriveFrames;
+  for (let i = 0; i < steps; i += 1) duel = engine.stepDuel(duel).state;
+  assert.equal(duel.left.attackDriveFrames, 0);
+});
+
+test('un impacto ilumina al defensor durante unos cuadros de simulación', () => {
+  const duel = engine.createDuel({
+    config: configWith({ light: { startupFrames: 0, activeFrames: 1, recoveryFrames: 2, reach: 220 } }),
+    left: { x: 400 }, right: { x: 500 }
+  });
+  let result = engine.stepDuel(duel, { left: { attack: 'light' } }).state;
+  assert.equal(result.right.impactFlashFrames, 4);
+  for (let i = 0; i < 4; i += 1) result = engine.stepDuel(result).state;
+  assert.equal(result.right.impactFlashFrames, 0);
+});
+
 test('el combo de Luis conecta a distancia mínima incluso si el rival intenta cubrirse', () => {
   let duel = engine.createDuel({ left: { ...globalThis.CenFighterRoster.entries[0], x: 400 }, right: { x: 546 } });
   const hits = [];

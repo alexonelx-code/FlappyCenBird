@@ -82,6 +82,10 @@ test('prepara y reutiliza frames pixelados desde el atlas cargado', () => {
     assert.equal(first.height, 8);
     assert.equal(first.image.context.pixels[(7 * first.width) * 4 + 3], 255);
     assert.equal(reads, 1, 'lee el atlas una sola vez y reutiliza el recorte');
+    const strictCell = atlas.getFrame(image, 8, 8, 0, 0);
+    assert.notStrictEqual(strictCell, first);
+    assert.equal(strictCell.height, 5);
+    assert.equal(reads, 2, 'los márgenes distintos no comparten recortes');
   } finally {
     if (originalDocument === undefined) delete global.document;
     else global.document = originalDocument;

@@ -115,9 +115,9 @@
     };
   }
 
-  function getFrame(image, frameWidth, frameHeight, index) {
+  function getFrame(image, frameWidth, frameHeight, index, padding = 28) {
     if (typeof document === 'undefined' || !image || !image.naturalWidth || !image.naturalHeight) return null;
-    const key = `${image.src}:${frameWidth}x${frameHeight}`;
+    const key = `${image.src}:${frameWidth}x${frameHeight}:${padding}`;
     if (!cachedFrames.has(key)) {
       try {
         const atlasWidth = image.naturalWidth;
@@ -134,7 +134,7 @@
         const pixels = sourceContext.getImageData(0, 0, atlasWidth, atlasHeight).data;
         const frames = [];
         for (let frameIndex = 0; frameIndex < columns * rows; frameIndex += 1) {
-          const frame = extractFrame(pixels, atlasWidth, atlasHeight, frameWidth, frameHeight, frameIndex, columns);
+          const frame = extractFrame(pixels, atlasWidth, atlasHeight, frameWidth, frameHeight, frameIndex, columns, padding);
           if (!frame) {
             frames.push(null);
             continue;

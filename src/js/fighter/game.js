@@ -36,13 +36,14 @@
   let lastFrameTime = 0;
   let accumulator = 0;
   let renderFrame = 0;
+  let visualElapsed = 0;
   let simulationFrame = 0;
   let hitstopFrames = 0;
   let stickPointerId = null;
   let canvasPortrait = false;
   let portraitCameraX = 480;
   let canvasPixelRatio = 1;
-  let pendingAttack = null;
+  const pendingAttacks = [];
   let pendingJump = false;
   let impactEffects = [];
   let lastHudSignature = '';
@@ -98,14 +99,16 @@
       return;
     }
     if (!rosterAtlas.complete || !rosterAtlas.naturalWidth) return;
-    const cellWidth = rosterAtlas.naturalWidth / 5;
-    const cellHeight = rosterAtlas.naturalHeight / 2;
+    const cellWidth = Math.floor(rosterAtlas.naturalWidth / 5);
+    const cellHeight = Math.floor(rosterAtlas.naturalHeight / 2);
     canvas.width = cellWidth;
     canvas.height = cellHeight;
     canvas.style.aspectRatio = `${cellWidth} / ${cellHeight}`;
     ctx.imageSmoothingEnabled = false;
     ctx.clearRect(0, 0, cellWidth, cellHeight);
-    ctx.drawImage(rosterAtlas, (index % 5) * cellWidth, Math.floor(index / 5) * cellHeight,
+    const art = globalThis.CenFighterSpriteAtlas?.getFrame(rosterAtlas, cellWidth, cellHeight, index, 0);
+    if (art) ctx.drawImage(art.image, 0, 0, art.width, art.height, art.x, cellHeight - art.height, art.width, art.height);
+    else ctx.drawImage(rosterAtlas, (index % 5) * cellWidth, Math.floor(index / 5) * cellHeight,
       cellWidth, cellHeight, 0, 0, cellWidth, cellHeight);
   }
 
@@ -125,7 +128,7 @@
     pressed.clear();
     keyboardPressed.clear();
     holdPointers.clear();
-    pendingAttack = null;
+    pendingAttacks.length = 0;
     pendingJump = false;
     touchAnalog.x = 0;
     touchAnalog.y = 0;
@@ -176,8 +179,8 @@
     const canvas = document.getElementById('fighterDifficultyPreview');
     const ctx = canvas?.getContext('2d');
     if (!ctx) return;
-    const cellWidth = rosterAtlas.naturalWidth / 5;
-    const cellHeight = rosterAtlas.naturalHeight / 2;
+    const cellWidth = Math.floor(rosterAtlas.naturalWidth / 5);
+    const cellHeight = Math.floor(rosterAtlas.naturalHeight / 2);
     const playerId = chosen[0] || roster[0]?.id;
     const playerIndex = Math.max(0, roster.findIndex((fighter) => fighter.id === playerId));
     const opponentCandidate = roster.findIndex((fighter, index) => index !== playerIndex && !chosen.includes(fighter.id));
@@ -229,8 +232,15 @@
         ctx.translate(x * 2 + artWidth, 0);
         ctx.scale(-1, 1);
       }
-      ctx.drawImage(rosterAtlas, (index % 5) * cellWidth, Math.floor(index / 5) * cellHeight,
-        cellWidth, cellHeight, x, ground - artHeight, artWidth, artHeight);
+      const art = globalThis.CenFighterSpriteAtlas?.getFrame(rosterAtlas, cellWidth, cellHeight, index, 0);
+      if (art) {
+        ctx.drawImage(art.image, 0, 0, art.width, art.height,
+          x + art.x * artWidth / cellWidth, ground - art.height * artHeight / cellHeight,
+          art.width * artWidth / cellWidth, art.height * artHeight / cellHeight);
+      } else {
+        ctx.drawImage(rosterAtlas, (index % 5) * cellWidth, Math.floor(index / 5) * cellHeight,
+          cellWidth, cellHeight, x, ground - artHeight, artWidth, artHeight);
+      }
       ctx.restore();
     };
     ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -463,9 +473,10 @@
     accumulator = 0;
     lastFrameTime = 0;
     renderFrame = 0;
+    visualElapsed = 0;
     simulationFrame = 0;
     hitstopFrames = 0;
-    pendingAttack = null;
+    pendingAttacks.length = 0;
     pendingJump = false;
     impactEffects = [];
     lastHudSignature = '';
@@ -519,6 +530,11 @@
   function draw() {
     impactEffects = impactEffects.filter((effect) => renderFrame - effect.frame <= 10);
     applyCanvasTransform();
+    const impact = impactEffects.at(-1);
+    const age = impact ? renderFrame - impact.frame : 10;
+    if (impact?.type === 'hit' && age < 3 && !window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) {
+      context.translate((age % 2 ? -1 : 1) * (impact.strength || 1) * (3 - age), 0);
+    }
     globalThis.CenFighterRenderer.draw(context, match, renderFrame, impactEffects, {
       portrait: canvasPortrait, stageId: selectedStageId, animationFrame: simulationFrame
     });
@@ -564,22 +580,27 @@
       ? 0
       : Math.sign(touchAnalog.x) * (Math.abs(touchAnalog.x) - 0.14) / 0.86;
     const guard = held('block');
-    const ultimate = guard && pendingAttack === 'special' && match.phase === 'fight' && match.duel.left.ultimateCharge >= 100;
+    const attack = pendingAttacks[0] || null;
     return {
       moveX: digitalX || analogX,
       jump: pendingJump || held('jump') || touchAnalog.y < -0.6,
       jumpPulse: pendingJump,
       crouch: held('crouch') || touchAnalog.y > 0.6,
-      block: guard && !ultimate,
-      attack: ultimate ? 'ultimate' : pendingAttack,
-      attackPulse: Boolean(pendingAttack)
+      block: guard && attack !== 'ultimate',
+      attack,
+      attackPulse: Boolean(attack)
     };
   }
 
   function loop(now) {
     if (!sessionActive) return;
-    if (lastFrameTime) accumulator += Math.min(100, now - lastFrameTime);
+    if (lastFrameTime && !paused) {
+      const elapsed = Math.min(100, now - lastFrameTime);
+      accumulator += elapsed;
+      visualElapsed += elapsed;
+    }
     lastFrameTime = now;
+    renderFrame = Math.floor(visualElapsed / tickDuration);
     if (!paused) {
       let steps = 0;
       while (accumulator >= tickDuration && steps < 6 && match.phase !== 'finished') {
@@ -600,7 +621,7 @@
         match = update.state;
         simulationFrame += 1;
         processEvents(update.events);
-        pendingAttack = null;
+        pendingAttacks.shift();
         pendingJump = false;
         accumulator -= tickDuration;
         steps += 1;
@@ -613,7 +634,6 @@
     } else {
       accumulator = 0;
     }
-    renderFrame += 1;
     draw();
     if (sessionActive) frameHandle = window.requestAnimationFrame(loop);
   }
@@ -774,8 +794,14 @@
       keyboardPressed.set(event.code, controls[event.code]);
     } else if (attack) {
       event.preventDefault();
-      pendingAttack = attack;
+      queueAttack(attack);
     }
+  }
+
+  function queueAttack(attack) {
+    const guarding = pressed.has('block') || Array.from(keyboardPressed.values()).includes('block');
+    const ultimate = attack === 'special' && guarding && match?.phase === 'fight' && match.duel.left.ultimateCharge >= 100;
+    if (pendingAttacks.length < 3) pendingAttacks.push(ultimate ? 'ultimate' : attack);
   }
 
   function onKeyUp(event) {
@@ -814,7 +840,7 @@
         if (!sessionActive || paused) return;
         event.preventDefault();
         button.setPointerCapture(event.pointerId);
-        pendingAttack = button.dataset.fighterAttack;
+        queueAttack(button.dataset.fighterAttack);
         button.classList.add('is-pressed');
       });
       button.addEventListener('pointerup', () => button.classList.remove('is-pressed'));

@@ -201,9 +201,12 @@
       attackId: null,
       attackFrame: 0,
       attackConnected: false,
+      attackDriveFrames: 0,
+      attackDriveSpeed: 0,
       projectileSpawned: false,
       hitstunFrames: 0,
       blockstunFrames: 0,
+      impactFlashFrames: 0,
       knockdownFrames: 0,
       bufferedAttack: null,
       bufferedJump: 0,
@@ -285,6 +288,8 @@
     fighter.attackId = moveId;
     fighter.attackFrame = 0;
     fighter.attackConnected = false;
+    fighter.attackDriveFrames = fighter.grounded && (moveId === 'light' || moveId === 'medium') ? 4 : 0;
+    fighter.attackDriveSpeed = moveId === 'light' ? 0.8 : moveId === 'medium' ? 1.5 : 0;
     fighter.projectileSpawned = false;
     fighter.bufferedAttack = null;
     return true;
@@ -318,12 +323,13 @@
         || (fighter.attackId === 'medium' && nextMove === 'special');
       if (chain && fighter.attackFrame >= current.startupFrames + current.activeFrames) {
         startAttack(fighter, nextMove);
-        if (nextMove === 'medium') fighter.x += fighter.facing * 20;
+        if (nextMove === 'medium') fighter.attackDriveSpeed = 5;
         if (nextMove === 'special') fighter.attackFrame = fighter.moves.special.startupFrames;
       }
     }
 
     if (fighter.knockedOut) return;
+    if (fighter.impactFlashFrames > 0) fighter.impactFlashFrames -= 1;
 
     if (wasStunned) {
       fighter.hitstunFrames -= 1;
@@ -370,6 +376,10 @@
 
     fighter.vy = Math.min(fighter.vy + rules.physics.gravity / rules.tickRate, rules.physics.maxFallSpeed);
     fighter.x += fighter.vx / rules.tickRate;
+    if (fighter.attackId && fighter.attackDriveFrames > 0 && fighter.grounded && !wasStunned) {
+      fighter.x += fighter.facing * fighter.attackDriveSpeed;
+      fighter.attackDriveFrames -= 1;
+    }
     fighter.y += fighter.vy / rules.tickRate;
 
     const minX = rules.arena.wallPadding + fighter.spacingWidth / 2;
@@ -484,12 +494,14 @@
 
     if (!projectile && attacker.attackId === moveId) attacker.attackConnected = true;
     defender.health = Math.max(0, defender.health - damage);
+    defender.impactFlashFrames = blocked ? 2 : 4;
     attacker.ultimateCharge = Math.min(100, attacker.ultimateCharge + (blocked ? 5 : 25));
     defender.ultimateCharge = Math.min(100, defender.ultimateCharge + (blocked ? 3 : 12));
     defender.vx = (projectile ? projectile.direction : attacker.facing) * move.knockback * (blocked ? defender.stats.guardKnockbackScale : 1);
     if (!blocked) {
       defender.hitstunFrames = move.hitstunFrames ?? defender.stats.hitstunFrames;
       defender.attackId = null;
+      defender.attackDriveFrames = 0;
       defender.attackFrame = 0;
       defender.attackConnected = false;
       defender.bufferedAttack = null;
@@ -539,6 +551,7 @@
       fighter.vx = 0;
       fighter.vy = 0;
       fighter.hitstunFrames = 0;
+      fighter.impactFlashFrames = 0;
       fighter.blockstunFrames = 0;
       fighter.knockdownFrames = 0;
       fighter.attackId = null;
