@@ -103,6 +103,7 @@ test('mantiene el ancla del cuerpo en el suelo para cada pose del atlas', () => 
       { remainingStun: 12, renderFrame: 0, expectedFrame: 24, moving: false },
       { remainingStun: 7, renderFrame: 0, expectedFrame: 25, moving: false },
       { remainingStun: 0, renderFrame: 6, expectedFrame: 3, moving: true },
+      { remainingStun: 0, renderFrame: 18, expectedFrame: 5, moving: true },
       { remainingStun: 0, renderFrame: 0, expectedFrame: 0, moving: false }
     ].forEach(({ remainingStun, renderFrame, expectedFrame, moving }) => {
       fighter.hitstunFrames = remainingStun;
@@ -115,6 +116,7 @@ test('mantiene el ancla del cuerpo en el suelo para cada pose del atlas', () => 
 
       assert.equal(frame, expectedFrame);
       assert.ok(Math.abs(baseline - fighter.y) < 1e-9);
+      if (expectedFrame === 5) assert.equal(args[4], -fighter.sprite.anchor.x - 18);
     });
   } finally {
     if (originalImage === undefined) delete global.Image;
