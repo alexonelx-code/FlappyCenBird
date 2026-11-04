@@ -163,8 +163,31 @@ test('se pueden lanzar puños y patadas en el aire conservando impulso', () => {
     const speed = duel.left.vx;
     duel = engine.stepDuel(duel, { left: { attack } }).state;
     assert.equal(duel.left.attackId, attack);
-    assert.equal(duel.left.vx, speed);
+    assert.ok(duel.left.vx > speed * 0.98);
   }
+});
+
+test('el salto conserva impulso al soltar dirección y cambia de rumbo gradualmente', () => {
+  let duel = engine.createDuel();
+  duel = engine.stepDuel(duel, { left: { jump: true, moveX: 1 } }).state;
+  const initialSpeed = duel.left.vx;
+  duel = engine.stepDuel(duel).state;
+  assert.ok(duel.left.vx > initialSpeed * 0.98);
+  const beforeReverse = duel.left.vx;
+  duel = engine.stepDuel(duel, { left: { moveX: -1 } }).state;
+  assert.ok(duel.left.vx > 0 && duel.left.vx < beforeReverse);
+  for (let i = 0; i < 20; i += 1) duel = engine.stepDuel(duel, { left: { moveX: -1 } }).state;
+  assert.ok(duel.left.vx < 0);
+});
+
+test('el aterrizaje muestra apoyo breve sin impedir un nuevo salto', () => {
+  let duel = engine.createDuel();
+  duel = engine.stepDuel(duel, { left: { jump: true } }).state;
+  while (!duel.left.grounded) duel = engine.stepDuel(duel).state;
+  assert.equal(duel.left.landingFrames, 4);
+  duel = engine.stepDuel(duel, { left: { jump: true } }).state;
+  assert.equal(duel.left.grounded, false);
+  assert.equal(duel.left.landingFrames, 0);
 });
 
 test('un ataque bloqueado mantiene la cobertura durante la recuperación', () => {

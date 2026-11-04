@@ -196,6 +196,8 @@
       ultimateCharge: 0,
       maxHealth,
       grounded: true,
+      airFrames: 0,
+      landingFrames: 0,
       guarding: false,
       crouching: false,
       attackId: null,
@@ -305,6 +307,7 @@
     const hadAttack = Boolean(fighter.attackId);
     const wasStunned = fighter.hitstunFrames > 0;
     const wasBlocking = fighter.blockstunFrames > 0;
+    const wasGrounded = fighter.grounded;
 
     fighter.previousAttack = input.attack;
     fighter.previousJump = input.jump;
@@ -329,6 +332,7 @@
     }
 
     if (fighter.knockedOut) return;
+    if (fighter.landingFrames > 0) fighter.landingFrames -= 1;
     if (fighter.impactFlashFrames > 0) fighter.impactFlashFrames -= 1;
 
     if (wasStunned) {
@@ -357,7 +361,15 @@
     const canMove = !fighter.attackId && !wasStunned && !fighter.guarding && !fighter.crouching;
     const moveX = canMove ? input.moveX : 0;
     const speed = fighter.grounded ? fighter.stats.groundSpeed : fighter.stats.airSpeed;
-    if (moveX) {
+    if (!fighter.grounded && !wasStunned) {
+      if (moveX) {
+        const target = moveX * speed;
+        const adjustment = speed * 0.16;
+        fighter.vx += clamp(target - fighter.vx, -adjustment, adjustment);
+      } else {
+        fighter.vx *= 0.99;
+      }
+    } else if (moveX) {
       fighter.vx = moveX * speed;
     } else if (fighter.crouching && !wasStunned && !wasBlocking) {
       fighter.vx = 0;
@@ -372,6 +384,8 @@
       fighter.grounded = false;
       fighter.vy = -fighter.stats.jumpVelocity;
       fighter.bufferedJump = 0;
+      fighter.landingFrames = 0;
+      fighter.airFrames = 0;
     }
 
     fighter.vy = Math.min(fighter.vy + rules.physics.gravity / rules.tickRate, rules.physics.maxFallSpeed);
@@ -395,8 +409,11 @@
       fighter.y = rules.arena.floorY;
       fighter.vy = 0;
       fighter.grounded = true;
+      if (!wasGrounded && fighter.airFrames > 0) fighter.landingFrames = 4;
+      fighter.airFrames = 0;
     } else {
       fighter.grounded = false;
+      fighter.airFrames += 1;
     }
 
     if (fighter.bufferedAttack && !actionPressed) {
@@ -561,6 +578,8 @@
       fighter.bufferedJump = 0;
       fighter.knockedOut = false;
       fighter.grounded = true;
+      fighter.airFrames = 0;
+      fighter.landingFrames = 0;
       fighter.y = state.rules.arena.floorY;
     });
     state.projectiles = [];

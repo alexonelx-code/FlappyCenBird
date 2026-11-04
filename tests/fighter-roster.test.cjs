@@ -18,6 +18,7 @@ test('la pose refleja defensa aérea, defensa baja, caída y recuperación', () 
   assert.equal(art.animationFor(fighter), 'block');
   assert.equal(art.animationFor({ ...fighter, crouching: true }), 'blockCrouch');
   assert.equal(art.animationFor({ ...fighter, grounded: false }), 'blockAir');
+  assert.equal(art.animationFor({ ...fighter, guarding: false, landingFrames: 4 }), 'landing');
   assert.equal(art.animationFor({ ...fighter, guarding: false, knockdownFrames: 28, hitstunFrames: 28 }), 'hurt');
   assert.equal(art.animationFor({ ...fighter, guarding: false, knockdownFrames: 20, hitstunFrames: 20 }), 'down');
   assert.equal(art.animationFor({ ...fighter, guarding: false, knockdownFrames: 8, hitstunFrames: 8 }), 'getup');

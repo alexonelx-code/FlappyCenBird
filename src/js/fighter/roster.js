@@ -20,6 +20,7 @@
         idle: { frames: [0, 1], fps: 5, loop: true },
         walk: { frames: [2, 3, 4, 5], fps: 10, loop: true },
         jump: { frames: [6], fps: 8, loop: false },
+        landing: { frames: [8], fps: 8, loop: false },
         crouch: { frames: [8], fps: 8, loop: true },
         block: { frames: [10], fps: 6, loop: true },
         blockCrouch: { frames: [8], fps: 6, loop: true },

@@ -1,7 +1,7 @@
 (() => {
   'use strict';
 
-  const ANIMATIONS = Object.freeze(['idle', 'walk', 'jump', 'crouch', 'block', 'blockCrouch', 'blockAir', 'light', 'medium', 'heavy', 'special', 'ultimate', 'hurt', 'down', 'getup', 'ko', 'enter', 'victory']);
+  const ANIMATIONS = Object.freeze(['idle', 'walk', 'jump', 'landing', 'crouch', 'block', 'blockCrouch', 'blockAir', 'light', 'medium', 'heavy', 'special', 'ultimate', 'hurt', 'down', 'getup', 'ko', 'enter', 'victory']);
 
   function clone(value) {
     return JSON.parse(JSON.stringify(value));
@@ -75,6 +75,7 @@
     if (fighter.guarding) return !fighter.grounded ? 'blockAir' : fighter.crouching ? 'blockCrouch' : 'block';
     if (!fighter.grounded) return 'jump';
     if (fighter.crouching) return 'crouch';
+    if (fighter.landingFrames > 0) return 'landing';
     if (Math.abs(fighter.vx) > 12) return 'walk';
     return 'idle';
   }

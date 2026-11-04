@@ -140,7 +140,10 @@
     ctx.globalAlpha = fighter.knockedOut ? 0.58 : 1;
     drawGroundShadow(ctx, fighter, groundY, width);
     ctx.translate(fighter.x, fighter.y);
-    ctx.scale(fighter.facing * scale, scale);
+    const airborne = !fighter.grounded && !fighter.knockedOut && !fighter.hitstunFrames;
+    const squash = !reducedMotion && fighter.landingFrames > 0 && !fighter.attackId ? 0.95 : 1;
+    const stretch = !reducedMotion && airborne ? (fighter.vy < -90 ? 1.035 : fighter.vy > 90 ? 0.98 : 1) : squash;
+    ctx.scale(fighter.facing * scale / Math.sqrt(stretch), scale * stretch);
     ctx.imageSmoothingEnabled = false;
     if (fighter.impactFlashFrames > 0 && !reducedMotion) ctx.filter = 'brightness(1.65)';
     if (extracted) {
