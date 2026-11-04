@@ -157,10 +157,12 @@
     const photo = document.getElementById('fighterFeaturedPhoto');
     const showPhoto = Boolean(fighter.portraitSrc);
     photo.hidden = !showPhoto;
-    sprite.hidden = showPhoto;
+    sprite.hidden = false;
+    document.getElementById('fighterFeaturedArt').classList.toggle('has-photo', showPhoto);
+    document.getElementById('fighterSpriteCaption').hidden = !showPhoto;
     if (showPhoto) photo.src = fighter.portraitSrc;
     sprite.dataset.atlasIndex = String(index);
-    if (!showPhoto) drawAtlasCell(sprite, index);
+    drawAtlasCell(sprite, index);
     if (fighter.palette) {
       sprite.style.setProperty('--fighter-accent', fighter.palette.accent);
       sprite.style.setProperty('--fighter-shadow', fighter.palette.shadow);

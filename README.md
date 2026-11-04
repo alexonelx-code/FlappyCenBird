@@ -6,7 +6,7 @@ CenGames es un proyecto personal de ocio para jugar entre amigos. No es un produ
 
 - Un portal web adaptable a teléfonos y computadoras, hecho con HTML, CSS y JavaScript sin dependencias externas.
 - Flappy BirdCen, dibujado en Canvas, con controles táctiles y de teclado, récord, tabla, sonido, cinco personajes gratuitos y velocidad progresiva con tramos aleatorios que se estabiliza cerca de los 50 puntos.
-- Cen Fighters, juego local contra la computadora con equipos de tres, diez peleadores provisionales, tres dificultades y cinco escenarios de campus. Luis tiene una hoja animada propia; los demás usan arte de muestra. Incluye aprendizaje local por perfil, sonido y controles de teclado y táctiles.
+- Cen Fighters, juego local contra la computadora con equipos de tres, diez peleadores provisionales, tres dificultades y cinco escenarios de campus. Alvin Luis tiene una hoja animada propia; los demás usan arte de muestra. Incluye aprendizaje local por perfil, sonido y controles de teclado y táctiles.
 - Un perfil por nombre en cada navegador, con récords, estadísticas, saldo común de Cent y avatar seleccionado.
 - Una tienda de 15 avatares: los primeros cinco son gratis, los siguientes cinco cuestan 40 Cent cada uno y los últimos cinco cuestan 60 Cent cada uno.
 - Una tienda de Flappy BirdCen con cinco pájaros disponibles y cinco diseños reservados en beta, además de cinco fondos: Costa dorada y Aurora polar gratis; Órbita (60 Cent), Último sol (80 Cent) y Neón urbano (100 Cent).

@@ -58,7 +58,7 @@ test('el catálogo tiene diez luchadores distintos con arquetipos y estadística
     cpuTeam: ['fighter-03', 'fighter-08', 'fighter-10'],
     seed: 40
   });
-  assert.equal(match.combatants[match.active.player].name, 'Luis');
+  assert.equal(match.combatants[match.active.player].name, 'Alvin Luis');
   assert.equal(roster.entries[0].portraitSrc, 'assets/fighters/characters/luis-original.jpg');
   assert.equal(roster.entries[0].sprite.visualScale, 0.70);
   assert.deepEqual(roster.entries[0].sprite.anchor, { x: 114.5, y: 229 });

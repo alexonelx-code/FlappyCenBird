@@ -31,6 +31,56 @@
   background: #213d3d;
   box-shadow: 6px 6px 0 #102326;
 }
+#fighterSetupScreen .fighter-feature-art.has-photo::before {
+  background: linear-gradient(90deg, rgba(12, 28, 31, .25), transparent 55%);
+}
+#fighterSetupScreen .fighter-feature-art.has-photo .fighter-feature-photo {
+  object-position: 50% 35%;
+  transform: none;
+}
+#fighterSetupScreen .fighter-feature-art.has-photo .fighter-feature-sprite,
+#fighterSetupScreen .fighter-feature-art.has-photo .fighter-feature-sprite.has-square-sprite {
+  position: absolute;
+  z-index: 4;
+  right: 12px;
+  bottom: 70px;
+  width: 100px;
+  height: 100px;
+  max-width: none;
+  padding: 7px;
+  border: 1px solid rgba(245, 230, 192, .7);
+  background: rgba(18, 43, 43, .92);
+  box-shadow: 3px 3px 0 rgba(8, 20, 21, .6);
+  image-rendering: pixelated;
+}
+#fighterSetupScreen .fighter-sprite-caption {
+  position: absolute;
+  z-index: 5;
+  right: 12px;
+  bottom: 55px;
+  width: 100px;
+  color: #f8e8be;
+  background: #173132;
+  font: 700 8px/15px system-ui, sans-serif;
+  letter-spacing: .08em;
+  text-align: center;
+}
+#fighterSetupScreen .fighter-sprite-caption[hidden] { display: none; }
+#fighterSetupScreen .fighter-select-photo-frame .fighter-select-photo {
+  object-position: 50% 35%;
+  transform: none;
+}
+@media (max-width: 760px) {
+  #fighterSetupScreen .fighter-feature-art.has-photo .fighter-feature-photo { object-position: 50% 30%; }
+  #fighterSetupScreen .fighter-feature-art.has-photo .fighter-feature-sprite,
+  #fighterSetupScreen .fighter-feature-art.has-photo .fighter-feature-sprite.has-square-sprite {
+    right: 10px;
+    bottom: 63px;
+    width: 76px;
+    height: 76px;
+  }
+  #fighterSetupScreen .fighter-sprite-caption { right: 10px; bottom: 48px; width: 76px; }
+}
 #fighterSetupScreen .fighter-select-card,
 #fighterSetupScreen .fighter-team-slot,
 #fighterSetupScreen .fighter-stage-card,

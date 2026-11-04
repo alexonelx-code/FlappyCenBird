@@ -1,4 +1,4 @@
-const CACHE_NAME = 'minijuegos-cen-v82';
+const CACHE_NAME = 'minijuegos-cen-v83';
 const APP_FILES = [
   './',
   './index.html',
@@ -6,7 +6,7 @@ const APP_FILES = [
   './src/css/game.css?v=59',
   './src/css/portal-fighter.css?v=1',
   './src/css/fighter-layout.css?v=1',
-  './src/css/fighter-identity.css?v=4',
+  './src/css/fighter-identity.css?v=5',
   './src/js/audio.js?v=35',
   './src/js/economy.js?v=30',
   './src/js/store-ui.js?v=28',
@@ -23,12 +23,12 @@ const APP_FILES = [
   './src/js/fighter/random.js',
   './src/js/fighter/sprite-contract.js?v=9',
   './src/js/fighter/sprite-atlas.js?v=3',
-  './src/js/fighter/roster.js?v=9',
+  './src/js/fighter/roster.js?v=10',
   './src/js/fighter/team-match.js?v=3',
   './src/js/fighter/cpu.js',
   './src/js/fighter/learning.js?v=2',
   './src/js/fighter/renderer.js?v=57',
-  './src/js/fighter/game.js?v=59',
+  './src/js/fighter/game.js?v=60',
   './assets/fighters/stages/01-biblioteca.png',
   './assets/fighters/stages/02-campus-nocturno.png',
   './assets/fighters/stages/03-jardin.png',
