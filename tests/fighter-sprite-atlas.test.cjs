@@ -4,6 +4,18 @@ const assert = require('node:assert/strict');
 require('../src/js/fighter/sprite-atlas.js');
 const atlas = globalThis.CenFighterSpriteAtlas;
 
+test('ignora ruido casi transparente que une poses vecinas', () => {
+  const pixels = new Uint8ClampedArray(16 * 8 * 4);
+  for (let y = 2; y < 7; y += 1) {
+    pixels[(y * 16 + 3) * 4 + 3] = 255;
+    pixels[(y * 16 + 11) * 4 + 3] = 255;
+  }
+  for (let x = 4; x < 11; x += 1) pixels[(4 * 16 + x) * 4 + 3] = 1;
+  const frame = atlas.extractFrame(pixels, 16, 8, 8, 8, 0, 2);
+  assert.equal(frame.x, 3);
+  assert.equal(frame.width, 1);
+});
+
 test('recupera los píxeles que rebasan una celda y descarta fragmentos vecinos', () => {
   const atlasWidth = 8;
   const atlasHeight = 16;

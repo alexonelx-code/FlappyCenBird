@@ -117,7 +117,12 @@
         ? Math.max(0, fighter.stats.hitstunFrames - fighter.hitstunFrames)
         : frame;
     const step = reducedMotion ? 0 : Math.floor(animationFrame * clip.fps / 60);
-    const clipStep = clip.loop ? step % clip.frames.length : Math.min(step, clip.frames.length - 1);
+    const attack = fighter.attackId && !fighter.victorious && fighter.moves?.[fighter.attackId];
+    const phase = attack && fighter.attackFrame >= attack.startupFrames
+      ? (fighter.attackFrame < attack.startupFrames + attack.activeFrames ? 1 : 2) : 0;
+    const clipStep = attack && clip.frames.length >= 3
+      ? phase
+      : clip.loop ? step % clip.frames.length : Math.min(step, clip.frames.length - 1);
     const index = clip.frames[clipStep];
     const extracted = globalThis.CenFighterSpriteAtlas?.getFrame(image, sprite.frameWidth, sprite.frameHeight, index);
     const scale = fighter.height * (sprite.visualScale || 1) / sprite.anchor.y;

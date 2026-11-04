@@ -2,6 +2,7 @@
   'use strict';
 
   const cachedFrames = new Map();
+  const ALPHA_THRESHOLD = 16;
 
   // Poses overflow their cells, so recover a 14-pixel gutter without swallowing the next pose.
   function extractFrame(pixels, atlasWidth, atlasHeight, frameWidth, frameHeight, index, columns, padding = 14) {
@@ -26,7 +27,7 @@
       if (visited[start]) continue;
       const imageX = left + start % width;
       const imageY = top + Math.floor(start / width);
-      if (pixels[(imageY * atlasWidth + imageX) * 4 + 3] === 0) {
+      if (pixels[(imageY * atlasWidth + imageX) * 4 + 3] <= ALPHA_THRESHOLD) {
         visited[start] = 1;
         continue;
       }
@@ -64,7 +65,7 @@
           const nextX = left + next % width;
           const nextY = top + Math.floor(next / width);
           visited[next] = 1;
-          if (pixels[(nextY * atlasWidth + nextX) * 4 + 3] > 0) queue[tail++] = next;
+          if (pixels[(nextY * atlasWidth + nextX) * 4 + 3] > ALPHA_THRESHOLD) queue[tail++] = next;
         });
       }
 
@@ -101,7 +102,7 @@
         const nextX = left + next % width;
         const nextY = top + Math.floor(next / width);
         included[next] = 1;
-        if (pixels[(nextY * atlasWidth + nextX) * 4 + 3] > 0) queue[tail++] = next;
+        if (pixels[(nextY * atlasWidth + nextX) * 4 + 3] > ALPHA_THRESHOLD) queue[tail++] = next;
       });
     }
 

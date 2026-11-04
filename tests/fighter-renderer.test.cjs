@@ -151,6 +151,16 @@ test('usa la hoja pixelada original para todas las poses de Luis', () => {
     const scale = fighter.height * fighter.sprite.visualScale / fighter.sprite.anchor.y;
     const baseline = draw.translateY + (draw.args[5] + fighter.sprite.frameHeight) * scale;
     assert.ok(Math.abs(baseline - match.duel.rules.arena.floorY) < 1e-9);
+
+    fighter.guarding = false;
+    fighter.attackId = 'special';
+    const move = fighter.moves.special;
+    for (const [attackFrame, expectedFrame] of [[0, 21], [move.startupFrames, 22], [move.startupFrames + move.activeFrames, 20]]) {
+      fighter.attackFrame = attackFrame;
+      renderer.draw(ctx, match, 0, [], { stageId: 'fachada' });
+      const args = ctx.calls.spriteDraws.at(-1).args;
+      assert.equal(Math.floor(args[0] / fighter.sprite.frameWidth) + Math.floor(args[1] / fighter.sprite.frameHeight) * 6, expectedFrame);
+    }
   } finally {
     if (originalImage === undefined) delete global.Image;
     else global.Image = originalImage;
