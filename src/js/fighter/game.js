@@ -20,6 +20,7 @@
   const resultOverlay = document.getElementById('fighterResultOverlay');
   const sound = window.FlappyAudio;
   const pressed = new Set();
+  const keyboardPressed = new Map();
   const touchAnalog = { x: 0, y: 0 };
   let chosen = [];
   let roster = globalThis.CenFighterRoster?.entries || globalThis.CenFighterTeams.DEFAULT_ROSTER;
@@ -117,6 +118,7 @@
 
   function clearInputs() {
     pressed.clear();
+    keyboardPressed.clear();
     pendingAttack = null;
     touchAnalog.x = 0;
     touchAnalog.y = 0;
@@ -537,17 +539,18 @@
   }
 
   function inputForPlayer() {
-    const left = pressed.has('left');
-    const right = pressed.has('right');
+    const held = (action) => pressed.has(action) || Array.from(keyboardPressed.values()).includes(action);
+    const left = held('left');
+    const right = held('right');
     const digitalX = left === right ? 0 : left ? -1 : 1;
     const analogX = Math.abs(touchAnalog.x) < 0.14
       ? 0
       : Math.sign(touchAnalog.x) * (Math.abs(touchAnalog.x) - 0.14) / 0.86;
     return {
       moveX: digitalX || analogX,
-      jump: pressed.has('jump') || touchAnalog.y < -0.6,
-      crouch: pressed.has('crouch') || touchAnalog.y > 0.6,
-      block: pressed.has('block'),
+      jump: held('jump') || touchAnalog.y < -0.6,
+      crouch: held('crouch') || touchAnalog.y > 0.6,
+      block: held('block'),
       attack: pendingAttack
     };
   }
@@ -732,7 +735,7 @@
     const attack = globalThis.CenFighterConfig.controls.attacks[event.code];
     if (controls[event.code]) {
       event.preventDefault();
-      pressed.add(controls[event.code]);
+      keyboardPressed.set(event.code, controls[event.code]);
     } else if (attack) {
       event.preventDefault();
       pendingAttack = attack;
@@ -745,7 +748,7 @@
       ArrowUp: 'jump', KeyW: 'jump', Space: 'jump', ArrowDown: 'crouch', KeyS: 'crouch',
       KeyJ: 'block', ShiftLeft: 'block', ShiftRight: 'block'
     };
-    if (controls[event.code]) pressed.delete(controls[event.code]);
+    if (controls[event.code]) keyboardPressed.delete(event.code);
   }
 
   function bindTouchControls() {

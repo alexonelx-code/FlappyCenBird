@@ -1,4 +1,4 @@
-const CACHE_NAME = 'minijuegos-cen-v74';
+const CACHE_NAME = 'minijuegos-cen-v75';
 const APP_FILES = [
   './',
   './index.html',
@@ -16,7 +16,7 @@ const APP_FILES = [
   './src/js/game-overlay.js?v=28',
   './src/js/game.js?v=29',
   './src/js/fighter/config.js?v=2',
-  './src/js/fighter/engine.js?v=2',
+  './src/js/fighter/engine.js?v=3',
   './src/js/fighter/random.js',
   './src/js/fighter/sprite-contract.js?v=7',
   './src/js/fighter/sprite-atlas.js?v=1',
@@ -25,7 +25,7 @@ const APP_FILES = [
   './src/js/fighter/cpu.js',
   './src/js/fighter/learning.js',
   './src/js/fighter/renderer.js?v=52',
-  './src/js/fighter/game.js?v=53',
+  './src/js/fighter/game.js?v=54',
   './assets/fighters/stages/01-biblioteca.png',
   './assets/fighters/stages/02-campus-nocturno.png',
   './assets/fighters/stages/03-jardin.png',

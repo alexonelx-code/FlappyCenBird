@@ -15,6 +15,44 @@ function configWith(overrides = {}) {
   return config;
 }
 
+test('acepta ataques al agacharse y evita desplazarse agachado', () => {
+  let duel = engine.createDuel();
+  duel = engine.stepDuel(duel, { left: { crouch: true, moveX: 1 } }).state;
+  assert.equal(duel.left.x, engine.createDuel().left.x);
+  duel = engine.stepDuel(duel, { left: { crouch: true, attack: 'light' } }).state;
+  assert.equal(duel.left.attackId, 'light');
+});
+
+test('guarda un ataque y un salto poco antes de aterrizar', () => {
+  let duel = engine.createDuel();
+  duel = engine.stepDuel(duel, { left: { jump: true } }).state;
+  while (duel.left.y < duel.rules.arena.floorY - 20 || duel.left.vy < 0) {
+    duel = engine.stepDuel(duel).state;
+  }
+  duel = engine.stepDuel(duel, { left: { attack: 'light' } }).state;
+  for (let i = 0; i < 6 && !duel.left.attackId; i += 1) duel = engine.stepDuel(duel).state;
+  assert.equal(duel.left.attackId, 'light');
+
+  duel = engine.createDuel();
+  duel = engine.stepDuel(duel, { left: { jump: true } }).state;
+  while (duel.left.y < duel.rules.arena.floorY - 20 || duel.left.vy < 0) {
+    duel = engine.stepDuel(duel).state;
+  }
+  duel = engine.stepDuel(duel, { left: { jump: true } }).state;
+  for (let i = 0; i < 6 && duel.left.vy >= 0; i += 1) duel = engine.stepDuel(duel).state;
+  assert.ok(duel.left.vy < 0);
+});
+
+test('un movimiento puede especificar cero cuadros de aturdimiento', () => {
+  const duel = engine.createDuel({
+    config: configWith({ light: { startupFrames: 0, activeFrames: 1, reach: 220, hitstunFrames: 0 } }),
+    left: { x: 400 }, right: { x: 500 }
+  });
+  const result = engine.stepDuel(duel, { left: { attack: 'light' } });
+  assert.ok(result.events.some((event) => event.type === 'hit'));
+  assert.equal(result.state.right.hitstunFrames, 0);
+});
+
 test('el duelo es determinista y cada impacto activo se aplica una sola vez', () => {
   const config = configWith({ light: { startupFrames: 2, activeFrames: 3, recoveryFrames: 4, reach: 220 } });
   const options = {

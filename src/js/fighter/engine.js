@@ -202,6 +202,7 @@
       attackConnected: false,
       hitstunFrames: 0,
       bufferedAttack: null,
+      bufferedJump: 0,
       previousAttack: null,
       previousJump: false,
       knockedOut: false
@@ -290,9 +291,10 @@
     fighter.guarding = false;
     fighter.crouching = false;
 
-    if (actionPressed && fighter.moves[input.attack] && (hadAttack || wasStunned)) {
+    if (actionPressed && fighter.moves[input.attack] && (hadAttack || wasStunned || !fighter.grounded)) {
       fighter.bufferedAttack = { id: input.attack, frames: fighter.stats.inputBufferFrames };
     }
+    if (jumpPressed) fighter.bufferedJump = fighter.stats.inputBufferFrames;
 
     if (fighter.knockedOut) return;
 
@@ -301,17 +303,17 @@
     } else if (!hadAttack && input.block && fighter.grounded) {
       fighter.guarding = true;
       fighter.bufferedAttack = null;
-    } else if (!hadAttack && input.crouch && fighter.grounded) {
-      fighter.crouching = true;
-    } else if (!hadAttack && !input.block && !input.crouch) {
+    } else if (!hadAttack && !input.block) {
       if (actionPressed && fighter.moves[input.attack] && fighter.grounded) {
         startAttack(fighter, input.attack);
       } else if (fighter.bufferedAttack && fighter.bufferedAttack.frames > 0 && fighter.grounded) {
         startAttack(fighter, fighter.bufferedAttack.id);
+      } else if (input.crouch && fighter.grounded) {
+        fighter.crouching = true;
       }
     }
 
-    const canMove = !fighter.attackId && !wasStunned && !fighter.guarding;
+    const canMove = !fighter.attackId && !wasStunned && !fighter.guarding && !fighter.crouching;
     const moveX = canMove ? input.moveX : 0;
     const speed = fighter.grounded ? fighter.stats.groundSpeed : fighter.stats.airSpeed;
     if (moveX) {
@@ -322,9 +324,10 @@
       if (Math.abs(fighter.vx) < 1) fighter.vx = 0;
     }
 
-    if (jumpPressed && fighter.grounded && !fighter.attackId && !wasStunned && !fighter.guarding) {
+    if ((jumpPressed || fighter.bufferedJump > 0) && fighter.grounded && !fighter.attackId && !wasStunned && !fighter.guarding && !fighter.crouching) {
       fighter.grounded = false;
       fighter.vy = -fighter.stats.jumpVelocity;
+      fighter.bufferedJump = 0;
     }
 
     fighter.vy = Math.min(fighter.vy + rules.physics.gravity / rules.tickRate, rules.physics.maxFallSpeed);
@@ -352,6 +355,7 @@
       fighter.bufferedAttack.frames -= 1;
       if (fighter.bufferedAttack.frames <= 0) fighter.bufferedAttack = null;
     }
+    if (fighter.bufferedJump > 0 && !jumpPressed) fighter.bufferedJump -= 1;
   }
 
   function faceOpponents(left, right) {
@@ -438,11 +442,12 @@
     defender.health = Math.max(0, defender.health - damage);
     defender.vx = attacker.facing * move.knockback * (blocked ? defender.stats.guardKnockbackScale : 1);
     if (!blocked) {
-      defender.hitstunFrames = move.hitstunFrames || defender.stats.hitstunFrames;
+      defender.hitstunFrames = move.hitstunFrames ?? defender.stats.hitstunFrames;
       defender.attackId = null;
       defender.attackFrame = 0;
       defender.attackConnected = false;
       defender.bufferedAttack = null;
+      defender.bufferedJump = 0;
     }
 
     events.push({
@@ -485,6 +490,7 @@
       fighter.attackFrame = 0;
       fighter.attackConnected = false;
       fighter.bufferedAttack = null;
+      fighter.bufferedJump = 0;
       fighter.knockedOut = false;
       fighter.grounded = true;
       fighter.y = state.rules.arena.floorY;
